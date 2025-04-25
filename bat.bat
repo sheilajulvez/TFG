@@ -13,8 +13,6 @@ echo BUILD PLUGIN
 cmake --build --preset windows-x64 --config Debug
 cmake --build --preset windows-x64 --config Release
 cmake --build --preset windows-x64 --config RelWithDebInfo
-copy /y C:\Users\USER\Desktop\Carrera\tfg\TFG\personal\obs-plugintemplate-master\build_x64\RelWithDebInfo\SheilaJosePluginTest.dll C:\Program Files\obs-studio\obs-plugins\64bit\
-copy /y C:\Users\USER\Desktop\Carrera\tfg\TFG\personal\obs-plugintemplate-master\build_x64\RelWithDebInfo\SheilaJosePluginTest.pdb C:\Program Files\obs-studio\obs-plugins\64bit\
 
 REM Finalizar
 echo Proceso completado.
