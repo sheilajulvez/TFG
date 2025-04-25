@@ -55,9 +55,10 @@ endif()
 
 # Fuentes del plugin
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE 
- src/Pixel_art_effect.cpp
-   src/Model3D_OBS.cpp
-   src/plugin-main.c
+
+ src/plugin-main.c
+ src/model3D_OBS.c
+  
 
 )
 

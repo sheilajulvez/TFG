@@ -1,77 +1,109 @@
-#include "pixel_art_effect.hpp"
+
+//EFECTO BASICO QUE COMPILA PERO NO HACE NI MIERDAS
+
+
+
 #include <obs-module.h>
-PluginEffect::PluginEffect() : m_source(nullptr) {}
+#include <graphics/graphics.h>
+OBS_DECLARE_MODULE()
+OBS_MODULE_USE_DEFAULT_LOCALE("simple_color_overlay", "en-US")
 
-PluginEffect::~PluginEffect()
+extern "C" {
+static const char *plugin_effect_get_name(void *unused)
 {
-	// Limpiar recursos si es necesario
+	return "Simple Color Overlay";
 }
 
-bool PluginEffect::Initialize(obs_source_t *source)
+static void *plugin_effect_create(obs_data_t *settings, obs_source_t *source)
 {
-	m_source = source;
-	return true;
+	UNUSED_PARAMETER(settings);
+	UNUSED_PARAMETER(source);
+	return source;
 }
 
-void PluginEffect::ApplyEffect()
+static void plugin_effect_destroy(void *data)
 {
-	if (!m_source) {
-		return;
+	UNUSED_PARAMETER(data);
+}
+
+static void plugin_effect_update(void *data, obs_data_t *settings)
+{
+	UNUSED_PARAMETER(data);
+	UNUSED_PARAMETER(settings);
+}
+
+static struct obs_source_frame * plugin_effect_filter_video(void *data, struct obs_source_frame *frame)
+{
+	if (!frame || frame->format != VIDEO_FORMAT_RGBA) {
+		// sólo manejamos RGBA en este ejemplo
+		return frame;
 	}
 
-	// Aquí puedes aplicar un filtro o efecto en el video.
-	// Por ejemplo, ajustando el brillo o el contraste (esto es solo un ejemplo de efecto simple).
-	gs_effect_t *effect =
-		nullptr; // Aquí iría la lógica para crear el efecto.
+	uint8_t *pixels = frame->data[0];
+	uint32_t ls = frame->linesize[0];
+	uint32_t w = frame->width;
+	uint32_t h = frame->height;
 
-	// Aplicar un efecto de ejemplo: por ejemplo, usando un shader simple.
-	// Reemplaza este código con el efecto que desees aplicar.
-}
-
-// Función para crear el filtro
-void *plugin_effect_create(obs_data_t *settings, obs_source_t *source)
-{
-	PluginEffect *effect = new PluginEffect();
-	if (!effect->Initialize(source)) {
-		delete effect;
-		return nullptr;
+	// Recorremos cada fila
+	for (uint32_t y = 0; y < h; y++) {
+		uint8_t *row = pixels + y * ls;
+		// Cada píxel son 4 bytes: R, G, B, A (RGBA)
+		for (uint32_t x = 0; x < w; x++) {
+			uint8_t *px = row + x * 4;
+			// Tintamos el canal R al 100%, y mezclamos 30%:
+			px[0] = (uint8_t)(px[0] * 0.7f + 255 * 0.3f);
+			// dejamos G,B,A igual
+		}
 	}
-	return effect;
+
+	return frame;
 }
 
-// Función para destruir el filtro
-void plugin_effect_destroy(void *data)
-{
-	delete static_cast<PluginEffect *>(data);
-}
-
-// Función para obtener el nombre del filtro
-const char *plugin_effect_get_name(void *data)
-{
-	return "Simple Color Effect";
-}
-
-// Función para renderizar el filtro (esto se ejecuta en cada frame)
-void plugin_effect_video_render(void *data, gs_effect_t *effect)
-{
-	static_cast<PluginEffect *>(data)->ApplyEffect();
-}
+//static void ApplyEffect(void *data, gs_effect_t *effect)
+//{
+//	obs_source_t *source = static_cast<obs_source_t *>(data);
+//
+//	// Obtener la textura de la fuente (esto se realiza mediante la API correcta)
+//	gs_texture_t *texture = obs_source_get_texture(source);
+//	if (!texture)
+//		return;
+//
+//	// Crear un efecto base para dibujar la textura
+//	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+//	if (!solid)
+//		return;
+//
+//	gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
+//
+//	// Inicializa vec4 para definir el color
+//	vec4 redColor = {1.0f, 0.0f, 0.0f, 0.3f}; // Rojo con transparencia
+//
+//	// Establecer el color en el shader
+//	gs_effect_set_vec4(color, &redColor);
+//
+//	// Aplica el filtro (renderiza sobre la fuente original)
+//	while (gs_effect_loop(solid, "Solid")) {
+//		// Dibuja la textura de la fuente
+//		gs_draw_sprite(texture, 0, 0, 0); // Dibuja la textura completa
+//	}
+//}
 
 static struct obs_source_info plugin_effect_info = {
-	.id = "plugin_effect",              // ID del filtro
-	.type = OBS_SOURCE_TYPE_FILTER,     // Tipo de fuente
-	.create = plugin_effect_create,     // Función para crear el filtro
-	.destroy = plugin_effect_destroy,   // Función para destruir el filtro
+	.id = "simple_color_overlay",
+	.type = OBS_SOURCE_TYPE_FILTER,
+	.output_flags = OBS_SOURCE_VIDEO,
 
-};
+	.get_name = plugin_effect_get_name,
+	.create = plugin_effect_create,
+	.destroy = plugin_effect_destroy,
+	.video_tick = nullptr,
+	.filter_video = plugin_effect_filter_video,
 
+	.audio_render = nullptr};
 
-// Registrar el filtro
-bool obs_module_load()
+bool obs_module_load(void)
 {
-	blog(LOG_INFO, "Plugin de efecto simple cargado.");
-	plugin_effect_info.get_name =plugin_effect_get_name; // Función para obtener el nombre
-	plugin_effect_info.video_render =plugin_effect_video_render; // Función para renderizar el video
 	obs_register_source(&plugin_effect_info);
 	return true;
+}
 }

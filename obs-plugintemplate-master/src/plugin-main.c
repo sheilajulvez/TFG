@@ -163,3 +163,144 @@ void obs_module_unload(void)
 //	obs_register_source(&pixel_art_filter);
 //	return true;
 //}
+
+
+//PRUEBA MODELO 3D
+//
+//#include <obs-module.h>
+//#include <graphics/graphics.h>
+//#include <stdint.h>
+//#include <vector>
+//#include <string>
+//#include <QtCore/QCoreApplication>
+//#include <QtGui/QOpenGLFunctions>
+//#include <QtOpenGLWidgets/qopenglwidget.h>
+//#include <qopengl.h>
+//#include "qwidget.h"
+//#include <obs.h>
+//#include <QOpenGLShaderProgram>
+//#include <QOpenGLBuffer>
+//#include <QOpenGLVertexArrayObject>
+//#include <obs-module.h>
+//
+//class OpenGLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
+//	Q_OBJECT
+//
+//public:
+//	OpenGLWidget(QWidget *parent = nullptr) : QOpenGLWidget(parent) {}
+//
+//	~OpenGLWidget() override
+//	{
+//		delete shaderProgram;
+//		delete vertexBuffer;
+//		delete indexBuffer;
+//		delete vao;
+//	}
+//
+//protected:
+//	void initializeGL() override
+//	{
+//		initializeOpenGLFunctions();
+//		initShaders();
+//		initModel();
+//	}
+//
+//	void resizeGL(int w, int h) override { glViewport(0, 0, w, h); }
+//
+//	void paintGL() override
+//	{
+//		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//		renderModel();
+//	}
+//
+//private:
+//	QOpenGLShaderProgram *shaderProgram;
+//	QOpenGLBuffer *vertexBuffer;
+//	QOpenGLBuffer *indexBuffer;
+//	QOpenGLVertexArrayObject *vao;
+//
+//	std::vector<float> vertices = {-0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+//				       0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+//				       0.5f,  0.5f,  -0.5f, 0.0f, 0.0f, 1.0f,
+//				       -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, 0.0f,
+//				       -0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 1.0f,
+//				       0.5f,  -0.5f, 0.5f,  0.0f, 1.0f, 1.0f,
+//				       0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,
+//				       -0.5f, 0.5f,  0.5f,  0.5f, 0.5f, 0.5f};
+//
+//	std::vector<unsigned int> indices = {
+//		0, 1, 2, 2, 3, 0, // Frente
+//		4, 5, 6, 6, 7, 4, // Atrás
+//		0, 1, 5, 5, 4, 0, // Abajo
+//		2, 3, 7, 7, 6, 2, // Arriba
+//		0, 3, 7, 7, 4, 0, // Izquierda
+//		1, 2, 6, 6, 5, 1  // Derecha
+//	};
+//
+//	void initShaders()
+//	{
+//		shaderProgram = new QOpenGLShaderProgram(this);
+//		shaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex,
+//						       ":/shaders/model.vert");
+//		shaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment,
+//						       ":/shaders/model.frag");
+//		shaderProgram->link();
+//	}
+//
+//	void initModel()
+//	{
+//		vertexBuffer = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+//		vertexBuffer->create();
+//		vertexBuffer->bind();
+//		vertexBuffer->allocate(vertices.data(),
+//				       vertices.size() * sizeof(float));
+//
+//		indexBuffer = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+//		indexBuffer->create();
+//		indexBuffer->bind();
+//		indexBuffer->allocate(indices.data(),
+//				      indices.size() * sizeof(unsigned int));
+//
+//		vao = new QOpenGLVertexArrayObject();
+//		vao->create();
+//		vao->bind();
+//	}
+//
+//	void renderModel()
+//	{
+//		shaderProgram->bind();
+//		vao->bind();
+//		glDrawElements(GL_TRIANGLES,
+//			       indexBuffer->size() / sizeof(unsigned int),
+//			       GL_UNSIGNED_INT, nullptr);
+//		vao->release();
+//		shaderProgram->release();
+//	}
+//};
+//
+//// Define el filtro de OBS que usará este OpenGLWidget
+//class Model3DFilter : public obs_source_filter {
+//public:
+//	Model3DFilter(obs_source_t *source)
+//	{
+//		// Crea el widget de OpenGL
+//		widget = new OpenGLWidget();
+//		widget->show();
+//	}
+//
+//	~Model3DFilter() { delete widget; }
+//
+//	void render() override { widget->update(); }
+//
+//private:
+//	OpenGLWidget *widget;
+//};
+//
+//// Registrar el filtro
+//extern "C" {
+//bool obs_module_load()
+//{
+//	obs_register_source(&Model3DFilter);
+//	return true;
+//}
+//}
