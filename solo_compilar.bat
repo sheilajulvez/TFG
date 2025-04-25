@@ -14,7 +14,7 @@ REM Paso 4: Copiar la .dll y .pdb generados a la carpeta de instalación de OBS
 echo Copiando archivos .dll y .pdb a la instalación de OBS...
 copy /y "C:\Users\Sheila Julvez\Desktop\U\TFG\TFG\obs-plugintemplate-master\build_x64\RelWithDebInfo\SheilaJosePluginTest.dll" "C:\ProgramData\OBS\obs-studio\obs-plugins\64bit\"
 copy /y "C:\Users\Sheila Julvez\Desktop\U\TFG\TFG\obs-plugintemplate-master\build_x64\RelWithDebInfo\SheilaJosePluginTest.pdb" "C:\ProgramData\OBS\obs-studio\obs-plugins\64bit"
-
+copy /y "C:\Users\Sheila Julvez\Desktop\U\TFG\TFG\obs-plugintemplate-master\data" "C:\ProgramData\OBS\obs-studio\data\obs-plugins\SheilaJosePluginTest"
 REM Finalizar
 echo Proceso completado.
 pause
