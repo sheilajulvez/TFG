@@ -56,8 +56,8 @@ endif()
 # Fuentes del plugin
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE 
 
- src/plugin-main.c
- src/model3D_OBS.c
+
+ src/Cubo-plugin.c
   
 
 )

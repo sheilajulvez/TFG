@@ -234,40 +234,92 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 		gs_blend_state_pop();
 	}
 
-	void pixel_art_downscale_render(void *data, obs_source_t *target,
-					bool source_render_type)
+	static void cube_filter_render(void *data, gs_effect_t *effect)
 	{
+		struct cube_filter_data *filter = data;
 
-		struct pixel_art_plugin_data *filter = data;
-
-		uint32_t current_width = filter->base_width;
-		uint32_t current_height = filter->base_height;
-
-		const float w = (float)filter->base_width;
-		const float h = (float)filter->base_height;
-
-		for (int i = 0; i < filter->downscales; i++) {
-
-			gs_texrender_reset(filter->render);
-
-			current_width /= 2;
-			current_height /= 2;
-
-			if (gs_texrender_begin_with_color_space(
-				    filter->render, current_width,
-				    current_height, filter->space)) {
-
-				gs_ortho(0.0f, w, 0.0f, h, -100.0f, 100.0f);
-
-				if (source_render_type) {
-					obs_source_default_render(target);
-				} else {
-					obs_source_video_render(target);
-				}
-				gs_texrender_end(filter->render);
-			}
+		if (!filter->vb || !filter->ib || !filter->effect ||
+		    !filter->param_view_proj || !filter->param_world) {
+			obs_source_skip_video_filter(filter->context);
+			return;
 		}
+
+		if (!obs_source_process_filter_begin(filter->context, GS_RGBA,
+						     OBS_ALLOW_DIRECT_RENDERING))
+			return;
+
+		obs_source_t *target = obs_filter_get_target(filter->context);
+		if (target) {
+			obs_source_video_render(target);
+		}
+
+		uint32_t width = obs_source_get_width(filter->context);
+		uint32_t height = obs_source_get_height(filter->context);
+
+		if (width == 0)
+			width = 1;
+		if (height == 0)
+			height = 1;
+
+		struct matrix4 proj, view, view_proj_matrix;
+		struct matrix4 world_matrix, rot_x_matrix, rot_y_matrix;
+
+		// Configuramos la perspectiva
+		matrix4_perspective(&proj, 60.0f * (float)M_PI / 180.0f,
+				    (float)width / (float)height, 0.1f, 100.0f);
+
+		// Establecemos la vista
+		matrix4_identity(&view);
+		matrix4_translate3f(&view, &view, 0.0f, 0.0f, -2.5f);
+
+		matrix4_mul(&view_proj_matrix, &proj, &view);
+
+		// Configuramos la rotación
+		matrix4_identity(&world_matrix);
+
+		struct axisang rot_params_y = {0.0f, 1.0f, 0.0f,
+					       filter->angle_y * (float)M_PI /
+						       180.0f};
+		matrix4_from_axisang(&rot_y_matrix, &rot_params_y);
+
+		struct axisang rot_params_x = {1.0f, 0.0f, 0.0f,
+					       filter->angle_x * (float)M_PI /
+						       180.0f};
+		matrix4_from_axisang(&rot_x_matrix, &rot_params_x);
+
+		matrix4_mul(&world_matrix, &rot_x_matrix, &rot_y_matrix);
+
+		gs_effect_set_matrix4(filter->param_view_proj,
+				      &view_proj_matrix);
+		gs_effect_set_matrix4(filter->param_world, &world_matrix);
+
+		gs_technique_t *tech =
+			gs_effect_get_technique(filter->effect, "Draw");
+		if (tech) {
+			size_t num_passes = gs_technique_begin(tech);
+			for (size_t i = 0; i < num_passes; i++) {
+				if (gs_technique_begin_pass(tech, i)) {
+					// Configurar el modo 3D
+					gs_set_3d_mode(60.0f, 0.1f, 100.0f);
+
+					// Cargar los buffers de vértices e índices
+					gs_load_vertexbuffer(filter->vb);
+					gs_load_indexbuffer(filter->ib);
+
+					// Dibujar el cubo utilizando la función adecuada
+					gs_draw_sprite(
+						NULL, 0, 0,
+						0); // Nota: Cambiar este enfoque, si es necesario
+
+					gs_technique_end_pass(tech);
+				}
+			}
+			gs_technique_end(tech);
+		}
+
+		obs_source_process_filter_end(filter->context, effect, 0, 0);
 	}
+
 
 	void pixel_art_default_render(void *data, obs_source_t *target,
 				      bool source_render_type)
