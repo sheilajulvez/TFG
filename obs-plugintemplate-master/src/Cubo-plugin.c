@@ -8,7 +8,6 @@
 #include <plugin-support.h>
 #include "Windows.h"
 
-
 #include "obs-config.h"
 #include "obs-defs.h"
 #include "obs-data.h"
@@ -27,8 +26,10 @@ struct cube_filter_data {
 	obs_source_t *source;
 	gs_texture_t *texture;
 	int width, height;
+	int pox, posy;
+	float rotation_z;
 };
-
+int vel = 40;
 //gs_vertbuffer_t *vb;
 
 //static const uint16_t cube_indices[] = {0, 1, 2, 2, 3, 0};
@@ -83,6 +84,17 @@ struct cube_filter_data {
 //	obs_source_t *source;
 //	//gs_texture_t *text;
 //};
+static uint32_t cube_source_get_width(void *data)
+{
+	UNUSED_PARAMETER(data);
+	return 0; // O el ancho que tú quieras
+}
+
+static uint32_t cube_source_get_height(void *data)
+{
+	UNUSED_PARAMETER(data);
+	return 0; // O la altura deseada
+}
 
 void image_source_load(gs_image_file_t *image, const char *file)
 {
@@ -114,14 +126,62 @@ static void update_vertices(void)
 	gs_render_start(true);
 	// --- LINE VERTICES ---
 	
-	gs_vertex2f(0, 0);
-	gs_vertex2f(size, 0);
-	gs_vertex2f(0, size);
-	gs_vertex2f(0, size);
-	gs_vertex2f(size, size);
-	gs_vertex2f(size, 0);
 
-//	gs_vertex2f(0, 0);
+	//cara 1
+	// Cara frontal (z = size)
+	gs_vertex3f(0, 0, size);
+	gs_vertex3f(size, 0, size);
+	gs_vertex3f(0, size, size);
+
+	gs_vertex3f(0, size, size);
+	gs_vertex3f(size, 0, size);
+	gs_vertex3f(size, size, size);
+
+	// Cara trasera (z = 0)
+	gs_vertex3f(0, 0, 0);
+	gs_vertex3f(0, size, 0);
+	gs_vertex3f(size, 0, 0);
+
+	gs_vertex3f(size, 0, 0);
+	gs_vertex3f(0, size, 0);
+	gs_vertex3f(size, size, 0);
+
+	// Cara superior (y = size)
+	gs_vertex3f(0, size, 0);
+	gs_vertex3f(0, size, size);
+	gs_vertex3f(size, size, 0);
+
+	gs_vertex3f(size, size, 0);
+	gs_vertex3f(0, size, size);
+	gs_vertex3f(size, size, size);
+
+	// Cara inferior (y = 0)
+	gs_vertex3f(0, 0, 0);
+	gs_vertex3f(size, 0, 0);
+	gs_vertex3f(0, 0, size);
+
+	gs_vertex3f(0, 0, size);
+	gs_vertex3f(size, 0, 0);
+	gs_vertex3f(size, 0, size);
+
+	// Cara izquierda (x = 0)
+	gs_vertex3f(0, 0, 0);
+	gs_vertex3f(0, 0, size);
+	gs_vertex3f(0, size, 0);
+
+	gs_vertex3f(0, size, 0);
+	gs_vertex3f(0, 0, size);
+	gs_vertex3f(0, size, size);
+
+	// Cara derecha (x = size)
+	gs_vertex3f(size, 0, 0);
+	gs_vertex3f(size, size, 0);
+	gs_vertex3f(size, 0, size);
+
+	gs_vertex3f(size, 0, size);
+	gs_vertex3f(size, size, 0);
+	gs_vertex3f(size, size, size);
+		
 	line_vert  = gs_render_save();
 
 
@@ -154,7 +214,8 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 {
 	struct cube_filter_data *data =bzalloc(sizeof(struct cube_filter_data));
 	data->source = source;
-
+	data->pox = 0;
+	data->posy = 0;
 	// Crear los vértices para dibujar líneas/puntos
 	update_vertices();
 
@@ -176,13 +237,15 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 
 static void cube_filter_destroy(void *data)
 {
+	
 }
 
 static void cube_filter_render(void *data, gs_effect_t *effect1)
 {
 	struct cube_filter_data *filter = (struct cube_filter_data *)data;
 
-		// Obtener el efecto base por defecto
+
+	// Obtener el efecto base por defecto
 	gs_effect_t* effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 
 	if (effect && filter->texture) {
@@ -191,16 +254,14 @@ static void cube_filter_render(void *data, gs_effect_t *effect1)
 		gs_matrix_push();
 		gs_matrix_identity();
 
-		while (gs_effect_loop(effect, "Draw")) {
+		//while (gs_effect_loop(effect, "Draw")) {
 			
-			obs_source_draw(filter->texture, 0, 0, 0, 0, false);
-		}
+		obs_source_draw(filter->texture, 0, 0, 0, 0, false);
+		//}
 
 		gs_matrix_pop();
 		gs_blend_state_pop();
 	}
-	
-
 	
 }
 
@@ -212,7 +273,12 @@ static const char *cube_filter_get_name(void *unused)
 static void cue_filter_tick(void* data, float seconds) {
 	struct cube_filter_data *filter = data;
 	struct obs_video_info video_info;
+	/*filter->pox = filter->pox + vel * seconds;
+	filter->posy = filter->posy + vel * seconds;*/
+	filter->rotation_z += 45.0f * seconds;
 
+	if (filter->rotation_z >= 360.0f)
+		filter->rotation_z -= 360.0f;
 	if (obs_get_video_info(&video_info)) {
 		
 			if (video_info.base_width != filter->width|| video_info.base_height != filter->height) {
@@ -233,6 +299,7 @@ static void cue_filter_tick(void* data, float seconds) {
 	gs_texture_t *prev_zstencil_target = gs_get_zstencil_target();
 
 	gs_set_render_target(filter->texture, NULL);
+	gs_clear(GS_CLEAR_COLOR, (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0);
 	gs_viewport_push();
 	gs_set_viewport(0, 0, filter->width, filter->height);
 	gs_projection_push();
@@ -247,7 +314,7 @@ static void cue_filter_tick(void* data, float seconds) {
 
 	
 	struct vec4 color_v4;
-	vec4_from_rgba(&color_v4, 0xFFFFFFFF); // ejemplo color blanco
+	vec4_from_rgba(&color_v4, 0XFFFF0080); // ejemplo color blanco
 	gs_effect_set_vec4(color_param, &color_v4);
 	
 
@@ -266,22 +333,29 @@ static void cue_filter_tick(void* data, float seconds) {
 	float len = sqrt(dx*dx + dy*dy); // longitud arbitraria para escalar la línea
 	float angle = atan2f(dy, dx); // ángulo entre (0,0) y (dx, dy)
 
+
+	//gs_set_3d_mode(60.0, 1.0, 1000.0);
+
 	gs_matrix_push();
 	gs_matrix_identity();
-
+	
 	// Mueve el sistema de coordenadas a la posición del cursor
-	gs_matrix_translate3f(mouse_pos.x, mouse_pos.y, 0.0f);
+	gs_matrix_translate3f(filter->pox+500, filter->posy+500, 0.0f);
 
-	gs_matrix_push();
-	gs_matrix_translate3f(-size, -size, 0.0f);
-	// Aquí podrías dibujar algo, si quieres, por ejemplo un punto o la "cabeza" de la línea
-	// Pero si no hay dibujo aquí, no hace falta este push/pop
+	//gs_matrix_push();
+	////gs_matrix_translate3f(-size, -size, 0.0f);
+	//// Aquí podrías dibujar algo, si quieres, por ejemplo un punto o la "cabeza" de la línea
+	//// Pero si no hay dibujo aquí, no hace falta este push/pop
 
-	gs_matrix_pop();
+	//gs_matrix_pop();
+	// 2. Traslada al centro del objeto
+	gs_matrix_translate3f(size/2, size/2, size/2); // centro del cuadrado
 
 	// Rota y escala la línea para que apunte hacia el cursor
-	gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, 0);
-	gs_matrix_translate3f(0.0f, -size, 0.0f);
+	float angle_rad = filter->rotation_z * (float)M_PI / 180.0f;
+	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, angle_rad);
+	//gs_matrix_translate3f(0.0f, -size, 0.0f);
+	gs_matrix_translate3f(-size / 2, -size / 2,-size / 2); // centro del cuadrado
 	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
 
 	// Carga el buffer de vértices y dibuja la línea
@@ -318,13 +392,15 @@ static void cue_filter_tick(void* data, float seconds) {
 
 static struct obs_source_info cube_filter = {
 	.id = "cube_filter",
-	.type = OBS_SOURCE_TYPE_FILTER,
-	.output_flags = OBS_SOURCE_VIDEO,
+	.type = OBS_SOURCE_TYPE_INPUT,
+	.output_flags = OBS_SOURCE_VIDEO, OBS_SOURCE_CUSTOM_DRAW,
 	.get_name = cube_filter_get_name,
 	.create = cube_filter_create,
 	.destroy = cube_filter_destroy,
 	.video_render = cube_filter_render,
-	.video_tick = cue_filter_tick
+	.video_tick = cue_filter_tick,
+	.get_width = cube_source_get_width,
+	.get_height = cube_source_get_height,
 	
 	
 };
@@ -337,6 +413,7 @@ bool obs_module_load(void)
 	blog(LOG_INFO, "[CUBE] Registrade");
 	return true;
 }
+
 
 
 
