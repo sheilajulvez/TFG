@@ -2,485 +2,318 @@
 #include "graphics/graphics.h"
 #include "graphics/effect.h"
 #include "graphics/vec4.h"
-
+#include <graphics/image-file.h>
 #include "graphics/quat.h"
 #include <obs.h>
 #include <plugin-support.h>
+#include "Windows.h"
+
+
+#include "obs-config.h"
+#include "obs-defs.h"
+#include "obs-data.h"
+#include "obs-properties.h"
+#include "obs-interaction.h"
+
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("cube", "en-US")
 
 MODULE_EXPORT const char *obs_module_description(void)
 {
-	return "Cubo con índice y UV, sin textura";
+	return "PLANO";
 }
 
 struct cube_filter_data {
-	obs_source_t *context;
-	gs_vertbuffer_t *vb;
-	gs_indexbuffer_t *ib;
-	gs_texture_t *text;
+	obs_source_t *source;
+	gs_texture_t *texture;
 	int width, height;
 };
 
+//gs_vertbuffer_t *vb;
 
-static const struct vec3 cube_positions[] = {
-	{-0.5f, -0.5f, 0.5f},
-	{0.5f, -0.5f, 0.5f},
-	{0.5f, 0.5f, 0.5f},
-	{-0.5f, 0.5f, 0.5f},
-};
+//static const uint16_t cube_indices[] = {0, 1, 2, 2, 3, 0};
+//struct cube_filter_data *f;
+//static void render_cubo_3d(void)
+//{
+//	blog(LOG_INFO, "[CUBE] Renderizando cubo 3D");
+//
+//	// Lista de posiciones de los vértices del cubo (8 vértices)
+//	float cube_positions[8][3] = {
+//		{-1.0f, -1.0f, -1.0f}, {1.0f, -1.0f, -1.0f},
+//		{1.0f, 1.0f, -1.0f},   {-1.0f, 1.0f, -1.0f},
+//		{-1.0f, -1.0f, 1.0f},  {1.0f, -1.0f, 1.0f},
+//		{1.0f, 1.0f, 1.0f},    {-1.0f, 1.0f, 1.0f}};
+//
+//	// Índices que definen las caras del cubo (dos triángulos por cara)
+//	int cube_faces[6][6] = {
+//		{0, 1, 2, 0, 2, 3}, // Cara frontal
+//		{4, 5, 6, 4, 6, 7}, // Cara posterior
+//		{3, 2, 6, 3, 6, 7}, // Cara superior
+//		{0, 1, 5, 0, 5, 4}, // Cara inferior
+//		{1, 2, 6, 1, 6, 5}, // Cara derecha
+//		{0, 3, 7, 0, 7, 4}  // Cara izquierda
+//	};
+//
+//	// Iniciar el renderizado
+//	gs_render_start(true);
+//
+//	// Recorrer cada cara
+//	for (int i = 0; i < 6; i++) {
+//		// Dibujar los dos triángulos de cada cara
+//		for (int j = 0; j < 6; j += 3) {
+//			int idx1 = cube_faces[i][j];
+//			int idx2 = cube_faces[i][j + 1];
+//			int idx3 = cube_faces[i][j + 2];
+//
+//			gs_vertex3f(cube_positions[idx1][0],
+//					cube_positions[idx1][1],
+//					cube_positions[idx1][2]);
+//			gs_vertex3f(cube_positions[idx2][0],
+//					cube_positions[idx2][1],
+//					cube_positions[idx2][2]);
+//			gs_vertex3f(cube_positions[idx3][0],
+//					cube_positions[idx3][1],
+//					cube_positions[idx3][2]);
+//		}
+//	}
+//
+//	
+//}
+//static struct filter_data {
+//	obs_source_t *source;
+//	//gs_texture_t *text;
+//};
 
-
-static const struct vec2 cube_uvs[] = {
-	{0.0f, 1.0f},
-	{1.0f, 1.0f},
-	{1.0f, 0.0f},
-	{0.0f, 0.0f},
-};
-
-
-static const uint16_t cube_indices[] = {0, 1, 2, 2, 3, 0};
-struct cube_filter_data *f;
-static void render_cubo_3d(void)
+void image_source_load(gs_image_file_t *image, const char *file)
 {
-	blog(LOG_INFO, "[CUBE] Renderizando cubo 3D");
+	obs_enter_graphics();
 
-	// Lista de posiciones de los vértices del cubo (8 vértices)
-	float cube_positions[8][3] = {
-		{-1.0f, -1.0f, -1.0f}, {1.0f, -1.0f, -1.0f},
-		{1.0f, 1.0f, -1.0f},   {-1.0f, 1.0f, -1.0f},
-		{-1.0f, -1.0f, 1.0f},  {1.0f, -1.0f, 1.0f},
-		{1.0f, 1.0f, 1.0f},    {-1.0f, 1.0f, 1.0f}};
+	gs_image_file_free(image);
 
-	// Índices que definen las caras del cubo (dos triángulos por cara)
-	int cube_faces[6][6] = {
-		{0, 1, 2, 0, 2, 3}, // Cara frontal
-		{4, 5, 6, 4, 6, 7}, // Cara posterior
-		{3, 2, 6, 3, 6, 7}, // Cara superior
-		{0, 1, 5, 0, 5, 4}, // Cara inferior
-		{1, 2, 6, 1, 6, 5}, // Cara derecha
-		{0, 3, 7, 0, 7, 4}  // Cara izquierda
-	};
+	obs_leave_graphics();
 
-	// Iniciar el renderizado
+	gs_image_file_init(image, file);
+
+	obs_enter_graphics();
+
+	gs_image_file_init_texture(image);
+
+	obs_leave_graphics();
+
+	if (!image->loaded) {
+		blog(LOG_WARNING, "failed to load texture %s", file);
+	}
+}
+static gs_vertbuffer_t *line_vert = NULL;
+static gs_vertbuffer_t *dot_vert = NULL;
+static int size = 50; // Ejemplo, ajustar según necesidad
+
+static void update_vertices(void)
+{
+	obs_enter_graphics();
 	gs_render_start(true);
+	// --- LINE VERTICES ---
+	
+	gs_vertex2f(0, 0);
+	gs_vertex2f(size, 0);
+	gs_vertex2f(0, size);
+	gs_vertex2f(0, size);
+	gs_vertex2f(size, size);
+	gs_vertex2f(size, 0);
 
-	// Recorrer cada cara
-	for (int i = 0; i < 6; i++) {
-		// Dibujar los dos triángulos de cada cara
-		for (int j = 0; j < 6; j += 3) {
-			int idx1 = cube_faces[i][j];
-			int idx2 = cube_faces[i][j + 1];
-			int idx3 = cube_faces[i][j + 2];
+//	gs_vertex2f(0, 0);
+	line_vert  = gs_render_save();
 
-			gs_vertex3f(cube_positions[idx1][0],
-					cube_positions[idx1][1],
-					cube_positions[idx1][2]);
-			gs_vertex3f(cube_positions[idx2][0],
-					cube_positions[idx2][1],
-					cube_positions[idx2][2]);
-			gs_vertex3f(cube_positions[idx3][0],
-					cube_positions[idx3][1],
-					cube_positions[idx3][2]);
-		}
+
+	obs_leave_graphics();
+
+
+
+
+	// No liberar dot_data ni dot_data->points (la función gs_vertexbuffer_create toma la propiedad)
+}
+// Función para crear una textura blanca para la pizarra
+void create_whiteboard_texture(struct cube_filter_data *data)
+{
+	obs_enter_graphics();
+
+	if (data->texture != NULL) {
+		gs_texture_destroy(data->texture);
+		data->texture = NULL;
 	}
 
-	
+	data->texture = gs_texture_create(data->width, data->height, GS_RGBA, 1,
+					  NULL, GS_RENDER_TARGET);
+
+	blog(LOG_INFO, "create whiteboard texture %d %d", data->width,
+	     data->height);
+
+	obs_leave_graphics();
 }
-static struct filter_data {
-	obs_source_t *source;
-	//gs_texture_t *text;
-};
 static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 {
-	struct filter_data *filter =bzalloc(sizeof(struct filter_data)); // Asignar memoria
-	filter->source = source; // Asociamos la fuente al filtro
-	
-	
-	
-	//blog(LOG_INFO, "[CUBE] Iniciando creación de filtro");
+	struct cube_filter_data *data =bzalloc(sizeof(struct cube_filter_data));
+	data->source = source;
 
-	//f = bzalloc(sizeof(*f));
-	//if (!f) {
-	//	blog(LOG_ERROR,
-	//	     "[CUBE] Error al asignar memoria para el filtro");
-	//	return NULL;
-	//}
-	//f->context = source;
+	// Crear los vértices para dibujar líneas/puntos
+	update_vertices();
 
-	//f->width = 1920;
-	//f->height = 1080;
+	// Obtener la resolución del vídeo de salida
+	struct obs_video_info ovi;
+	if (obs_get_video_info(&ovi)) {
+		data->width = ovi.base_width;
+		data->height = ovi.base_height;
 
-	//blog(LOG_INFO, "[CUBE] Creando gs_vb_data");
-
-	struct gs_vb_data *vd = gs_vbdata_create();
-	if (!vd) {
-		blog(LOG_ERROR, "[CUBE] Error al crear gs_vb_data");
-		bfree(f);
-		return NULL;
-	}
-	vd->num = 4;
-	vd->points = bmemdup(cube_positions, sizeof(cube_positions));
-	vd->num_tex = 1;
-	vd->tvarray = bzalloc(sizeof(struct gs_tvertarray));
-	vd->tvarray[0].array = bmemdup(cube_uvs, sizeof(cube_uvs));
-
-	//blog(LOG_INFO, "[CUBE] Creando vertex buffer");
-
-	f->vb = gs_vertexbuffer_create(vd, 0);
-	if (!f->vb) {
-		blog(LOG_ERROR, "[CUBE] Error al crear vertex buffer");
-		gs_vbdata_destroy(vd);
-		bfree(f);
-		return NULL;
+		create_whiteboard_texture(data);
+	} else {
+		blog(LOG_WARNING, "Whiteboard: Failed to get video resolution");
 	}
 
-	//blog(LOG_INFO, "[CUBE] Creando index buffer");
-
-	///*f->ib = gs_indexbuffer_create(GS_UNSIGNED_SHORT, cube_indices,
-	//			      sizeof(cube_indices), 0);
-	//if (!f->ib) {
-	//	blog(LOG_ERROR, "[CUBE] Error al crear index buffer");
-	//	gs_vertexbuffer_destroy(f->vb);
-	//	gs_vbdata_destroy(vd);
-	//	bfree(f);
-	//	return NULL;
-	//}*/
+	return data;
 
 
-	//blog(LOG_INFO, "[CUBE] Creando textura");
-	//uint32_t color = 0xFF0000FF; // Rojo (0xRRGGBBAA)
-
-	//// Convertir el color a un arreglo de bytes, de forma que coincida con el formato de textura esperado
-	//uint8_t px[4]; // Un arreglo para los 4 bytes de RGBA
-
-	//// Desglosar el color en componentes individuales de RGBA
-	//px[0] = (color >> 24) & 0xFF; // Rojo
-	//px[1] = (color >> 16) & 0xFF; // Verde
-	//px[2] = (color >> 8) & 0xFF;  // Azul
-	//px[3] = color & 0xFF;         // Alfa
-
-	//// Crear un puntero a un arreglo de punteros a datos de textura
-	//const uint8_t *data[1] = {px}; // Un solo puntero para la textura de 1x1
-
-	//// Crear la textura de 1x1 con el color especificado
-	//filter->text = gs_texture_create(1, 1, GS_RGBA, 1, data, 0);
-	//gs_cubetexture_create(1, GS_CS_SRGB, 0, dat)
-	//if (!filter->text) {
-	//	blog(LOG_ERROR, "[CUBE] Error al crear textura");
-	///*	gs_vertexbuffer_destroy(f->vb);
-	//	gs_indexbuffer_destroy(f->ib);
-	//	gs_vbdata_destroy(vd);*/
-	//	bfree(filter);
-	//	return NULL;
-	//}
-
-	//blog(LOG_INFO, "[CUBE] Filtro creado correctamente");
-
-	//return f;
 }
 
 static void cube_filter_destroy(void *data)
 {
-	//struct cube_filter_data *f = data;
-
-	//blog(LOG_INFO, "[CUBE] Destruyendo filtro");
-
-	//if (f->vb) {
-	//	blog(LOG_INFO, "[CUBE] Destruyendo vertex buffer");
-	//	gs_vertexbuffer_destroy(f->vb);
-	//}
-
-	//if (f->ib) {
-	//	blog(LOG_INFO, "[CUBE] Destruyendo index buffer");
-	//	gs_indexbuffer_destroy(f->ib);
-	//}
-
-	//if (f->text) {
-	//	blog(LOG_INFO, "[CUBE] Destruyendo textura");
-	//	gs_texture_destroy(f->text);
-	//}
-
-	//bfree(f);
-	//blog(LOG_INFO, "[CUBE] Filtro destruido");
 }
 
 static void cube_filter_render(void *data, gs_effect_t *effect1)
 {
+	struct cube_filter_data *filter = (struct cube_filter_data *)data;
 
-//UNUSED_PARAMETER(data);
-//	gs_blend_state_push();
-//	if (!obs_source_process_filter_begin(effect, GS_RGBA,
-//						 OBS_ALLOW_DIRECT_RENDERING))
-//		return;
-//	
-//
-//	// 🔹 Paso 2: Dibuja un cuadrado rojo encima
-//	gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-//	if (!default_effect)
-//		return;
-//
-//	// Establecer el color rojo
-//	float color[4] = {1.0f, 0.0f, 0.0f, 1.0f};
-//	gs_eparam_t *color_param =
-//		gs_effect_get_param_by_name(default_effect, "color");
-//	if (color_param)
-//		gs_effect_set_vec4(color_param, (const struct vec4 *)color);
-//
-//	gs_technique_t *tech = gs_effect_get_technique(default_effect, "Draw");
-//	if (!tech)
-//		return;
-//
-//	gs_technique_begin(tech);
-//	while (gs_technique_begin_pass(tech, 0)) {
-//		// 💡 Aquí defines el tamaño y posición del cuadrado rojo
-//		gs_draw_sprite(
-//			NULL, 0, 200,
-//			200); // cuadrado de 200x200 en la esquina sup izq
-//		gs_technique_end_pass(tech);
-//	}
-//	gs_technique_end(tech);
-//	gs_blend_state_pop();
-		
-	struct filter_data *filter = data;
+		// Obtener el efecto base por defecto
+	gs_effect_t* effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 
-	blog(LOG_INFO, "[CUBE] Iniciando renderizado del filtro");
-
-	obs_source_t *target = obs_filter_get_target(filter->source);
-	if (target) {
-		blog(LOG_INFO, "[CUBE] Renderizando fuente objetivo");
-		obs_source_video_render(target);
-	} else {
-		blog(LOG_INFO, "[CUBE] Fuente objetivo no encontrada");
-	}
-
-	gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-	if (!effect) {
-		blog(LOG_ERROR, "[CUBE] No se pudo obtener efecto base");
-		return;
-	}
-	gs_technique_t *tech = gs_effect_get_technique(effect, "Draw");
-	if (!tech) {
-		blog(LOG_ERROR, "[CUBE] No se pudo obtener técnica 'Draw'");
-		return;
-	}
-
-	//// Crear cubemap
-	//const uint32_t num_faces = 6;
-	//const enum gs_color_format format = GS_RGBA;
-	//const uint32_t levels = 1;
-	//const uint32_t flags = GS_DYNAMIC;
-	//const size_t face_size = 32 * 32 * 4;
-
-	//blog(LOG_INFO, "[CUBE] Reservando memoria para caras de cubemap");
-
-	//uint8_t *faces[6];
-	//for (uint32_t i = 0; i < num_faces; ++i) {
-	//	faces[i] = (uint8_t *)malloc(face_size);
-	//	if (!faces[i]) {
-	//		blog(LOG_ERROR,
-	//			 "[CUBE] Fallo al reservar memoria para la cara %u", i);
-	//		for (uint32_t j = 0; j < i; ++j)
-	//			free(faces[j]);
-	//		return;
-	//	}
-	//	for (uint32_t px = 0; px < 32 * 32; ++px) {
-	//		faces[i][px * 4 + 0] = 255; // R
-	//		faces[i][px * 4 + 1] = 0;   // G
-	//		faces[i][px * 4 + 2] = 0;   // B
-	//		faces[i][px * 4 + 3] = 255; // A
-	//	}
-	//}
-	//blog(LOG_INFO, "[CUBE] Caras del cubemap preparadas");
-
-	//const uint8_t *face_data[6];
-	//for (uint32_t i = 0; i < num_faces; ++i)
-	//	face_data[i] = faces[i];
-
-	//gs_texture_t *cubemap =gs_texture_create(32,32, format, levels, face_data, flags);
-	//if (!cubemap) {
-	//	blog(LOG_ERROR, "[CUBE] Error al crear textura cúbica");
-	//	for (uint32_t i = 0; i < num_faces; ++i)
-	//		free(faces[i]);
-	//	return;
-	//}
-	//blog(LOG_INFO, "[CUBE] Cubemap creado correctamente");
-
-	/*for (uint32_t i = 0; i < num_faces; ++i)
-		free(faces[i]);*/
-
-	obs_enter_graphics();
-	gs_set_3d_mode(1920, 1080, 90);
-	blog(LOG_INFO, "[CUBE] Modo 3D establecido");
-	gs_texture_t *render_target = gs_get_render_target();
-	gs_zstencil_t *zsentil = gs_get_zstencil_target();
-
-	gs_set_viewport(0, 0, 1920, 1080);
-	gs_projection_push();
-	gs_ortho(0, 1920, 0, 1080, 0.0, 1.0);
-	gs_blend_state_push();
-	gs_reset_blend_state();
-	
-
-	blog(LOG_INFO, "[CUBE] Matriz de transformación inicializada");
-	
-	if (gs_technique_begin(tech)) {
-		if (gs_technique_begin_pass(tech, 0)) {
-		/*struct quat rotation;
-		quat_identity(&rotation);
-
-		blog(LOG_INFO, "[CUBE] Dibujando cubo con backdrop");
-
-		float left = -100.0f;
-		float right = 100.0f;
-		float top = 100.0f;
-		float bottom = -100.0f;
-		float znear = 0.6f;
-
-		gs_draw_cube_backdrop(cubemap, &rotation, left, right, top,
-				      bottom, znear);
-		gs_draw_sprite(cubemap, 0, 32, 32);
-		gs_technique_end_pass(tech);*/
-		
-		int width = 1920;  // Ancho de la ventana
-		int height = 1080; // Alto de la ventana
-
-		blog(LOG_INFO, "[CUBE] Configurando matrices de proyección y vista");
-
-		// Guardar la matriz actual
+	if (effect && filter->texture) {
+		gs_blend_state_push();
+		gs_reset_blend_state();
 		gs_matrix_push();
 		gs_matrix_identity();
-		gs_matrix_translate3f((float)(width / 2), (float)(height / 2), 0.0f);
 
-		blog(LOG_INFO, "[CUBE] Cargando vertex buffer");
-		render_cubo_3d();
-		//gs_load_vertexbuffer(f->vb);
-		gs_draw(GS_TRIS, 0, 32);
-	
+		while (gs_effect_loop(effect, "Draw")) {
+			
+			obs_source_draw(filter->texture, 0, 0, 0, 0, false);
+		}
 
-		gs_technique_end_pass(tech);
-
-		blog(LOG_INFO, "[CUBE] Técnica finalizada correctamente");
-	} else {
-		blog(LOG_INFO ,"[CUBE] No se pudo iniciar el pase de técnica");
+		gs_matrix_pop();
+		gs_blend_state_pop();
 	}
-		gs_technique_end(tech);
-	} else {
-		blog(LOG_INFO, "[CUBE] No se pudo iniciar la técnica");
-	}
-
-	gs_matrix_pop();
-	// Restaurar el viewport
-	gs_viewport_pop();
-	// Restaurar el estado de mezcla
-	gs_blend_state_pop();
-	obs_leave_graphics();
-	blog(LOG_INFO, "[CUBE] Matriz restaurada y renderizado completado");
-		// Restaura el estado anterior de la matriz
-	//gs_matrix_pop();
-
-	// Aplica una rotación al cubo (por ejemplo, 45 grados alrededor del eje Y)
-	//gs_matrix_rotate_y(45.0f * (float)M_PI / 180.0f);
 	
-	// Aplica una traslación si deseas mover el cubo a otra posición
-	// gs_matrix_translate3f(x, y, z);
+
 	
-	// Crea y dibuja el cubo con dimensiones 1x1x1
-	
-	//
-	//	// Paso 2: Dibujar un cuadrado rojo encima
-	
-//
-//	// Establecer el color rojo (r=1, g=0, b=0, alpha=1)
-//	gs_eparam_t *color_param =
-//		gs_effect_get_param_by_name(default_effect, "color");
-//	if (color_param) {
-//		float color[4] = {1.0f, 0.0f, 0.0f, 1.0f}; // Rojo
-//		gs_effect_set_vec4(color_param, (const struct vec4 *)color);
-//	}
-//
-//	// Iniciar la técnica de dibujo
-//	gs_technique_begin(tech);
-//	// Usamos un solo pase para dibujar el cuadrado
-//	gs_technique_begin_pass(tech, 0);
-//
-//	// Dibujar el cuadrado de 200x200 en la posición (100, 100)
-//	gs_draw_sprite(filter->text, 0, 100, 100); // Cuadrado rojo de 200x200 px
-//	/*gs_draw_cube_backdrop
-//		gs_draw_*/
-//	// Finalizamos el pase de la técnica
-//	gs_technique_end_pass(tech);
-//	gs_technique_end(tech);
-//
-//// renderiza la cámara original
-//	//blog(LOG_INFO, "[CUBE] Renderizando cubo 3D");
-
-	//obs_enter_graphics();
-
-
-	//gs_texture_t *render_target = gs_get_render_target();
-	//gs_zstencil_t *zsentil = gs_get_zstencil_target();
-
-	//gs_set_viewport(0, 0, f->width, f->height);
-	//gs_projection_push();
-	//gs_ortho(0, f->width, 0, f->height, 0.0, 1.0);
-	//gs_blend_state_push();
-	//gs_reset_blend_state();
-	//gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
-
-	//// Obtener el parámetro 'color' del efecto
-	//gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
-
-	//// Obtener la técnica 'Solid' del efecto
-	//gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
-
-	//// Iniciar la técnica
-	//gs_technique_begin(tech);
-
-	//// Iniciar la pasada de la técnica
-	//gs_technique_begin_pass(tech, 0);
-
-	//obs_source_t *source = obs_get_source_by_name("Video Capture Device");
-
-	//int width = 1920;  // Ancho de la ventana
-	//int height = 1080; // Alto de la ventana
-
-	//blog(LOG_INFO, "[CUBE] Configurando matrices de proyección y vista");
-
-	//// Guardar la matriz actual
-	//gs_matrix_push();
-	//gs_matrix_identity();
-	//gs_matrix_translate3f((float)(width / 2), (float)(height / 2), 0.0f);
-
-	//blog(LOG_INFO, "[CUBE] Cargando vertex buffer");
-
-	//gs_load_vertexbuffer(f->vb);
-	//gs_draw(GS_TRIS, 0, 4);
-	//gs_matrix_pop();
-
-	//gs_technique_end_pass(tech);
-	//gs_technique_end(tech);
-
-	//gs_matrix_pop();
-	//gs_projection_pop();
-
-	//// Restaurar el viewport
-	//gs_viewport_pop();
-	//// Restaurar el estado de mezcla
-	//gs_blend_state_pop();
-
-	//// Restaurar el render target anterior
-	//gs_set_render_target(render_target, zsentil);
-
-	//obs_leave_graphics();
-
-	//blog(LOG_INFO, "[CUBE] Renderizado completado");
 }
 
 static const char *cube_filter_get_name(void *unused)
 {
 	UNUSED_PARAMETER(unused); // Macro común en OBS para evitar warnings
 	return "Cubo 3D (Índices y UV, sin textura)";
+}
+static void cue_filter_tick(void* data, float seconds) {
+	struct cube_filter_data *filter = data;
+	struct obs_video_info video_info;
+
+	if (obs_get_video_info(&video_info)) {
+		
+			if (video_info.base_width != filter->width|| video_info.base_height != filter->height) {
+			filter->width = video_info.base_width;
+			filter->height = video_info.base_height;
+			create_whiteboard_texture(filter);
+		}
+	}
+
+	if (filter->texture == NULL) {
+		blog("MAL", "MAL");
+		return;
+	}
+	
+	obs_enter_graphics();
+	update_vertices();
+	gs_texture_t *prev_render_target = gs_get_render_target();
+	gs_texture_t *prev_zstencil_target = gs_get_zstencil_target();
+
+	gs_set_render_target(filter->texture, NULL);
+	gs_viewport_push();
+	gs_set_viewport(0, 0, filter->width, filter->height);
+	gs_projection_push();
+	gs_ortho(0, filter->width, 0, filter->height, 0.0f, 1.0f);
+
+	gs_blend_state_push();
+	gs_reset_blend_state();
+
+	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
+	gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
+
+	
+	struct vec4 color_v4;
+	vec4_from_rgba(&color_v4, 0xFFFFFFFF); // ejemplo color blanco
+	gs_effect_set_vec4(color_param, &color_v4);
+	
+
+	gs_technique_begin(tech);
+	gs_technique_begin_pass(tech, 0);
+	POINT mouse_pos;
+	if (GetCursorPos(&mouse_pos)) {
+		// mouse_pos.x y mouse_pos.y contienen la posición del cursor en pantalla
+	} else {
+		// Error al obtener la posición del cursor
+	} 
+	
+	float dx = (float)mouse_pos.x;
+	float dy = (float)mouse_pos.y;
+
+	float len = sqrt(dx*dx + dy*dy); // longitud arbitraria para escalar la línea
+	float angle = atan2f(dy, dx); // ángulo entre (0,0) y (dx, dy)
+
+	gs_matrix_push();
+	gs_matrix_identity();
+
+	// Mueve el sistema de coordenadas a la posición del cursor
+	gs_matrix_translate3f(mouse_pos.x, mouse_pos.y, 0.0f);
+
+	gs_matrix_push();
+	gs_matrix_translate3f(-size, -size, 0.0f);
+	// Aquí podrías dibujar algo, si quieres, por ejemplo un punto o la "cabeza" de la línea
+	// Pero si no hay dibujo aquí, no hace falta este push/pop
+
+	gs_matrix_pop();
+
+	// Rota y escala la línea para que apunte hacia el cursor
+	gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, 0);
+	gs_matrix_translate3f(0.0f, -size, 0.0f);
+	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
+
+	// Carga el buffer de vértices y dibuja la línea
+	gs_load_vertexbuffer(line_vert);
+	gs_draw(GS_TRIS, 0, 0);
+	
+	// Dibuja la "cabeza" o punto final en la posición del cursor
+	/*gs_matrix_identity();
+	gs_matrix_translate3f(dx, dy, 2.0f);
+	gs_matrix_translate3f(-size, -size, 2.0f);*/
+
+	// Aquí también deberías cargar el vertex buffer de la cabeza y dibujarlo,
+	// si lo tienes definido, por ejemplo:
+	// gs_load_vertexbuffer(dot_vert);
+	// gs_draw(GS_LINESTRIP, 0, 0);
+	gs_technique_end_pass(tech);
+	gs_technique_end(tech);
+
+	gs_matrix_pop();
+
+	// Luego, ya fuera de la matriz, restauras estados gráficos
+	gs_projection_pop();
+	gs_viewport_pop();
+	gs_blend_state_pop();
+
+	gs_set_render_target(prev_render_target, prev_zstencil_target);
+
+	obs_leave_graphics();
+
+
+
+
 }
 
 static struct obs_source_info cube_filter = {
@@ -491,6 +324,9 @@ static struct obs_source_info cube_filter = {
 	.create = cube_filter_create,
 	.destroy = cube_filter_destroy,
 	.video_render = cube_filter_render,
+	.video_tick = cue_filter_tick
+	
+	
 };
 
 bool obs_module_load(void)
@@ -498,7 +334,7 @@ bool obs_module_load(void)
 	blog(LOG_INFO, "[CUBE] Registrando filtro");
 
 	obs_register_source(&cube_filter);
-
+	blog(LOG_INFO, "[CUBE] Registrade");
 	return true;
 }
 
