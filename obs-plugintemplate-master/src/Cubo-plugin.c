@@ -29,7 +29,16 @@ struct cube_filter_data {
 	int pox, posy;
 	float rotation_z;
 };
-int vel = 40;
+int vel = 100;
+
+static struct vec4 cube_colors[3] = {
+	{1.0f, 0.0f, 0.0f, 1.0f}, // Rojo
+	{0.0f, 0.0f, 1.0f, 1.0f}, // green
+	{0.0f, 1.0f, 0.0f, 1.0f}, // Azul
+
+
+
+};
 //gs_vertbuffer_t *vb;
 
 //static const uint16_t cube_indices[] = {0, 1, 2, 2, 3, 0};
@@ -117,6 +126,10 @@ void image_source_load(gs_image_file_t *image, const char *file)
 	}
 }
 static gs_vertbuffer_t *line_vert = NULL;
+
+
+static gs_vertbuffer_t *cube_faces[6];
+
 static gs_vertbuffer_t *dot_vert = NULL;
 static int size = 50; // Ejemplo, ajustar según necesidad
 
@@ -129,58 +142,62 @@ static void update_vertices(void)
 
 	//cara 1
 	// Cara frontal (z = size)
-	gs_vertex3f(0, 0, size);
-	gs_vertex3f(size, 0, size);
-	gs_vertex3f(0, size, size);
-
-	gs_vertex3f(0, size, size);
-	gs_vertex3f(size, 0, size);
-	gs_vertex3f(size, size, size);
-
-	// Cara trasera (z = 0)
-	gs_vertex3f(0, 0, 0);
-	gs_vertex3f(0, size, 0);
-	gs_vertex3f(size, 0, 0);
-
-	gs_vertex3f(size, 0, 0);
-	gs_vertex3f(0, size, 0);
-	gs_vertex3f(size, size, 0);
-
-	// Cara superior (y = size)
-	gs_vertex3f(0, size, 0);
-	gs_vertex3f(0, size, size);
-	gs_vertex3f(size, size, 0);
-
-	gs_vertex3f(size, size, 0);
-	gs_vertex3f(0, size, size);
-	gs_vertex3f(size, size, size);
-
-	// Cara inferior (y = 0)
 	gs_vertex3f(0, 0, 0);
 	gs_vertex3f(size, 0, 0);
-	gs_vertex3f(0, 0, size);
+	gs_vertex3f(0, size, 0);
 
-	gs_vertex3f(0, 0, size);
+	gs_vertex3f(0, size, 0);
+	gs_vertex3f(size, size, 0);
 	gs_vertex3f(size, 0, 0);
+	cube_faces[0] = gs_render_save();
+	//atras
+	gs_vertex3f(0, 0, size);
 	gs_vertex3f(size, 0, size);
-
-	// Cara izquierda (x = 0)
-	gs_vertex3f(0, 0, 0);
-	gs_vertex3f(0, 0, size);
-	gs_vertex3f(0, size, 0);
-
-	gs_vertex3f(0, size, 0);
-	gs_vertex3f(0, 0, size);
 	gs_vertex3f(0, size, size);
 
-	// Cara derecha (x = size)
-	gs_vertex3f(size, 0, 0);
-	gs_vertex3f(size, size, 0);
+	gs_vertex3f(0, size, size);
+	gs_vertex3f(size, size, size);
 	gs_vertex3f(size, 0, size);
+	cube_faces[1] = gs_render_save();
 
+	// Cara derexha (z = 0) SI
+	gs_vertex3f(size, 0, 0);
 	gs_vertex3f(size, 0, size);
+	gs_vertex3f(size, size, 0);
+
 	gs_vertex3f(size, size, 0);
 	gs_vertex3f(size, size, size);
+	gs_vertex3f(size, 0, size);
+	cube_faces[2] = gs_render_save();
+
+	// Cara izquierda  SI
+	gs_vertex3f(0, 0, size);
+	gs_vertex3f(0, 0, 0);
+	gs_vertex3f(0, size, size);
+
+	gs_vertex3f(0, size, size);
+	gs_vertex3f(0, size, 0);
+	gs_vertex3f(0, 0, 0);
+	cube_faces[3] = gs_render_save();
+	// Cara arriba (y = 0)
+	gs_vertex3f(0, 0, size);
+	gs_vertex3f(size, 0, size);
+	gs_vertex3f(0, 0, 0);
+
+	gs_vertex3f(0, 0, 0);
+	gs_vertex3f(size, 0, 0);
+	gs_vertex3f(size, 0, size);
+	cube_faces[4] = gs_render_save();
+	// Cara abajo (x = 0)
+	gs_vertex3f(0, size, size);
+	gs_vertex3f(size, size, size);
+	gs_vertex3f(0, size, 0);
+
+	gs_vertex3f(0, size, 0);
+	gs_vertex3f(size, size, 0);
+	gs_vertex3f(size, size, size);
+	cube_faces[5] = gs_render_save();
+
 		
 	line_vert  = gs_render_save();
 
@@ -303,7 +320,9 @@ static void cue_filter_tick(void* data, float seconds) {
 	gs_viewport_push();
 	gs_set_viewport(0, 0, filter->width, filter->height);
 	gs_projection_push();
-	gs_ortho(0, filter->width, 0, filter->height, 0.0f, 1.0f);
+	
+	gs_set_3d_mode(60.0f, 0.1f, 1000.0f);
+
 
 	gs_blend_state_push();
 	gs_reset_blend_state();
@@ -349,18 +368,24 @@ static void cue_filter_tick(void* data, float seconds) {
 
 	//gs_matrix_pop();
 	// 2. Traslada al centro del objeto
-	gs_matrix_translate3f(size/2, size/2, size/2); // centro del cuadrado
+	gs_matrix_translate3f(size/2, size/2, -size/2); // centro del cuadrado
 
 	// Rota y escala la línea para que apunte hacia el cursor
 	float angle_rad = filter->rotation_z * (float)M_PI / 180.0f;
-	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, angle_rad);
+	gs_matrix_rotaa4f(1.0f, 1.0f, 0.0f, angle_rad);
 	//gs_matrix_translate3f(0.0f, -size, 0.0f);
-	gs_matrix_translate3f(-size / 2, -size / 2,-size / 2); // centro del cuadrado
+	gs_matrix_translate3f(-size / 2, -size / 2,size / 2); // centro del cuadrado
 	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
 
 	// Carga el buffer de vértices y dibuja la línea
-	gs_load_vertexbuffer(line_vert);
-	gs_draw(GS_TRIS, 0, 0);
+	for (int i = 0; i < 6; i++) {
+		gs_effect_set_vec4(color_param, &cube_colors[i/2]);
+		gs_load_vertexbuffer(cube_faces[i]);
+		gs_draw(GS_TRIS, 0, 0);
+	}
+
+	/*gs_load_vertexbuffer(line_vert);
+	gs_draw(GS_TRIS, 0, 0);*/
 	
 	// Dibuja la "cabeza" o punto final en la posición del cursor
 	/*gs_matrix_identity();
