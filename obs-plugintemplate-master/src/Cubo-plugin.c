@@ -259,6 +259,8 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	//update_vertices();
 	obs_enter_graphics();
 	gs_render_start(true);
+
+
 	struct gs_vb_data *vbd = gs_vbdata_create();
 	vbd->num = 8;
 	vbd->points = bmemdup(cube_vertices, sizeof(cube_vertices));
@@ -377,14 +379,15 @@ static void cue_filter_tick(void* data, float seconds) {
 	gs_blend_state_push();
 	gs_reset_blend_state();
 
-	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+	  gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
 	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
+
 	gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
 
 	
-	struct vec4 color_v4;
-	vec4_from_rgba(&color_v4, 0XFFFF0080); // ejemplo color blanco
-	gs_effect_set_vec4(color_param, &color_v4);
+	//struct vec4 color_v4;
+	//vec4_from_rgba(&color_v4, 0XFFFF0080); // ejemplo color blanco
+	//gs_effect_set_vec4(color_param, &color_v4);
 	//
 
 	gs_technique_begin(tech);
@@ -433,28 +436,35 @@ static void cue_filter_tick(void* data, float seconds) {
 	gs_matrix_translate3f(-size / 2, -size / 2,size / 2); // centro del cuadrado
 	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
 
-	// Carga el buffer de vértices y dibuja la línea
-	/*for (int i = 0; i < 6; i++) {
-		gs_effect_set_vec4(color_param, &cube_colors[i/2]);
-		gs_load_vertexbuffer(cube_faces[i]);
-		gs_draw(GS_TRIS, 0, 36);
-	}*/
-	//gs_matrix_scale3f(100, 100, 100);
-	gs_load_vertexbuffer(vertexbuffer);
-	gs_load_indexbuffer(indexbuffer);
-	gs_draw(GS_TRIS, 0, 36);
-	/*gs_load_vertexbuffer(line_vert);
-	gs_draw(GS_TRIS, 0, 0);*/
-	
-	// Dibuja la "cabeza" o punto final en la posición del cursor
-	/*gs_matrix_identity();
-	gs_matrix_translate3f(dx, dy, 2.0f);
-	gs_matrix_translate3f(-size, -size, 2.0f);*/
+	//// Carga el buffer de vértices y dibuja la línea
+	///*for (int i = 0; i < 6; i++) {
+	//	gs_effect_set_vec4(color_param, &cube_colors[i/2]);
+	//	gs_load_vertexbuffer(cube_faces[i]);
+	//	gs_draw(GS_TRIS, 0, 36);
+	//}*/
+	//gs_matrix_scale3f(2, 2, 2);
+	//gs_load_vertexbuffer(vertexbuffer);
+	//gs_load_indexbuffer(indexbuffer);
+	//gs_draw(GS_TRIS, 0, 36);
+	const struct vec4 cube_colors[6] = {
+		{1, 0, 0, 1}, // Rojo
+		{0, 1, 0, 1}, // Verde
+		{0, 0, 1, 1}, // Azul
+		{1, 1, 0, 1}, // Amarillo
+		{1, 0, 1, 1}, // Magenta
+		{0, 1, 1, 1}, // Cyan
+	};
 
-	// Aquí también deberías cargar el vertex buffer de la cabeza y dibujarlo,
-	// si lo tienes definido, por ejemplo:
-	// gs_load_vertexbuffer(dot_vert);
-	// gs_draw(GS_LINESTRIP, 0, 0);
+	for (int i = 0; i < 6; i++) {
+		gs_effect_set_vec4(color_param, &cube_colors[i]);
+
+		gs_load_vertexbuffer(vertexbuffer);
+		gs_load_indexbuffer(indexbuffer);
+
+		// Cada cara son 6 índices (2 triángulos)
+		gs_draw(GS_TRIS, i * 6, 6);
+	}
+
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
 
