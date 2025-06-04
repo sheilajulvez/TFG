@@ -339,149 +339,112 @@ static const char *cube_filter_get_name(void *unused)
 	UNUSED_PARAMETER(unused); // Macro común en OBS para evitar warnings
 	return "Cubo 3D (Índices y UV, sin textura)";
 }
-static void cue_filter_tick(void* data, float seconds) {
+static void cue_filter_tick(void *data, float seconds)
+{
 	struct cube_filter_data *filter = data;
 	struct obs_video_info video_info;
-	/*filter->pox = filter->pox + vel * seconds;
-	filter->posy = filter->posy + vel * seconds;*/
-	filter->rotation_z += 45.0f * seconds;
 
+	filter->rotation_z += 45.0f * seconds;
 	if (filter->rotation_z >= 360.0f)
 		filter->rotation_z -= 360.0f;
+
+	// Actualizar dimensiones si han cambiado
 	if (obs_get_video_info(&video_info)) {
-		
-			if (video_info.base_width != filter->width|| video_info.base_height != filter->height) {
+		if (video_info.base_width != filter->width ||
+		    video_info.base_height != filter->height) {
 			filter->width = video_info.base_width;
 			filter->height = video_info.base_height;
 			create_whiteboard_texture(filter);
 		}
 	}
 
-	if (filter->texture == NULL) {
-		blog("MAL", "MAL");
+	if (!filter->texture) {
+		blog(LOG_WARNING, "Render cancelado: textura no creada");
 		return;
 	}
-	
+
 	obs_enter_graphics();
-	//update_vertices();
+
 	gs_texture_t *prev_render_target = gs_get_render_target();
 	gs_texture_t *prev_zstencil_target = gs_get_zstencil_target();
 
 	gs_set_render_target(filter->texture, NULL);
-	gs_clear(GS_CLEAR_COLOR, (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0);
+	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,
+		 (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
+
 	gs_viewport_push();
 	gs_set_viewport(0, 0, filter->width, filter->height);
 	gs_projection_push();
-	
 	gs_set_3d_mode(60.0f, 0.1f, 1000.0f);
-
 
 	gs_blend_state_push();
 	gs_reset_blend_state();
 
-	  gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+	gs_enable_depth_test(true);
+	gs_depth_function(GS_LESS);
+	gs_set_cull_mode(GS_BACK);
+
+	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
 	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
-
 	gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
-
-	
-	//struct vec4 color_v4;
-	//vec4_from_rgba(&color_v4, 0XFFFF0080); // ejemplo color blanco
-	//gs_effect_set_vec4(color_param, &color_v4);
-	//
 
 	gs_technique_begin(tech);
 	gs_technique_begin_pass(tech, 0);
-	POINT mouse_pos;
-	if (GetCursorPos(&mouse_pos)) {
-		// mouse_pos.x y mouse_pos.y contienen la posición del cursor en pantalla
-	} else {
-		// Error al obtener la posición del cursor
-	} 
-	
-	float dx = (float)mouse_pos.x;
-	float dy = (float)mouse_pos.y;
-
-	float len = sqrt(dx*dx + dy*dy); // longitud arbitraria para escalar la línea
-	float angle = atan2f(dy, dx); // ángulo entre (0,0) y (dx, dy)
-
-
-	//gs_set_3d_mode(60.0, 1.0, 1000.0);
-	gs_enable_depth_test(true);
-	gs_depth_function(GS_ALWAYS);
-	
-	//gs_depth_function()// con esta función una vez detectados los pixeles decides cual quieres pintar sobre cual, recibe el enum de :
-						//->el menor
-						//->el menor igual	
-						//->el mayor....
+	const struct vec4 cube_colorsfaces[6] = {
+		{1, 0, 0, 1},  // Rojo
+		{0, 1, 0, 1},  // Verde
+		{0, 0, 1, 1},  // Azul
+		{1, 1, 0, 1},  // Amarillo
+		{1, 0, 1, 1},  // Magenta
+		{0, 1, 1, 1}
+	};
+	// --- Cubo 1 (más lejano)
 	gs_matrix_push();
 	gs_matrix_identity();
-	
-	// Mueve el sistema de coordenadas a la posición del cursor
-	gs_matrix_translate3f(filter->pox+500, filter->posy+500, 0.0f);
-
-	//gs_matrix_push();
-	////gs_matrix_translate3f(-size, -size, 0.0f);
-	//// Aquí podrías dibujar algo, si quieres, por ejemplo un punto o la "cabeza" de la línea
-	//// Pero si no hay dibujo aquí, no hace falta este push/pop
-
-	//gs_matrix_pop();
-	// 2. Traslada al centro del objeto
-	gs_matrix_translate3f(size/2, size/2, -size/2); // centro del cuadrado
-
-	// Rota y escala la línea para que apunte hacia el cursor
-	float angle_rad = filter->rotation_z * (float)M_PI / 180.0f;
-	gs_matrix_rotaa4f(1.0f, 1.0f, 0.0f, angle_rad);
-	//gs_matrix_translate3f(0.0f, -size, 0.0f);
-	gs_matrix_translate3f(-size / 2, -size / 2,size / 2); // centro del cuadrado
+	gs_matrix_translate3f(filter->pox + 300, filter->posy + 300,
+			      0.0f); // Más lejos
+	gs_matrix_rotaa4f(1.0f, 1.0f, 0.0f,
+			  filter->rotation_z * (float)M_PI / 180.0f);
 	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
 
-	//// Carga el buffer de vértices y dibuja la línea
-	///*for (int i = 0; i < 6; i++) {
-	//	gs_effect_set_vec4(color_param, &cube_colors[i/2]);
-	//	gs_load_vertexbuffer(cube_faces[i]);
-	//	gs_draw(GS_TRIS, 0, 36);
-	//}*/
-	//gs_matrix_scale3f(2, 2, 2);
-	//gs_load_vertexbuffer(vertexbuffer);
-	//gs_load_indexbuffer(indexbuffer);
-	//gs_draw(GS_TRIS, 0, 36);
-	const struct vec4 cube_colors[6] = {
-		{1, 0, 0, 1}, // Rojo
-		{0, 1, 0, 1}, // Verde
-		{0, 0, 1, 1}, // Azul
-		{1, 1, 0, 1}, // Amarillo
-		{1, 0, 1, 1}, // Magenta
-		{0, 1, 1, 1}, // Cyan
-	};
 
+	gs_load_vertexbuffer(vertexbuffer);
+	gs_load_indexbuffer(indexbuffer);
 	for (int i = 0; i < 6; i++) {
-		gs_effect_set_vec4(color_param, &cube_colors[i]);
-
-		gs_load_vertexbuffer(vertexbuffer);
-		gs_load_indexbuffer(indexbuffer);
-
-		// Cada cara son 6 índices (2 triángulos)
+		gs_effect_set_vec4(color_param, &cube_colorsfaces[i]);
 		gs_draw(GS_TRIS, i * 6, 6);
 	}
+	
+	gs_matrix_pop();
+
+	// --- Cubo 2 (más cercano)
+	gs_matrix_push();
+	gs_matrix_identity();
+	gs_matrix_translate3f(filter->pox + 350, filter->posy + 300,
+			      -300.0f); // Más cerca
+	gs_matrix_rotaa4f(1.0f, 1.0f, 0.0f,
+			  filter->rotation_z * (float)M_PI / 180.0f);
+	gs_matrix_scale3f(5.0f, 5.0f, 5.0f); 
+
+	
+	gs_load_vertexbuffer(vertexbuffer);
+	gs_load_indexbuffer(indexbuffer);
+	for (uint32_t i = 0; i < 6; i++) {
+		gs_effect_set_vec4(color_param, &cube_colorsfaces[i]);
+		gs_draw(GS_TRIS, i * 6, 6);
+	}
+	gs_matrix_pop();
 
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
 
-	gs_matrix_pop();
-	gs_enable_depth_test(false);
-	// Luego, ya fuera de la matriz, restauras estados gráficos
+	
 	gs_projection_pop();
 	gs_viewport_pop();
 	gs_blend_state_pop();
 
 	gs_set_render_target(prev_render_target, prev_zstencil_target);
-
 	obs_leave_graphics();
-
-
-
-
 }
 
 static struct obs_source_info cube_filter = {
