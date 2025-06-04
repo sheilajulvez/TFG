@@ -7,7 +7,7 @@
 #include <obs.h>
 #include <plugin-support.h>
 #include "Windows.h"
-
+#include <util/platform.h>  // bmemdup, bmalloc, etc. (memoria multiplataforma)
 #include "obs-config.h"
 #include "obs-defs.h"
 #include "obs-data.h"
@@ -31,14 +31,8 @@ struct cube_filter_data {
 };
 int vel = 100;
 
-static struct vec4 cube_colors[3] = {
-	{1.0f, 0.0f, 0.0f, 1.0f}, // Rojo
-	{0.0f, 0.0f, 1.0f, 1.0f}, // Verde
-	{0.0f, 1.0f, 0.0f, 1.0f}, // Azul
 
 
-
-};
 //gs_vertbuffer_t *vb;
 
 //static const uint16_t cube_indices[] = {0, 1, 2, 2, 3, 0};
@@ -125,12 +119,38 @@ void image_source_load(gs_image_file_t *image, const char *file)
 		blog(LOG_WARNING, "failed to load texture %s", file);
 	}
 }
-static gs_vertbuffer_t *line_vert = NULL;
-
 
 static gs_vertbuffer_t *cube_faces[6];
 
-static gs_vertbuffer_t *dot_vert = NULL;
+static gs_indexbuffer_t *indexbuffer; //triangulos 
+static gs_vertbuffer_t *vertexbuffer; //vertices
+
+// Vértices del cubo (8 vértices)
+struct vec3 cube_vertices[8] = {
+	{0, 0, 0},   // 0
+	{50, 0, 0},  // 1
+	{0, 50, 0},  // 2
+	{50, 50, 0}, // 3
+	{0, 0, 50},  // 4
+	{50, 0, 50}, // 5
+	{0, 50, 50}, // 6
+	{50, 50, 50} // 7
+};
+// Índices para las 12 caras del cubo (36 índices)
+static const uint16_t cube_indices[] = {
+    0, 1, 3,  3, 2, 0,  // Cara trasera  (Z=0)
+    4, 6, 7,  7, 5, 4,  // Cara delantera (Z=50)
+    0, 2, 6,  6, 4, 0,  // Cara izquierda (X=0)
+    1, 5, 7,  7, 3, 1,  // Cara derecha  (X=50)
+    2, 3, 7,  7, 6, 2,  // Cara superior (Y=50)
+    0, 4, 5,  5, 1, 0   // Cara inferior (Y=0)
+};
+
+struct cube_vertex {
+	struct vec3 pos;
+	uint32_t color;
+};
+
 static int size = 50; // Ejemplo, ajustar según necesidad
 
 static void update_vertices(void)
@@ -138,11 +158,8 @@ static void update_vertices(void)
 	obs_enter_graphics();
 	gs_render_start(true);
 	// --- LINE VERTICES ---
-
-	
-
 	////cara 1
-	
+
 	// Cara frontal (z = size)
 	size = 50;
 	gs_vertex3f(0, 0, 0);
@@ -203,6 +220,7 @@ static void update_vertices(void)
 	gs_vertex3f(size, size, size);
 	cube_faces[5] = gs_render_save();
 
+
 		
 	//line_vert  = gs_render_save();
 
@@ -238,9 +256,31 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	data->source = source;
 	data->pox = 0;
 	data->posy = 0;
-	// Crear los vértices para dibujar líneas/puntos
-	update_vertices();
+	//update_vertices();
+	obs_enter_graphics();
+	gs_render_start(true);
+	struct gs_vb_data *vbd = gs_vbdata_create();
+	vbd->num = 8;
+	vbd->points = bmemdup(cube_vertices, sizeof(cube_vertices));
 
+	// Colores distintos por vértice
+	struct vec4 cube_colors[8] = {
+		{1, 0, 0, 1},    // Rojo
+		{0, 1, 0, 1},    // Verde
+		{0, 0, 1, 1},    // Azul
+		{1, 1, 0, 1},    // Amarillo
+		{1, 0, 1, 1},    // Magenta
+		{0, 1, 1, 1},
+		{1, 0.5f, 0, 1} // Naranja
+	};
+
+	vbd->colors = bmemdup(cube_colors, sizeof(cube_colors));
+	
+	// Crear el vertex buffer con los 8 vértices únicos
+	vertexbuffer = gs_vertexbuffer_create(vbd, 0);
+	uint16_t *indices_dup = bmemdup(cube_indices, sizeof(cube_indices));
+	indexbuffer =gs_indexbuffer_create(GS_UNSIGNED_SHORT, indices_dup, 36, 0);
+	obs_leave_graphics();
 	// Obtener la resolución del vídeo de salida
 	struct obs_video_info ovi;
 	if (obs_get_video_info(&ovi)) {
@@ -248,7 +288,8 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 		data->height = ovi.base_height;
 
 		create_whiteboard_texture(data);
-	} else {
+	} 
+	else {
 		blog(LOG_WARNING, "Whiteboard: Failed to get video resolution");
 	}
 
@@ -259,7 +300,11 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 
 static void cube_filter_destroy(void *data)
 {
-	
+	if (vertexbuffer)
+		gs_vertexbuffer_destroy(vertexbuffer);
+	if (indexbuffer)
+		gs_indexbuffer_destroy(indexbuffer);
+	//bfree(filter);
 }
 
 static void cube_filter_render(void *data, gs_effect_t *effect1)
@@ -276,10 +321,10 @@ static void cube_filter_render(void *data, gs_effect_t *effect1)
 		gs_matrix_push();
 		gs_matrix_identity();
 
-		//while (gs_effect_loop(effect, "Draw")) {
+		while (gs_effect_loop(effect, "Draw")) {
 			
 		obs_source_draw(filter->texture, 0, 0, 0, 0, false);
-		//}
+		}
 
 		gs_matrix_pop();
 		gs_blend_state_pop();
@@ -316,7 +361,7 @@ static void cue_filter_tick(void* data, float seconds) {
 	}
 	
 	obs_enter_graphics();
-	update_vertices();
+	//update_vertices();
 	gs_texture_t *prev_render_target = gs_get_render_target();
 	gs_texture_t *prev_zstencil_target = gs_get_zstencil_target();
 
@@ -340,7 +385,7 @@ static void cue_filter_tick(void* data, float seconds) {
 	struct vec4 color_v4;
 	vec4_from_rgba(&color_v4, 0XFFFF0080); // ejemplo color blanco
 	gs_effect_set_vec4(color_param, &color_v4);
-	
+	//
 
 	gs_technique_begin(tech);
 	gs_technique_begin_pass(tech, 0);
@@ -389,12 +434,15 @@ static void cue_filter_tick(void* data, float seconds) {
 	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
 
 	// Carga el buffer de vértices y dibuja la línea
-	for (int i = 0; i < 6; i++) {
+	/*for (int i = 0; i < 6; i++) {
 		gs_effect_set_vec4(color_param, &cube_colors[i/2]);
 		gs_load_vertexbuffer(cube_faces[i]);
-		gs_draw(GS_TRIS, 0, 0);
-	}
-
+		gs_draw(GS_TRIS, 0, 36);
+	}*/
+	//gs_matrix_scale3f(100, 100, 100);
+	gs_load_vertexbuffer(vertexbuffer);
+	gs_load_indexbuffer(indexbuffer);
+	gs_draw(GS_TRIS, 0, 36);
 	/*gs_load_vertexbuffer(line_vert);
 	gs_draw(GS_TRIS, 0, 0);*/
 	
@@ -429,7 +477,7 @@ static void cue_filter_tick(void* data, float seconds) {
 static struct obs_source_info cube_filter = {
 	.id = "cube_filter",
 	.type = OBS_SOURCE_TYPE_INPUT,
-	.output_flags = OBS_SOURCE_VIDEO, OBS_SOURCE_CUSTOM_DRAW,
+	.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_CUSTOM_DRAW,
 	.get_name = cube_filter_get_name,
 	.create = cube_filter_create,
 	.destroy = cube_filter_destroy,
