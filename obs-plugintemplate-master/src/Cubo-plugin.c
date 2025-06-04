@@ -33,7 +33,7 @@ int vel = 100;
 
 static struct vec4 cube_colors[3] = {
 	{1.0f, 0.0f, 0.0f, 1.0f}, // Rojo
-	{0.0f, 0.0f, 1.0f, 1.0f}, // green
+	{0.0f, 0.0f, 1.0f, 1.0f}, // Verde
 	{0.0f, 1.0f, 0.0f, 1.0f}, // Azul
 
 
@@ -138,10 +138,13 @@ static void update_vertices(void)
 	obs_enter_graphics();
 	gs_render_start(true);
 	// --- LINE VERTICES ---
+
 	
 
-	//cara 1
+	////cara 1
+	
 	// Cara frontal (z = size)
+	size = 50;
 	gs_vertex3f(0, 0, 0);
 	gs_vertex3f(size, 0, 0);
 	gs_vertex3f(0, size, 0);
@@ -161,6 +164,7 @@ static void update_vertices(void)
 	cube_faces[1] = gs_render_save();
 
 	// Cara derexha (z = 0) SI
+
 	gs_vertex3f(size, 0, 0);
 	gs_vertex3f(size, 0, size);
 	gs_vertex3f(size, size, 0);
@@ -180,6 +184,7 @@ static void update_vertices(void)
 	gs_vertex3f(0, 0, 0);
 	cube_faces[3] = gs_render_save();
 	// Cara arriba (y = 0)
+
 	gs_vertex3f(0, 0, size);
 	gs_vertex3f(size, 0, size);
 	gs_vertex3f(0, 0, 0);
@@ -199,7 +204,7 @@ static void update_vertices(void)
 	cube_faces[5] = gs_render_save();
 
 		
-	line_vert  = gs_render_save();
+	//line_vert  = gs_render_save();
 
 
 	obs_leave_graphics();
@@ -354,7 +359,13 @@ static void cue_filter_tick(void* data, float seconds) {
 
 
 	//gs_set_3d_mode(60.0, 1.0, 1000.0);
-
+	gs_enable_depth_test(true);
+	gs_depth_function(GS_ALWAYS);
+	
+	//gs_depth_function()// con esta función una vez detectados los pixeles decides cual quieres pintar sobre cual, recibe el enum de :
+						//->el menor
+						//->el menor igual	
+						//->el mayor....
 	gs_matrix_push();
 	gs_matrix_identity();
 	
@@ -400,7 +411,7 @@ static void cue_filter_tick(void* data, float seconds) {
 	gs_technique_end(tech);
 
 	gs_matrix_pop();
-
+	gs_enable_depth_test(false);
 	// Luego, ya fuera de la matriz, restauras estados gráficos
 	gs_projection_pop();
 	gs_viewport_pop();
