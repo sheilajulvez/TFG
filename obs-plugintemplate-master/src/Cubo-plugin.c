@@ -190,14 +190,20 @@ void create_whiteboard_texture(struct cube_filter_data *data)
 	if (!data->texrender) {
 		blog(LOG_ERROR, "❌ No se pudo crear texrender");
 	}
-	/*data->texture = gs_texture_create(data->width, data->height, GS_RGBA, 1,
-					  NULL, GS_RENDER_TARGET);*/
+	data->texture = gs_texture_create(data->width, data->height, GS_RGBA, 1,
+					  NULL, GS_RENDER_TARGET);
 	/*data->zstencil =
 		gs_zstencil_create(data->width, data->height, GS_Z32F_S8X24);*/
 	blog(LOG_INFO, "create whiteboard texture %d %d", data->width,
 	     data->height);
 
 	obs_leave_graphics();
+}
+
+static const char *cube_filter_get_name(void *unused)
+{
+	UNUSED_PARAMETER(unused); // Macro común en OBS para evitar warnings
+	return "Cubo 3D (Índices y UV, sin textura)";
 }
 static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 {
@@ -258,22 +264,18 @@ static void cube_filter_render(void *data, gs_effect_t *effect1)
 {
 	struct cube_filter_data *filter = (struct cube_filter_data *)data;
 
-
 	// Obtener el efecto base por defecto
 	gs_effect_t* effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 	obs_enter_graphics();
-	if (effect && gs_texrender_get_texture(filter->texrender)) {
+	if (effect) {
 		gs_blend_state_push();
 		gs_reset_blend_state();
 		gs_matrix_push();
 		gs_matrix_identity();
 
 		while (gs_effect_loop(effect, "Draw")) {
-			obs_source_draw(
-				gs_texrender_get_texture(filter->texrender)
-				, 0, 0, filter->width, filter->height, false);
-
-		//obs_source_draw(filter->texture, 0, 0, 0, 0, false);
+			obs_source_draw(gs_texrender_get_texture(filter->texrender), 0, 0, filter->width, filter->height, false);
+			obs_source_draw(filter->texture, 0, 0, 0, 0, false);
 		}
 
 		gs_matrix_pop();
@@ -282,19 +284,12 @@ static void cube_filter_render(void *data, gs_effect_t *effect1)
 	obs_leave_graphics();
 }
 
-static const char *cube_filter_get_name(void *unused)
-{
-	UNUSED_PARAMETER(unused); // Macro común en OBS para evitar warnings
-	return "Cubo 3D (Índices y UV, sin textura)";
-}
 static void cue_filter_tick(void *data, float seconds)
 {
 	struct cube_filter_data *filter = data;
 	struct obs_video_info video_info;
 
-	filter->rotation_z += 45.0f * seconds;
-	if (filter->rotation_z >= 360.0f)filter->rotation_z -= 360.0f;
-	
+
 	// Actualizar dimensiones si han cambiado
 	if (obs_get_video_info(&video_info)) {
 		if (video_info.base_width != filter->width ||
@@ -304,27 +299,19 @@ static void cue_filter_tick(void *data, float seconds)
 			create_whiteboard_texture(filter);
 		}
 	}
-	
 
 	obs_enter_graphics();
-	//gs_texture_t *prev_render_target = gs_get_render_target();
-	//gs_texture_t *prev_zstencil_target = gs_get_zstencil_target();
-	//gs_set_render_target(filter->texture, filter->zstencil);
-	gs_texrender_begin(filter->texrender, filter->width, filter->height);
-	if (!gs_texrender_get_texture(filter->texrender)) {
-		blog(LOG_WARNING, "Render cancelado: textura no creada");
-		return;
-	}
-	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,(float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
 	gs_viewport_push();
 	gs_set_viewport(0, 0, filter->width, filter->height);
 	gs_projection_push();
 	gs_set_3d_mode(60.0f, 0.1f, 1000.0f);
 	gs_blend_state_push();
 	gs_reset_blend_state();
+
 	gs_enable_depth_test(true);
 	gs_depth_function(GS_LESS);
-	//gs_set_cull_mode(GS_BACK);
+	gs_set_cull_mode(GS_BACK);
+
 	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
 	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
 	gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
@@ -338,12 +325,23 @@ static void cue_filter_tick(void *data, float seconds)
 		{1, 0, 1, 1},  // Magenta
 		{0, 1, 1, 1}
 	};
-	// --- Cubo 1 (más lejano)
+
+
+	// --- Cubo 1 TEXTURA
+	gs_texture_t *prev_render_target = gs_get_render_target();
+	gs_texture_t *prev_zstencil_target = gs_get_zstencil_target();
+	gs_set_render_target(filter->texture, filter->zstencil); //TEXTURA
+
+	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,
+		 (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
 	gs_matrix_push();
 	gs_matrix_identity();
-	gs_matrix_translate3f(filter->pox + 500, filter->posy + 300,0.0f); // Más lejos
-	gs_matrix_rotaa4f(1.0f, 1.0f, 1.0f,15 * (float)M_PI / 180.0f);
+	gs_matrix_translate3f(filter->pox + 500, filter->posy + 300,0.0f); 
+	filter->rotation_z += 45.0f * seconds;
+	if (filter->rotation_z >= 360.0f) filter->rotation_z -= 360.0f;
+	gs_matrix_rotaa4f(1.0f, 1.0f, 1.0f,filter->rotation_z * (float)M_PI / 180.0f);
 	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
+
 	gs_load_vertexbuffer(vertexbuffer);
 	gs_load_indexbuffer(indexbuffer);
 	for (int i = 0; i < 6; i++) {
@@ -351,6 +349,37 @@ static void cue_filter_tick(void *data, float seconds)
 		gs_draw(GS_TRIS, i * 6, 6);
 	}
 	gs_matrix_pop();
+	gs_set_render_target(prev_render_target, prev_zstencil_target);
+
+	//Cubo 2 TEXTRENDER
+	gs_texrender_begin(filter->texrender, filter->width,
+			   filter->height); //TEXTRENDER
+	if (!gs_texrender_get_texture(filter->texrender)) {
+		blog(LOG_WARNING, "Render cancelado: textura no creada");
+		return;
+	}
+	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,
+		 (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
+	gs_matrix_push();
+	gs_matrix_identity();
+	gs_matrix_translate3f(filter->pox + 700, filter->posy + 300, 0.0f);
+	filter->rotation_z += 45.0f * seconds;
+	if (filter->rotation_z >= 360.0f)
+		filter->rotation_z -= 360.0f;
+	gs_matrix_rotaa4f(1.0f, 1.0f, 1.0f,
+			  filter->rotation_z * (float)M_PI / 180.0f);
+	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
+
+	gs_load_vertexbuffer(vertexbuffer);
+	gs_load_indexbuffer(indexbuffer);
+	for (int i = 0; i < 6; i++) {
+		gs_effect_set_vec4(color_param, &cube_colorsfaces[i]);
+		gs_draw(GS_TRIS, i * 6, 6);
+	}
+	gs_matrix_pop();
+	gs_texrender_end(filter->texrender);
+
+
 	// --- Cubo 2 (más cercano)
 	//gs_matrix_push();
 	//gs_matrix_identity();
@@ -369,10 +398,10 @@ static void cue_filter_tick(void *data, float seconds)
 	gs_projection_pop();
 	gs_viewport_pop();
 	gs_blend_state_pop();
-	gs_texrender_end(filter->texrender);
-
-	//gs_set_render_target(prev_render_target, prev_zstencil_target);
 	obs_leave_graphics();
+
+
+	
 }
 
 static struct obs_source_info cube_filter = {
