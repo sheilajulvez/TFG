@@ -21,72 +21,17 @@ MODULE_EXPORT const char *obs_module_description(void)
 {
 	return "PLANO";
 }
-
 struct cube_filter_data {
+	int zstencil;
 	obs_source_t *source;
 	gs_texture_t *texture;
 	int width, height;
 	int pox, posy;
 	float rotation_z;
+
+	gs_texrender_t *texrender; //  Usa esto en su lugar
 };
 int vel = 100;
-
-
-
-//gs_vertbuffer_t *vb;
-
-//static const uint16_t cube_indices[] = {0, 1, 2, 2, 3, 0};
-//struct cube_filter_data *f;
-//static void render_cubo_3d(void)
-//{
-//	blog(LOG_INFO, "[CUBE] Renderizando cubo 3D");
-//
-//	// Lista de posiciones de los vértices del cubo (8 vértices)
-//	float cube_positions[8][3] = {
-//		{-1.0f, -1.0f, -1.0f}, {1.0f, -1.0f, -1.0f},
-//		{1.0f, 1.0f, -1.0f},   {-1.0f, 1.0f, -1.0f},
-//		{-1.0f, -1.0f, 1.0f},  {1.0f, -1.0f, 1.0f},
-//		{1.0f, 1.0f, 1.0f},    {-1.0f, 1.0f, 1.0f}};
-//
-//	// Índices que definen las caras del cubo (dos triángulos por cara)
-//	int cube_faces[6][6] = {
-//		{0, 1, 2, 0, 2, 3}, // Cara frontal
-//		{4, 5, 6, 4, 6, 7}, // Cara posterior
-//		{3, 2, 6, 3, 6, 7}, // Cara superior
-//		{0, 1, 5, 0, 5, 4}, // Cara inferior
-//		{1, 2, 6, 1, 6, 5}, // Cara derecha
-//		{0, 3, 7, 0, 7, 4}  // Cara izquierda
-//	};
-//
-//	// Iniciar el renderizado
-//	gs_render_start(true);
-//
-//	// Recorrer cada cara
-//	for (int i = 0; i < 6; i++) {
-//		// Dibujar los dos triángulos de cada cara
-//		for (int j = 0; j < 6; j += 3) {
-//			int idx1 = cube_faces[i][j];
-//			int idx2 = cube_faces[i][j + 1];
-//			int idx3 = cube_faces[i][j + 2];
-//
-//			gs_vertex3f(cube_positions[idx1][0],
-//					cube_positions[idx1][1],
-//					cube_positions[idx1][2]);
-//			gs_vertex3f(cube_positions[idx2][0],
-//					cube_positions[idx2][1],
-//					cube_positions[idx2][2]);
-//			gs_vertex3f(cube_positions[idx3][0],
-//					cube_positions[idx3][1],
-//					cube_positions[idx3][2]);
-//		}
-//	}
-//
-//	
-//}
-//static struct filter_data {
-//	obs_source_t *source;
-//	//gs_texture_t *text;
-//};
 static uint32_t cube_source_get_width(void *data)
 {
 	UNUSED_PARAMETER(data);
@@ -241,10 +186,14 @@ void create_whiteboard_texture(struct cube_filter_data *data)
 		gs_texture_destroy(data->texture);
 		data->texture = NULL;
 	}
-
-	data->texture = gs_texture_create(data->width, data->height, GS_RGBA, 1,
-					  NULL, GS_RENDER_TARGET);
-
+	data->texrender = gs_texrender_create(GS_RGBA, GS_Z16);
+	if (!data->texrender) {
+		blog(LOG_ERROR, "❌ No se pudo crear texrender");
+	}
+	/*data->texture = gs_texture_create(data->width, data->height, GS_RGBA, 1,
+					  NULL, GS_RENDER_TARGET);*/
+	/*data->zstencil =
+		gs_zstencil_create(data->width, data->height, GS_Z32F_S8X24);*/
 	blog(LOG_INFO, "create whiteboard texture %d %d", data->width,
 	     data->height);
 
@@ -256,15 +205,12 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	data->source = source;
 	data->pox = 0;
 	data->posy = 0;
-	//update_vertices();
 	obs_enter_graphics();
 	gs_render_start(true);
-
 
 	struct gs_vb_data *vbd = gs_vbdata_create();
 	vbd->num = 8;
 	vbd->points = bmemdup(cube_vertices, sizeof(cube_vertices));
-
 	// Colores distintos por vértice
 	struct vec4 cube_colors[8] = {
 		{1, 0, 0, 1},    // Rojo
@@ -277,7 +223,6 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	};
 
 	vbd->colors = bmemdup(cube_colors, sizeof(cube_colors));
-	
 	// Crear el vertex buffer con los 8 vértices únicos
 	vertexbuffer = gs_vertexbuffer_create(vbd, 0);
 	uint16_t *indices_dup = bmemdup(cube_indices, sizeof(cube_indices));
@@ -288,7 +233,6 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	if (obs_get_video_info(&ovi)) {
 		data->width = ovi.base_width;
 		data->height = ovi.base_height;
-
 		create_whiteboard_texture(data);
 	} 
 	else {
@@ -296,8 +240,6 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	}
 
 	return data;
-
-
 }
 
 static void cube_filter_destroy(void *data)
@@ -306,6 +248,9 @@ static void cube_filter_destroy(void *data)
 		gs_vertexbuffer_destroy(vertexbuffer);
 	if (indexbuffer)
 		gs_indexbuffer_destroy(indexbuffer);
+	/*if (data->texrender)
+		gs_texrender_destroy(filter->texrender);*/
+
 	//bfree(filter);
 }
 
@@ -316,22 +261,25 @@ static void cube_filter_render(void *data, gs_effect_t *effect1)
 
 	// Obtener el efecto base por defecto
 	gs_effect_t* effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-
-	if (effect && filter->texture) {
+	obs_enter_graphics();
+	if (effect && gs_texrender_get_texture(filter->texrender)) {
 		gs_blend_state_push();
 		gs_reset_blend_state();
 		gs_matrix_push();
 		gs_matrix_identity();
 
 		while (gs_effect_loop(effect, "Draw")) {
-			
-		obs_source_draw(filter->texture, 0, 0, 0, 0, false);
+			obs_source_draw(
+				gs_texrender_get_texture(filter->texrender)
+				, 0, 0, filter->width, filter->height, false);
+
+		//obs_source_draw(filter->texture, 0, 0, 0, 0, false);
 		}
 
 		gs_matrix_pop();
 		gs_blend_state_pop();
 	}
-	
+	obs_leave_graphics();
 }
 
 static const char *cube_filter_get_name(void *unused)
@@ -345,9 +293,8 @@ static void cue_filter_tick(void *data, float seconds)
 	struct obs_video_info video_info;
 
 	filter->rotation_z += 45.0f * seconds;
-	if (filter->rotation_z >= 360.0f)
-		filter->rotation_z -= 360.0f;
-
+	if (filter->rotation_z >= 360.0f)filter->rotation_z -= 360.0f;
+	
 	// Actualizar dimensiones si han cambiado
 	if (obs_get_video_info(&video_info)) {
 		if (video_info.base_width != filter->width ||
@@ -357,37 +304,30 @@ static void cue_filter_tick(void *data, float seconds)
 			create_whiteboard_texture(filter);
 		}
 	}
+	
 
-	if (!filter->texture) {
+	obs_enter_graphics();
+	//gs_texture_t *prev_render_target = gs_get_render_target();
+	//gs_texture_t *prev_zstencil_target = gs_get_zstencil_target();
+	//gs_set_render_target(filter->texture, filter->zstencil);
+	gs_texrender_begin(filter->texrender, filter->width, filter->height);
+	if (!gs_texrender_get_texture(filter->texrender)) {
 		blog(LOG_WARNING, "Render cancelado: textura no creada");
 		return;
 	}
-
-	obs_enter_graphics();
-
-	gs_texture_t *prev_render_target = gs_get_render_target();
-	gs_texture_t *prev_zstencil_target = gs_get_zstencil_target();
-
-	gs_set_render_target(filter->texture, NULL);
-	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,
-		 (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
-
+	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,(float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
 	gs_viewport_push();
 	gs_set_viewport(0, 0, filter->width, filter->height);
 	gs_projection_push();
 	gs_set_3d_mode(60.0f, 0.1f, 1000.0f);
-
 	gs_blend_state_push();
 	gs_reset_blend_state();
-
 	gs_enable_depth_test(true);
 	gs_depth_function(GS_LESS);
-	gs_set_cull_mode(GS_BACK);
-
+	//gs_set_cull_mode(GS_BACK);
 	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
 	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
 	gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
-
 	gs_technique_begin(tech);
 	gs_technique_begin_pass(tech, 0);
 	const struct vec4 cube_colorsfaces[6] = {
@@ -401,49 +341,37 @@ static void cue_filter_tick(void *data, float seconds)
 	// --- Cubo 1 (más lejano)
 	gs_matrix_push();
 	gs_matrix_identity();
-	gs_matrix_translate3f(filter->pox + 300, filter->posy + 300,
-			      0.0f); // Más lejos
-	gs_matrix_rotaa4f(1.0f, 1.0f, 0.0f,
-			  filter->rotation_z * (float)M_PI / 180.0f);
+	gs_matrix_translate3f(filter->pox + 500, filter->posy + 300,0.0f); // Más lejos
+	gs_matrix_rotaa4f(1.0f, 1.0f, 1.0f,15 * (float)M_PI / 180.0f);
 	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
-
-
 	gs_load_vertexbuffer(vertexbuffer);
 	gs_load_indexbuffer(indexbuffer);
 	for (int i = 0; i < 6; i++) {
 		gs_effect_set_vec4(color_param, &cube_colorsfaces[i]);
 		gs_draw(GS_TRIS, i * 6, 6);
 	}
-	
 	gs_matrix_pop();
-
 	// --- Cubo 2 (más cercano)
-	gs_matrix_push();
-	gs_matrix_identity();
-	gs_matrix_translate3f(filter->pox + 350, filter->posy + 300,
-			      -300.0f); // Más cerca
-	gs_matrix_rotaa4f(1.0f, 1.0f, 0.0f,
-			  filter->rotation_z * (float)M_PI / 180.0f);
-	gs_matrix_scale3f(5.0f, 5.0f, 5.0f); 
-
-	
-	gs_load_vertexbuffer(vertexbuffer);
-	gs_load_indexbuffer(indexbuffer);
-	for (uint32_t i = 0; i < 6; i++) {
-		gs_effect_set_vec4(color_param, &cube_colorsfaces[i]);
-		gs_draw(GS_TRIS, i * 6, 6);
-	}
-	gs_matrix_pop();
-
+	//gs_matrix_push();
+	//gs_matrix_identity();
+	//gs_matrix_translate3f(filter->pox + 350, filter->posy + 300,-300.0f); // Más cerca
+	//gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,filter->rotation_z * (float)M_PI / 180.0f);
+	//gs_matrix_scale3f(5.0f, 5.0f, 5.0f); 
+	//gs_load_vertexbuffer(vertexbuffer);
+	//gs_load_indexbuffer(indexbuffer);
+	//for (uint32_t i = 0; i < 6; i++) {
+	//	gs_effect_set_vec4(color_param, &cube_colorsfaces[i]);
+	//	gs_draw(GS_TRIS, i * 6, 6);
+	//}
+	//gs_matrix_pop();
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
-
-	
 	gs_projection_pop();
 	gs_viewport_pop();
 	gs_blend_state_pop();
+	gs_texrender_end(filter->texrender);
 
-	gs_set_render_target(prev_render_target, prev_zstencil_target);
+	//gs_set_render_target(prev_render_target, prev_zstencil_target);
 	obs_leave_graphics();
 }
 
@@ -473,179 +401,3 @@ bool obs_module_load(void)
 
 
 
-
-
-
-//#include <obs-module.h>
-//#include <graphics/graphics.h>
-//
-//OBS_DECLARE_MODULE()
-//OBS_MODULE_USE_DEFAULT_LOCALE("cube_filter", "en-US")
-//
-//// 1. Estructura de datos del filtro
-//struct cube_filter_data {
-//	obs_source_t *context;
-//	gs_vertbuffer_t *vb;
-//	gs_indexbuffer_t *ib;
-//	gs_texture_t *tex;
-//};
-//
-//// 2. Definición de vértices y UVs (24 vértices únicos)
-//struct vertex {
-//	struct vec3 pos;
-//	struct vec2 uv;
-//};
-//
-//static const struct vertex cube_verts[24] = {
-//	// Frente
-//	{{-1, -1, 1}, {0, 1}},
-//	{{1, -1, 1}, {1, 1}},
-//	{{1, 1, 1}, {1, 0}},
-//	{{-1, 1, 1}, {0, 0}},
-//	// Atrás
-//	{{1, -1, -1}, {0, 1}},
-//	{{-1, -1, -1}, {1, 1}},
-//	{{-1, 1, -1}, {1, 0}},
-//	{{1, 1, -1}, {0, 0}},
-//	// Izquierda
-//	{{-1, -1, -1}, {0, 1}},
-//	{{-1, -1, 1}, {1, 1}},
-//	{{-1, 1, 1}, {1, 0}},
-//	{{-1, 1, -1}, {0, 0}},
-//	// Derecha
-//	{{1, -1, 1}, {0, 1}},
-//	{{1, -1, -1}, {1, 1}},
-//	{{1, 1, -1}, {1, 0}},
-//	{{1, 1, 1}, {0, 0}},
-//	// Superior
-//	{{-1, 1, 1}, {0, 1}},
-//	{{1, 1, 1}, {1, 1}},
-//	{{1, 1, -1}, {1, 0}},
-//	{{-1, 1, -1}, {0, 0}},
-//	// Inferior
-//	{{-1, -1, -1}, {0, 1}},
-//	{{1, -1, -1}, {1, 1}},
-//	{{1, -1, 1}, {1, 0}},
-//	{{-1, -1, 1}, {0, 0}},
-//};
-//
-//// 3. Índices para 12 triángulos (36 índices)
-//static const uint16_t cube_idx[36] = {
-//	0,  1,  2,  2,  3,  0,  // frente
-//	4,  5,  6,  6,  7,  4,  // atrás
-//	8,  9,  10, 10, 11, 8,  // izquierda
-//	12, 13, 14, 14, 15, 12, // derecha
-//	16, 17, 18, 18, 19, 16, // superior
-//	20, 21, 22, 22, 23, 20  // inferior
-//};
-//
-//// 4. Crear vertex/index buffers y textura
-//static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
-//{
-//	struct cube_filter_data *f = bmalloc(sizeof(*f));
-//	f->context = source;
-//
-//	// 1) Creamos el gs_vb_data
-//	struct gs_vb_data *vd = gs_vbdata_create();
-//	vd->num = 24; // 24 vértices
-//	vd->points = bmemdup(cube_verts, sizeof(cube_verts));
-//	vd->num_tex = 1; // una capa de UVs
-//
-//	// 2) Extraemos los UVs a un array puro
-//	struct vec2 *uvs = bmalloc(sizeof(struct vec2) * 24);
-//	for (size_t i = 0; i < 24; ++i)
-//		uvs[i] = cube_verts[i].uv;
-//
-//	// 3) Indicamos cuántos UVs y asignamos el puntero
-//	vd->tvarray[0].width = 24;
-//	vd->tvarray[0].array = uvs;
-//
-//	// 4) Creamos el vertex buffer y liberamos vd
-//	f->vb = gs_vertexbuffer_create(vd, 0);
-//	gs_vbdata_destroy(vd);
-//
-//	// 5) Creamos el index buffer
-//	f->ib = gs_indexbuffer_create(
-//		GS_UNSIGNED_SHORT, bmemdup(cube_idx, sizeof(cube_idx)), 36, 0);
-//
-//	// 6) Creamos la textura 1×1 azul
-//	uint32_t px = 0xFF0000FF;
-//	f->tex = gs_texture_create(1, 1, GS_RGBA, 1, (const uint8_t **)&px, 0);
-//
-//	return f;
-//}
-//
-//// 5. Destruir recursos
-//static void cube_filter_destroy(void *data)
-//{
-//	struct cube_filter_data *f = data;
-//	gs_vertexbuffer_destroy(f->vb); // liberar buffers
-//	gs_indexbuffer_destroy(f->ib);  // liberar buffers
-//	gs_texture_destroy(f->tex);     // liberar textura
-//	bfree(f);                       // liberar memoria del filtro
-//}
-//
-//// 6. Renderizar el cubo
-//static void cube_filter_render(void *data, gs_effect_t *effect)
-//{
-//	struct cube_filter_data *f = data;
-//
-//	// 6.1. Render de la fuente original
-//	obs_source_t *target = obs_filter_get_target(f->context);
-//	if (target)
-//		obs_source_video_render(target);
-//
-//	// 6.2. Estado 3D
-//	gs_enable_depth_test(true);
-//	gs_set_cull_mode(GS_BACK);
-//
-//	// 6.3. Proyección perspectiva
-//	gs_matrix_push();
-//	gs_projection_push();
-//	int w = obs_source_get_base_width(f->context);
-//	int h = obs_source_get_base_height(f->context);
-//	float asp = (float)w / (float)h;
-//	gs_perspective(45.0f, asp, 0.1f, 100.0f);
-//
-//	// 6.4. Transformaciones y rotaciones
-//	gs_matrix_translate3f(0.0f, 0.0f, -5.0f);
-//	double t = (double)os_gettime_ns() / 1e9;
-//	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, (float)t);
-//	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)(t * 0.5));
-//
-//	// 6.5. Carga de buffers y textura
-//	gs_load_vertexbuffer(f->vb);
-//	gs_load_indexbuffer(f->ib);
-//	gs_load_texture(f->tex, 0);
-//
-//	// 6.6. Dibujar 12 triángulos (36 vértices)
-//	gs_draw(GS_TRIS, 0, 36);
-//
-//	// 6.7. Restaurar matrices y desactivar profundidad
-//	gs_projection_pop();
-//	gs_matrix_pop();
-//	gs_enable_depth_test(false);
-//}
-//
-//static const char *cube_filter_get_name(void *unused)
-//{
-//	UNUSED_PARAMETER(unused);
-//	return "Cubo 3D (GS Draw)";
-//}
-//
-//// 7. Registro del filtro
-//static struct obs_source_info cube_filter_info = {
-//	.id = "cube_filter",
-//	.type = OBS_SOURCE_TYPE_FILTER,
-//	.output_flags = OBS_SOURCE_VIDEO,
-//	.get_name = cube_filter_get_name,
-//	.create = cube_filter_create,
-//	.destroy = cube_filter_destroy,
-//	.video_render = cube_filter_render,
-//};
-//
-//bool obs_module_load(void)
-//{
-//	obs_register_source(&cube_filter_info);
-//	return true;
-//}
