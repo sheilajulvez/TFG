@@ -336,7 +336,7 @@ static void cue_filter_tick(void *data, float seconds)
 		 (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
 	gs_matrix_push();
 	gs_matrix_identity();
-	gs_matrix_translate3f(filter->pox + 500, filter->posy + 300,0.0f); 
+	gs_matrix_translate3f(filter->pox + 500, filter->posy + 300,-50.0f); 
 	filter->rotation_z += 45.0f * seconds;
 	if (filter->rotation_z >= 360.0f) filter->rotation_z -= 360.0f;
 	gs_matrix_rotaa4f(1.0f, 1.0f, 1.0f,filter->rotation_z * (float)M_PI / 180.0f);
@@ -349,68 +349,34 @@ static void cue_filter_tick(void *data, float seconds)
 		gs_draw(GS_TRIS, i * 6, 6);
 	}
 	gs_matrix_pop();
-	gs_set_render_target(prev_render_target, prev_zstencil_target);
+	gs_matrix_push();
+	gs_matrix_identity();
+	gs_matrix_translate3f(filter->pox + 550, filter->posy + 300, 0.0f);
+	filter->rotation_z += 45.0f * seconds;
+	if (filter->rotation_z >= 360.0f)
+		filter->rotation_z -= 360.0f;
+	gs_matrix_rotaa4f(1.0f, 1.0f, 1.0f,
+			  filter->rotation_z * (float)M_PI / 180.0f);
+	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
 
-	//Cubo 2 TEXTRENDER
-	//if (!gs_texrender_begin(filter->texrender, filter->width,
-	//		       filter->height)) //TEXTRENDER
+	gs_load_vertexbuffer(vertexbuffer);
+	gs_load_indexbuffer(indexbuffer);
+	for (int i = 0; i < 6; i++) {
+		gs_effect_set_vec4(color_param, &cube_colorsfaces[i]);
+		gs_draw(GS_TRIS, i * 6, 6);
+	}
+	gs_matrix_pop();
 
-	//{
-	//	gs_texrender_end(filter->texrender);
 
-	//	gs_projection_pop();
-	//	gs_viewport_pop();
-	//	gs_blend_state_pop();
-	//	obs_leave_graphics();
-	//	return;
-	//}
-	//gs_texture_t *texture = gs_texrender_get_texture(filter->texrender);
-	//if (!texture) {
-	//	blog(LOG_WARNING, "Render cancelado: textura no creada");
-	//
-	//	gs_projection_pop();
-	//	gs_viewport_pop();
-	//	gs_blend_state_pop();
-	//	gs_texrender_end(filter->texrender);
-	//	obs_leave_graphics();
-	//	return;
-	//}
-	//gs_set_render_target(texture, filter->zstencil);
-	//gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,
-	//	 (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
-	//gs_matrix_push();
-	//gs_matrix_identity();
-	//gs_matrix_translate3f(filter->pox + 700, filter->posy + 300, 0.0f);
-	//filter->rotation_z += 45.0f * seconds;
-	//if (filter->rotation_z >= 360.0f)
-	//	filter->rotation_z -= 360.0f;
-	//gs_matrix_rotaa4f(1.0f, 1.0f, 0.0f,
-	//		  filter->rotation_z * (float)M_PI / 180.0f);
-	//gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
 
-	//gs_load_vertexbuffer(vertexbuffer);
-	//gs_load_indexbuffer(indexbuffer);
-	//for (int i = 0; i < 6; i++) {
-	//	gs_effect_set_vec4(color_param, &cube_colorsfaces[i]);
-	//	gs_draw(GS_TRIS, i * 6, 6);
-	//}
-	//gs_matrix_pop();
-	//gs_texrender_end(filter->texrender);
+
 
 
 	//// --- Cubo 2 (más cercano)
-	////gs_matrix_push();
-	////gs_matrix_identity();
-	////gs_matrix_translate3f(filter->pox + 350, filter->posy + 300,-300.0f); // Más cerca
-	////gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,filter->rotation_z * (float)M_PI / 180.0f);
-	////gs_matrix_scale3f(5.0f, 5.0f, 5.0f); 
-	////gs_load_vertexbuffer(vertexbuffer);
-	////gs_load_indexbuffer(indexbuffer);
-	////for (uint32_t i = 0; i < 6; i++) {
-	////	gs_effect_set_vec4(color_param, &cube_colorsfaces[i]);
-	////	gs_draw(GS_TRIS, i * 6, 6);
-	////}
-	////gs_matrix_pop();
+	
+
+	
+	gs_set_render_target(prev_render_target, prev_zstencil_target);
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
 	gs_projection_pop();
