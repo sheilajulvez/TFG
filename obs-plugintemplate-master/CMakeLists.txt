@@ -73,6 +73,7 @@ target_include_directories(${_name} PRIVATE
 # ==== Archivos fuente del plugin ====
 target_sources(${_name} PRIVATE
     src/Cubo-plugin.c
+    src/SJ_3DModel.c
 )
 
 # ==== Nombre final del plugin ====

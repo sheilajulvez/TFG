@@ -9,7 +9,7 @@
 #include "Windows.h"
 #include <util/platform.h>  // bmemdup, bmalloc, etc. (memoria multiplataforma)
 #include "obs-config.h"
-
+#include "SJ_3DModel.h"
 
 
 
@@ -235,6 +235,9 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	uint16_t *indices_dup = bmemdup(cube_indices, sizeof(cube_indices));
 	indexbuffer =gs_indexbuffer_create(GS_UNSIGNED_SHORT, indices_dup, 36, 0);
 	obs_leave_graphics();
+
+	load_model_c(
+		"C:/Users/USER/Downloads/89-1a/tazita.obj");
 	// Obtener la resolución del vídeo de salida
 	struct obs_video_info ovi;
 	if (obs_get_video_info(&ovi)) {
@@ -342,13 +345,8 @@ static void cue_filter_tick(void *data, float seconds)
 	if (filter->rotation_z >= 360.0f) filter->rotation_z -= 360.0f;
 	gs_matrix_rotaa4f(1.0f, 1.0f, 1.0f,filter->rotation_z * (float)M_PI / 180.0f);
 	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
+	render_model_c();
 
-	gs_load_vertexbuffer(vertexbuffer);
-	gs_load_indexbuffer(indexbuffer);
-	for (int i = 0; i < 6; i++) {
-		gs_effect_set_vec4(color_param, &cube_colorsfaces[i]);
-		gs_draw(GS_TRIS, i * 6, 6);
-	}
 	gs_matrix_pop();
 	gs_set_render_target(prev_render_target, prev_zstencil_target);
 
