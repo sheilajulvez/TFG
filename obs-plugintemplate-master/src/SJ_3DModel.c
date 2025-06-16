@@ -48,65 +48,62 @@
 		g_mesh_count = scene->mNumMeshes;
 		g_meshes = bmalloc(sizeof(Mesh) * g_mesh_count);
 
-		// Recorre cada aiMesh
 		for (size_t m = 0; m < g_mesh_count; m++) {
-	
-
-			// 1) Empaquetar vértices: posición (3 floats) + normales (3 floats)
 			struct aiMesh *mesh = scene->mMeshes[m];
 			size_t vert_count = mesh->mNumVertices;
 			size_t idx_count = mesh->mNumFaces * 3;
 
-			// 1) Posiciones
-			float *positions = bmalloc(sizeof(float) * 3 * vert_count);
+			// Crear estructura de vértices
+			struct gs_vb_data *vbd = gs_vbdata_create();
+			vbd->num = (uint32_t)vert_count;
+			vbd->points = bzalloc(sizeof(struct vec3) * vert_count);
+			vbd->normals =
+				bzalloc(sizeof(struct vec3) * vert_count);
+
+			// Copiar posiciones y normales en formato vec3
 			for (size_t i = 0; i < vert_count; i++) {
-				positions[i * 3 + 0] = mesh->mVertices[i].x;
-				positions[i * 3 + 1] = mesh->mVertices[i].y;
-				positions[i * 3 + 2] = mesh->mVertices[i].z;
+				vbd->points[i].x = mesh->mVertices[i].x;
+				vbd->points[i].y = mesh->mVertices[i].y;
+				vbd->points[i].z = mesh->mVertices[i].z;
+
+				if (mesh->mNormals) {
+					vbd->normals[i].x = mesh->mNormals[i].x;
+					vbd->normals[i].y = mesh->mNormals[i].y;
+					vbd->normals[i].z = mesh->mNormals[i].z;
+				}
 			}
 
-			// 2) Normales
-			float *normals = bmalloc(sizeof(float) * 3 * vert_count);
-			for (size_t i = 0; i < vert_count; i++) {
-				normals[i * 3 + 0] = mesh->mNormals[i].x;
-				normals[i * 3 + 1] = mesh->mNormals[i].y;
-				normals[i * 3 + 2] = mesh->mNormals[i].z;
-			}
-
-			// 2) Empaquetar índices (ya triangulados)
-		
-			uint32_t *indices = bmalloc(sizeof(uint32_t) * idx_count);
+			// Copiar índices
+			uint32_t *indices =
+				bmalloc(sizeof(uint32_t) * idx_count);
 			for (size_t f = 0; f < mesh->mNumFaces; f++) {
 				const struct aiFace *face = &mesh->mFaces[f];
+				if (face->mNumIndices != 3)
+					continue; // Por seguridad
 				indices[f * 3 + 0] = face->mIndices[0];
 				indices[f * 3 + 1] = face->mIndices[1];
 				indices[f * 3 + 2] = face->mIndices[2];
 			}
-	
+
+			// Crear buffers de GPU
 			obs_enter_graphics();
 			gs_render_start(true);
 
-			struct gs_vb_data *vbd = gs_vbdata_create();
-			vbd->num = (uint32_t)vert_count;
-			vbd->points = bmemdup(positions, sizeof(float) * 3 * vert_count);
-			vbd->normals = bmemdup(normals, sizeof(float) * 3 * vert_count);
-			// 3) Crear buffers de libOBS (wrapper OpenGL/D3D11)
-			gs_vertbuffer_t *vb = gs_vertexbuffer_create(
-				vbd,
-				0
-			);
+			gs_vertbuffer_t *vb = gs_vertexbuffer_create(vbd, 0);
 			gs_indexbuffer_t *ib = gs_indexbuffer_create(
-				GS_UNSIGNED_SHORT, indices, idx_count, 0);
-	
-			// Guardar en nuestro array
+				GS_UNSIGNED_LONG, indices, idx_count, 0);
+
+			obs_leave_graphics();
+
+			// Guardar malla
 			g_meshes[m].vb = vb;
 			g_meshes[m].ib = ib;
 			g_meshes[m].num_indices = (uint32_t)idx_count;
-			g_meshes[m].num_vertex = vert_count;
-			obs_leave_graphics();
-			// Liberar arrays temporales
-			bfree(positions);
+			g_meshes[m].num_vertex = (uint32_t)vert_count;
+
+			// Limpiar
 			bfree(indices);
+			gs_vbdata_destroy(vbd);
 		}
 
 		aiReleaseImport(scene);
@@ -119,6 +116,6 @@
 	{
 		gs_load_vertexbuffer(g_meshes->vb);
 		gs_load_indexbuffer(g_meshes->ib);
-		gs_draw(GS_TRIS, 0, g_meshes->num_vertex);
+		gs_draw(GS_TRIS, 0, g_meshes->num_indices);
 	
 	}

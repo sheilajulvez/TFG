@@ -237,7 +237,7 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	obs_leave_graphics();
 
 	load_model_c(
-		"C:/Users/USER/Downloads/89-1a/tazita.obj");
+		"C:/Users/USER/Downloads/xl4h349b6wao-Glass/Glass/Glass OBJ.obj");
 	// Obtener la resolución del vídeo de salida
 	struct obs_video_info ovi;
 	if (obs_get_video_info(&ovi)) {
@@ -344,7 +344,7 @@ static void cue_filter_tick(void *data, float seconds)
 	filter->rotation_z += 45.0f * seconds;
 	if (filter->rotation_z >= 360.0f) filter->rotation_z -= 360.0f;
 	gs_matrix_rotaa4f(1.0f, 1.0f, 1.0f,filter->rotation_z * (float)M_PI / 180.0f);
-	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
+	gs_matrix_scale3f(10.0f, 10.0f, 10.0f);
 	render_model_c();
 
 	gs_matrix_pop();
