@@ -237,7 +237,8 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	obs_leave_graphics();
 
 	load_model_c(
-		"C:/Users/USER/Downloads/xl4h349b6wao-Glass/Glass/Glass OBJ.obj");
+		"C:\\Users\\USER\\Downloads\\10450_Rectangular_Grass_Patch_L3.123c827d110a-1347-4381-9208-e4f735762647\\10450_Rectangular_Grass_Patch_L3.123c827d110a-1347-4381-9208-e4f735762647\\10450_Rectangular_Grass_Patch_v1_iterations-2.obj");
+
 	// Obtener la resolución del vídeo de salida
 	struct obs_video_info ovi;
 	if (obs_get_video_info(&ovi)) {
@@ -276,7 +277,7 @@ static void cube_filter_render(void *data, gs_effect_t *effect1)
 		gs_reset_blend_state();
 		gs_matrix_push();
 		gs_matrix_identity();
-
+		//apply_textyre()
 		while (gs_effect_loop(effect, "Draw")) {
 			obs_source_draw(gs_texrender_get_texture(filter->texrender), 0, 0, filter->width, filter->height, false);
 			obs_source_draw(filter->texture, 0, 0, 0, 0, false);
@@ -315,27 +316,18 @@ static void cue_filter_tick(void *data, float seconds)
 	gs_enable_depth_test(true);
 	gs_depth_function(GS_LESS);
 	//gs_set_cull_mode(GS_BACK);
-
 	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
 	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
 	gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
 	gs_technique_begin(tech);
 	gs_technique_begin_pass(tech, 0);
-	const struct vec4 cube_colorsfaces[6] = {
-		{1, 0, 0, 1},  // Rojo
-		{0, 1, 0, 1},  // Verde
-		{0, 0, 1, 1},  // Azul
-		{1, 1, 0, 1},  // Amarillo
-		{1, 0, 1, 1},  // Magenta
-		{0, 1, 1, 1}
-	};
-
 
 	//// --- Cubo 1 TEXTURA
 	gs_texture_t *prev_render_target = gs_get_render_target();
 	gs_texture_t *prev_zstencil_target = gs_get_zstencil_target();
 	gs_set_render_target(filter->texture, filter->zstencil); //TEXTURA
-
+	
+	
 	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,
 		 (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
 	gs_matrix_push();
@@ -344,13 +336,11 @@ static void cue_filter_tick(void *data, float seconds)
 	filter->rotation_z += 45.0f * seconds;
 	if (filter->rotation_z >= 360.0f) filter->rotation_z -= 360.0f;
 	gs_matrix_rotaa4f(1.0f, 1.0f, 1.0f,filter->rotation_z * (float)M_PI / 180.0f);
-	gs_matrix_scale3f(10.0f, 10.0f, 10.0f);
+	gs_matrix_scale3f(4,4, 4);
 	render_model_c();
-
+	
 	gs_matrix_pop();
 	gs_set_render_target(prev_render_target, prev_zstencil_target);
-
-
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
 	gs_projection_pop();

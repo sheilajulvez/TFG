@@ -4,4 +4,4 @@
 
 // Declara tus funciones y tipos públicos:
 bool load_model_c(const char *path);
-void render_model_c(void);
+void render_model_c();
