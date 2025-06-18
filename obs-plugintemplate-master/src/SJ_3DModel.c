@@ -13,6 +13,7 @@
 #include <graphics/image-file.h>
 #include <util/platform.h> 
 #include <graphics/vec4.h>
+
 // Inclusión de bibliotecas estándar de C.
 #include <string.h> 
 #include <assimp/types.h> 
@@ -37,7 +38,7 @@ typedef struct {
 
 
 static gs_effect_t *effect = NULL;
-
+static gs_image_file_t *image = NULL;
 /**
  * @brief Carga un efecto (shader) desde un archivo para su uso en el renderizado.
  * @param filename Nombre del archivo de efecto (.effect) a cargar.
@@ -45,7 +46,6 @@ static gs_effect_t *effect = NULL;
  */
 bool load_effect(const char *filename)
 {
-	// Obtiene la ruta completa al archivo de efecto dentro del directorio del módulo.
 	char *effect_path = obs_module_file(filename);
 	if (!effect_path) {
 		blog(LOG_ERROR, "No se pudo construir la ruta del efecto: %s",
@@ -53,13 +53,30 @@ bool load_effect(const char *filename)
 		return false;
 	}
 
+	blog(LOG_INFO, "Intentando cargar efecto desde: %s", effect_path);
+
+	// --- PRUEBA CON FOPEN PARA VERIFICAR LA EXISTENCIA DEL ARCHIVO ---
+	FILE *file = fopen(effect_path, "r");
+	if (file) {
+		blog(LOG_INFO,
+		     "DEBUG: El archivo de efecto '%s' FUE ENCONTRADO en la ruta especificada.",
+		     filename);
+		fclose(file); // Cierra el archivo inmediatamente
+	} else {
+		blog(LOG_ERROR,
+		     "DEBUG: El archivo de efecto '%s' NO FUE ENCONTRADO o no se pudo abrir en la ruta: %s",
+		     filename, effect_path);
+		bfree(effect_path); // Libera la memoria incluso si fopen falla
+		return false; // Si el archivo no se encuentra con fopen, no tiene sentido intentar cargarlo con gs_effect_create_from_file
+	}
+	// --- FIN PRUEBA CON FOPEN ---
 
 	obs_enter_graphics();
-	// Crea el efecto a partir del archivo especificado.
+	// gs_render_start(true); // <--- ELIMINADO: Esta línea no debe estar aquí.
+
 	effect = gs_effect_create_from_file(effect_path, NULL);
 	obs_leave_graphics();
 
-	// Libera la memoria de la ruta del archivo.
 	bfree(effect_path);
 
 	if (!effect) {
@@ -69,6 +86,7 @@ bool load_effect(const char *filename)
 
 	return true;
 }
+
 
 // Puntero global a un array de mallas que componen el modelo cargado.
 static Mesh *g_meshes = NULL;
@@ -288,9 +306,14 @@ bool load_model_c(const char *path)
 					strncpy(fullTexPath, texPath.data,sizeof(fullTexPath) - 1);
 					fullTexPath[sizeof(fullTexPath) - 1] ='\0';
 				}
-				// Cargar la imagen 
+				// Cargar la imagen
+				obs_enter_graphics();
 				gs_image_file_t *image =(gs_image_file_t *)bmalloc(sizeof(gs_image_file_t));
 				gs_image_file_init(image, fullTexPath);
+			
+				gs_image_file_init_texture(image);  
+					obs_leave_graphics();
+
 				if (image->loaded) {
 					blog(LOG_INFO, "Textura cargada: %s",fullTexPath);
 					g_meshes[m].image =image; // Guarda el objeto de imagen para gestión.
@@ -306,8 +329,12 @@ bool load_model_c(const char *path)
 		blog(LOG_WARNING,"No tiene materiales");
 		}
 	}
-	// Carga el efecto después de procesar el modelo.
-	load_effect("text.effect");
+	
+	gs_image_file_t *image =
+		(gs_image_file_t *)bmalloc(sizeof(gs_image_file_t));
+	gs_image_file_init(image, "C:\\Users\\USER\\Downloads\\rosa.jpg");
+	gs_image_file_init_texture(image);
+	obs_leave_graphics();
 	// Libera la escena de Assimp para evitar fugas de memoria.
 	aiReleaseImport(scene);
 	blog(LOG_INFO, "Modelo cargado con %zu mallas", g_mesh_count);
@@ -319,80 +346,84 @@ bool load_model_c(const char *path)
  *
  * Esta función debe ser llamada en cada fotograma dentro del ciclo de renderizado de OBS.
  */
-//void render_model_c()
-//{
-//	gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-//
-//	if (!default_effect) {
-//		return;
-//	}
-//
-//	gs_eparam_t *image_param =gs_effect_get_param_by_name(default_effect, "image");
-//	if (!image_param) {
-//		return;
-//	}
-//
-//	gs_technique_t *tech = gs_effect_get_technique(default_effect, "Draw");
-//	
-//	gs_technique_begin(tech);
-//	gs_technique_begin_pass(tech, 0);
-//	
-//	for (size_t i = 0; i < g_mesh_count; i++) {
-//		if (!g_meshes[i].vb || !g_meshes[i].ib)
-//			continue;
-//		
-//		if (!image_param) {
-//			blog(LOG_ERROR,
-//			     "DEBUG: image_param es NULL antes de set_texture!");
-//		} else {
-//			gs_effect_set_texture(image_param, g_meshes[i].image);
-//			blog(LOG_INFO, "DEBUG: image_param es válido.");
-//		}
-//	
-//
-//		gs_load_vertexbuffer(g_meshes[i].vb);
-//		gs_load_indexbuffer(g_meshes[i].ib);
-//
-//		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
-//	}
-//
-//	gs_technique_end_pass(tech);
-//	gs_technique_end(tech);
-//}
-
 void render_model_c()
 {
-	// Obtener el efecto sólido base de OBS.
-	gs_effect_t *solid_effect = obs_get_base_effect(OBS_EFFECT_SOLID);
+	gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 
-	gs_eparam_t *color_param =gs_effect_get_param_by_name(solid_effect, "color");
-	
-	gs_technique_t *tech = gs_effect_get_technique(solid_effect, "Solid");
+	if (!default_effect) {
+		return;
+	}
+
+	gs_eparam_t *image_param =gs_effect_get_param_by_name(default_effect, "image");
+	if (!image_param) {
+		return;
+	}
+
+	gs_technique_t *tech = gs_effect_get_technique(default_effect, "Draw");
 	
 	gs_technique_begin(tech);
-
 	gs_technique_begin_pass(tech, 0);
-
 	
-	//vector4
-	struct vec4 solid_color = {1.0f, 0.0f, 0.0f, 1.0f}; // Rojo opaco
-	gs_effect_set_vec4(color_param, &solid_color);
-
-	// Itera sobre cada malla del modelo.
-	for (size_t i = 0; i < g_mesh_count;
-	     i++) { 
+	for (size_t i = 0; i < g_mesh_count; i++) {
 		if (!g_meshes[i].vb || !g_meshes[i].ib)
 			continue;
-
 		
+		if (!g_meshes[i].image->texture) {
+			blog(LOG_ERROR,
+			     "DEBUG: image_param es NULL antes de set_texture!");
+		} else {
+			gs_effect_set_texture(image_param, g_meshes[i].image->texture);
+			blog(LOG_INFO, "DEBUG: image_param es válido.");
+		}
+	
+
 		gs_load_vertexbuffer(g_meshes[i].vb);
 		gs_load_indexbuffer(g_meshes[i].ib);
 
-	
 		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
 	}
-
 
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
 }
+// Modificación en render_model_c
+
+
+
+
+//void render_model_c()
+//{
+//	// Obtener el efecto sólido base de OBS.
+//	gs_effect_t *solid_effect = obs_get_base_effect(OBS_EFFECT_SOLID);
+//
+//	gs_eparam_t *color_param =gs_effect_get_param_by_name(solid_effect, "color");
+//	
+//	gs_technique_t *tech = gs_effect_get_technique(solid_effect, "Solid");
+//	
+//	gs_technique_begin(tech);
+//
+//	gs_technique_begin_pass(tech, 0);
+//
+//	
+//	//vector4
+//	struct vec4 solid_color = {1.0f, 0.0f, 0.0f, 1.0f}; // Rojo opaco
+//	gs_effect_set_vec4(color_param, &solid_color);
+//
+//	// Itera sobre cada malla del modelo.
+//	for (size_t i = 0; i < g_mesh_count;
+//	     i++) { 
+//		if (!g_meshes[i].vb || !g_meshes[i].ib)
+//			continue;
+//
+//		
+//		gs_load_vertexbuffer(g_meshes[i].vb);
+//		gs_load_indexbuffer(g_meshes[i].ib);
+//
+//	
+//		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
+//	}
+//
+//
+//	gs_technique_end_pass(tech);
+//	gs_technique_end(tech);
+//}

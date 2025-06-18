@@ -238,7 +238,8 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 
 	load_model_c(
 		"C:\\Users\\USER\\Downloads\\10450_Rectangular_Grass_Patch_L3.123c827d110a-1347-4381-9208-e4f735762647\\10450_Rectangular_Grass_Patch_L3.123c827d110a-1347-4381-9208-e4f735762647\\10450_Rectangular_Grass_Patch_v1_iterations-2.obj");
-
+		//"C:/Users/USER/Downloads/89-1a/tazita.obj");
+		//"C:/Users/USER/Downloads/we1nywlheigw-1/semtex.obj");
 	// Obtener la resolución del vídeo de salida
 	struct obs_video_info ovi;
 	if (obs_get_video_info(&ovi)) {
