@@ -12,14 +12,14 @@
 #include <graphics/matrix4.h> 
 #include <graphics/image-file.h>
 #include <util/platform.h> 
-
+#include <graphics/vec4.h>
 // Inclusión de bibliotecas estándar de C.
 #include <string.h> 
 #include <assimp/types.h> 
 
 
 
-/**
+/**	
  * @brief Estructura para representar una malla (mesh) de un modelo 3D.
  *
  * Contiene los buffers de vértices e índices necesarios para el renderizado,
@@ -31,10 +31,8 @@ typedef struct {
 	uint32_t num_indices;
 	uint32_t num_vertex;  
 
-	gs_image_file_t *
-		image; 
-	gs_texture_t *
-		texture; 
+	gs_image_file_t *image; 
+	gs_texture_t *texture; 
 } Mesh;
 
 
@@ -76,8 +74,7 @@ bool load_effect(const char *filename)
 static Mesh *g_meshes = NULL;
 // Contador del número de mallas en el array.
 static size_t g_mesh_count = 0;
-// Variable global para un vector de 4 componentes, inicializado a (1,1,1,1).
-struct vec4 vec4_one = {1.0f, 1.0f, 1.0f, 1.0f};
+
 
 /**
  * @brief Carga un modelo 3D desde un archivo utilizando Assimp.
@@ -123,30 +120,24 @@ bool load_model_c(const char *path)
 	// Asigna memoria para el nuevo conjunto de mallas del modelo.
 	g_mesh_count = scene->mNumMeshes;
 	g_meshes = (Mesh *)bmalloc(sizeof(Mesh) * g_mesh_count);
-	memset(g_meshes, 0, sizeof(Mesh) * g_mesh_count);
+
 
 	// Itera sobre cada malla en la escena de Assimp.
 	for (size_t m = 0; m < g_mesh_count; m++) {
 		struct aiMesh *mesh = scene->mMeshes[m];
 		size_t vert_count = mesh->mNumVertices;
-		size_t idx_count = mesh->mNumFaces *
-				   3; // Cada cara es un triángulo (3 índices).
+		size_t idx_count = mesh->mNumFaces *3; // Cada cara es un triángulo (3 índices).
 
 		// Estructura para almacenar los datos de los vértices antes de crear el buffer de OBS.
-		struct gs_vb_data *vbd =
-			(struct gs_vb_data *)bmalloc(sizeof(struct gs_vb_data));
-		memset(vbd, 0, sizeof(struct gs_vb_data));
+		struct gs_vb_data *vbd =(struct gs_vb_data *)bmalloc(sizeof(struct gs_vb_data));
+	
 
 		// Asigna memoria para los datos de los vértices.
 		vbd->num = vert_count;
-		vbd->points = (struct vec3 *)bmalloc(sizeof(struct vec3) *
-						     vert_count);
-		vbd->normals = (struct vec3 *)bmalloc(sizeof(struct vec3) *
-						      vert_count);
-		vbd->tangents = (struct vec3 *)bmalloc(sizeof(struct vec3) *
-						       vert_count);
-		vbd->colors =
-			(uint32_t *)bmalloc(sizeof(uint32_t) * vert_count);
+		vbd->points = (struct vec3 *)bmalloc(sizeof(struct vec3) *vert_count);
+		vbd->normals = (struct vec3 *)bmalloc(sizeof(struct vec3) * vert_count);
+		vbd->tangents = (struct vec3 *)bmalloc(sizeof(struct vec3) *vert_count);
+		vbd->colors =(uint32_t *)bmalloc(sizeof(uint32_t) * vert_count);
 
 		// Copia los datos de cada vértice desde la estructura de Assimp a nuestra estructura.
 		for (size_t i = 0; i < vert_count; i++) {
@@ -187,25 +178,24 @@ bool load_model_c(const char *path)
 						      255.0f);
 				uint8_t a = (uint8_t)(mesh->mColors[0][i].a *
 						      255.0f);
-				// Empaqueta los componentes RGBA en un entero de 32 bits (formato AABBGGRR).
-				vbd->colors[i] = (a << 24) | (b << 16) |
-						 (g << 8) | r;
+				// Empaqueta los componentes RGBA en un entero de 32 bits (formato ARGB).
+				vbd->colors[i] = (a << 24) | (r << 16) |
+						 (g << 8) | b;
 			} else {
-				// Si no hay color de vértice, se usa blanco opaco por defecto.
-				vbd->colors[i] = 0xFFFFFFFF;
+				
+				vbd->colors[i] =
+					0xFFFFFFFF; // Esto sigue siendo blanco opaco en ARGB
 			}
 		}
 
 		// Procesa las coordenadas de textura (UVs) si existen.
 		if (mesh->mTextureCoords[0]) {
+			blog(LOG_WARNING,
+				     " tiene coordenadas de textura");
 			vbd->num_tex = 1;
-			vbd->tvarray = (struct gs_tvertarray *)bmalloc(
-				sizeof(struct gs_tvertarray));
+			vbd->tvarray = (struct gs_tvertarray *)bmalloc(sizeof(struct gs_tvertarray));
 			vbd->tvarray[0].width = 2; // Coordenadas 2D (U, V).
-			vbd->tvarray[0].array =
-				bmalloc(sizeof(float) * 2 * vert_count);
-			memset(vbd->tvarray[0].array, 0,
-			       sizeof(float) * 2 * vert_count);
+			vbd->tvarray[0].array =bmalloc(sizeof(float) * 2 * vert_count);
 
 			const struct aiVector3D *uvs = mesh->mTextureCoords[0];
 			float *uv_array = (float *)vbd->tvarray[0].array;
@@ -216,6 +206,7 @@ bool load_model_c(const char *path)
 				uv_array[i * 2 + 1] = uvs[i].y;
 			}
 		} else {
+			blog(LOG_WARNING, " NO tiene coordenadas de textura");
 			vbd->num_tex = 0;
 			vbd->tvarray = NULL;
 		}
@@ -237,13 +228,12 @@ bool load_model_c(const char *path)
 
 		// Crea los buffers de la GPU dentro del contexto gráfico de OBS.
 		obs_enter_graphics();
-		// `gs_render_start(true)` no es usualmente necesario aquí, pero podría estar para asegurar un estado limpio.
+		
 		gs_render_start(true);
 
 		// Crea el buffer de vértices y el buffer de índices.
 		gs_vertbuffer_t *vb = gs_vertexbuffer_create(vbd, 0);
-		gs_indexbuffer_t *ib = gs_indexbuffer_create(
-			GS_UNSIGNED_LONG, indices, (uint32_t)idx_written, 0);
+		gs_indexbuffer_t *ib = gs_indexbuffer_create(GS_UNSIGNED_LONG, indices, (uint32_t)idx_written, 0);
 
 		obs_leave_graphics();
 
@@ -270,54 +260,50 @@ bool load_model_c(const char *path)
 		struct aiMaterial *material =
 			scene->mMaterials[mesh->mMaterialIndex];
 		// Comprueba si el material tiene una textura de tipo difuso.
-		if (material && aiGetMaterialTextureCount(
-					material, aiTextureType_DIFFUSE) > 0) {
+		if (material && aiGetMaterialTextureCount(material, aiTextureType_DIFFUSE) > 0) {
 			struct aiString texPath;
 			// Obtiene la ruta de la primera textura difusa.
-			if (aiGetMaterialTexture(
-				    material, aiTextureType_DIFFUSE, 0,
-				    &texPath, NULL, NULL, NULL, NULL, NULL,
-				    NULL) == AI_SUCCESS) {
+			if (aiGetMaterialTexture( material, aiTextureType_DIFFUSE, 0,&texPath, NULL, NULL, NULL, NULL, NULL,NULL) == AI_SUCCESS) {
 				char fullTexPath[512] = {0};
 				// Intenta construir la ruta completa de la textura, asumiendo que es relativa al archivo del modelo.
+				
 				const char *modelDir = strrchr(path, '/');
+	
 				if (!modelDir)
 					modelDir = strrchr(path, '\\');
 
+				// Si se encontró un separador de directorio (significa que el modelo está en un subdirectorio).
 				if (modelDir) {
+					// Calcula la longitud de la ruta del directorio del modelo, incluyendo el separador.
 					size_t len = modelDir - path + 1;
+					// Copia la parte de la ruta del directorio del modelo a 'fullTexPath'.
 					memcpy(fullTexPath, path, len);
+					// Asegura que la cadena esté terminada en nulo.
 					fullTexPath[len] = '\0';
-					strncat(fullTexPath, texPath.data,
-						sizeof(fullTexPath) - len - 1);
+					// Concatena el nombre de la textura a la ruta base del modelo.
+					strncat(fullTexPath, texPath.data,sizeof(fullTexPath) - len - 1);
 				} else {
-					strncpy(fullTexPath, texPath.data,
-						sizeof(fullTexPath) - 1);
-					fullTexPath[sizeof(fullTexPath) - 1] =
-						'\0';
+					// Si no se encontró un separador (el modelo está en el "directorio raíz" de la búsqueda).
+					// Simplemente copia el nombre de la textura directamente, asumiendo que está en el mismo directorio.
+					strncpy(fullTexPath, texPath.data,sizeof(fullTexPath) - 1);
+					fullTexPath[sizeof(fullTexPath) - 1] ='\0';
 				}
-
-				// Carga la imagen usando las funciones de OBS.
-				gs_image_file_t *image =
-					(gs_image_file_t *)bmalloc(
-						sizeof(gs_image_file_t));
-				memset(image, 0, sizeof(gs_image_file_t));
+				// Cargar la imagen 
+				gs_image_file_t *image =(gs_image_file_t *)bmalloc(sizeof(gs_image_file_t));
 				gs_image_file_init(image, fullTexPath);
-
 				if (image->loaded) {
-					blog(LOG_INFO, "Textura cargada: %s",
-					     fullTexPath);
-					g_meshes[m].image =
-						image; // Guarda el objeto de imagen para gestión.
-					g_meshes[m].texture =
-						image->texture; // Guarda la textura para renderizar.
+					blog(LOG_INFO, "Textura cargada: %s",fullTexPath);
+					g_meshes[m].image =image; // Guarda el objeto de imagen para gestión.
+					g_meshes[m].texture =image->texture; // Guarda la textura para renderizar.
 				} else {
 					blog(LOG_WARNING,
 					     "No se pudo cargar textura: %s",
 					     fullTexPath);
-					bfree(image); // Libera memoria si la carga falló.
+					bfree(image); 
 				}
 			}
+		} else {
+		blog(LOG_WARNING,"No tiene materiales");
 		}
 	}
 	// Carga el efecto después de procesar el modelo.
@@ -333,52 +319,80 @@ bool load_model_c(const char *path)
  *
  * Esta función debe ser llamada en cada fotograma dentro del ciclo de renderizado de OBS.
  */
+//void render_model_c()
+//{
+//	gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+//
+//	if (!default_effect) {
+//		return;
+//	}
+//
+//	gs_eparam_t *image_param =gs_effect_get_param_by_name(default_effect, "image");
+//	if (!image_param) {
+//		return;
+//	}
+//
+//	gs_technique_t *tech = gs_effect_get_technique(default_effect, "Draw");
+//	
+//	gs_technique_begin(tech);
+//	gs_technique_begin_pass(tech, 0);
+//	
+//	for (size_t i = 0; i < g_mesh_count; i++) {
+//		if (!g_meshes[i].vb || !g_meshes[i].ib)
+//			continue;
+//		
+//		if (!image_param) {
+//			blog(LOG_ERROR,
+//			     "DEBUG: image_param es NULL antes de set_texture!");
+//		} else {
+//			gs_effect_set_texture(image_param, g_meshes[i].image);
+//			blog(LOG_INFO, "DEBUG: image_param es válido.");
+//		}
+//	
+//
+//		gs_load_vertexbuffer(g_meshes[i].vb);
+//		gs_load_indexbuffer(g_meshes[i].ib);
+//
+//		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
+//	}
+//
+//	gs_technique_end_pass(tech);
+//	gs_technique_end(tech);
+//}
+
 void render_model_c()
 {
-	/* 
-	if (!effect)
-		return;
+	// Obtener el efecto sólido base de OBS.
+	gs_effect_t *solid_effect = obs_get_base_effect(OBS_EFFECT_SOLID);
 
-	// Obtiene el parámetro 'image' del efecto para poder asignarle la textura.
-	gs_eparam_t *image_param = gs_effect_get_param_by_name(effect, "image");
-
-	// Obtiene la técnica de renderizado "Draw" del efecto.
-	gs_technique_t *tech = gs_effect_get_technique(effect, "Draw");
-	if (!tech)
-		return;
-
-	// Inicia el proceso de renderizado con la técnica y el primer paso (pass).
+	gs_eparam_t *color_param =gs_effect_get_param_by_name(solid_effect, "color");
+	
+	gs_technique_t *tech = gs_effect_get_technique(solid_effect, "Solid");
+	
 	gs_technique_begin(tech);
+
 	gs_technique_begin_pass(tech, 0);
-	*/
+
+	
+	//vector4
+	struct vec4 solid_color = {1.0f, 0.0f, 0.0f, 1.0f}; // Rojo opaco
+	gs_effect_set_vec4(color_param, &solid_color);
 
 	// Itera sobre cada malla del modelo.
-	for (size_t i = 0; i < g_mesh_count; i++) {
-		// Se salta la malla si sus buffers no son válidos.
+	for (size_t i = 0; i < g_mesh_count;
+	     i++) { 
 		if (!g_meshes[i].vb || !g_meshes[i].ib)
 			continue;
-
-		/* 
-		   Si no hay textura, pasaría NULL.
-		if (g_meshes[i].texture)
-			gs_effect_set_texture(image_param, g_meshes[i].texture);
-		else
-			gs_effect_set_texture(image_param, NULL);
-		*/
 
 		
 		gs_load_vertexbuffer(g_meshes[i].vb);
 		gs_load_indexbuffer(g_meshes[i].ib);
 
-		// Lanza la llamada de dibujado (draw call) para renderizar los triángulos.
-		// GS_TRIS indica que se dibujarán triángulos.
-		// '0' es el índice de inicio.
-		// `g_meshes[i].num_indices` es el número de índices a procesar.
+	
 		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
 	}
 
-	/* Este bloque finaliza el paso y la técnica del efecto.
+
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
-	*/
 }

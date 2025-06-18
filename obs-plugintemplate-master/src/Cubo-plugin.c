@@ -316,11 +316,6 @@ static void cue_filter_tick(void *data, float seconds)
 	gs_enable_depth_test(true);
 	gs_depth_function(GS_LESS);
 	//gs_set_cull_mode(GS_BACK);
-	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
-	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
-	gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
-	gs_technique_begin(tech);
-	gs_technique_begin_pass(tech, 0);
 
 	//// --- Cubo 1 TEXTURA
 	gs_texture_t *prev_render_target = gs_get_render_target();
@@ -336,13 +331,13 @@ static void cue_filter_tick(void *data, float seconds)
 	filter->rotation_z += 45.0f * seconds;
 	if (filter->rotation_z >= 360.0f) filter->rotation_z -= 360.0f;
 	gs_matrix_rotaa4f(1.0f, 1.0f, 1.0f,filter->rotation_z * (float)M_PI / 180.0f);
-	gs_matrix_scale3f(4,4, 4);
+	gs_matrix_scale3f(1,1, 1);
+	//gs_matrix_scale3f(5, 5, 5);
 	render_model_c();
 	
 	gs_matrix_pop();
 	gs_set_render_target(prev_render_target, prev_zstencil_target);
-	gs_technique_end_pass(tech);
-	gs_technique_end(tech);
+
 	gs_projection_pop();
 	gs_viewport_pop();
 	gs_blend_state_pop();
