@@ -27,22 +27,31 @@ struct cube_filter_data {
 	obs_source_t *source;
 	gs_texture_t *texture;
 	int width, height;
-	int pox, posy;
-	float rotation_z;
+	float pos_x;
+	float pos_y;
+	float pos_z; 
+
+	float scale; 
+	float rotation_y_slider_value;
+	float rotation_x_slider_value;
+	float rotation_z_slider_value; 
+	float current_rotation_z_angle; 
+	float current_rotation_x_angle;
+	float current_rotation_y_angle;
 
 	gs_texrender_t *texrender; //  Usa esto en su lugar
 };
-int vel = 100;
+
 static uint32_t cube_source_get_width(void *data)
 {
-	UNUSED_PARAMETER(data);
-	return 0; // O el ancho que tú quieras
+	struct cube_filter_data *filter = data;
+	return filter->width; // Retorna el ancho actual
 }
 
 static uint32_t cube_source_get_height(void *data)
 {
-	UNUSED_PARAMETER(data);
-	return 0; // O la altura deseada
+	struct cube_filter_data *filter = data;
+	return filter->height; // Retorna la altura actual
 }
 
 void image_source_load(gs_image_file_t *image, const char *file)
@@ -97,87 +106,87 @@ struct cube_vertex {
 	uint32_t color;
 };
 
-static int size = 50; // Ejemplo, ajustar según necesidad
+//static int size = 50; // Ejemplo, ajustar según necesidad
 
-static void update_vertices(void)
-{
-	obs_enter_graphics();
-	gs_render_start(true);
-	// --- LINE VERTICES ---
-	////cara 1
-
-	// Cara frontal (z = size)
-	size = 50;
-	gs_vertex3f(0, 0, 0);
-	gs_vertex3f(size, 0, 0);
-	gs_vertex3f(0, size, 0);
-
-	gs_vertex3f(0, size, 0);
-	gs_vertex3f(size, size, 0);
-	gs_vertex3f(size, 0, 0);
-	cube_faces[0] = gs_render_save();
-	//atras
-	gs_vertex3f(0, 0, size);
-	gs_vertex3f(size, 0, size);
-	gs_vertex3f(0, size, size);
-
-	gs_vertex3f(0, size, size);
-	gs_vertex3f(size, size, size);
-	gs_vertex3f(size, 0, size);
-	cube_faces[1] = gs_render_save();
-
-	// Cara derexha (z = 0) SI
-
-	gs_vertex3f(size, 0, 0);
-	gs_vertex3f(size, 0, size);
-	gs_vertex3f(size, size, 0);
-
-	gs_vertex3f(size, size, 0);
-	gs_vertex3f(size, size, size);
-	gs_vertex3f(size, 0, size);
-	cube_faces[2] = gs_render_save();
-
-	// Cara izquierda  SI
-	gs_vertex3f(0, 0, size);
-	gs_vertex3f(0, 0, 0);
-	gs_vertex3f(0, size, size);
-
-	gs_vertex3f(0, size, size);
-	gs_vertex3f(0, size, 0);
-	gs_vertex3f(0, 0, 0);
-	cube_faces[3] = gs_render_save();
-	// Cara arriba (y = 0)
-
-	gs_vertex3f(0, 0, size);
-	gs_vertex3f(size, 0, size);
-	gs_vertex3f(0, 0, 0);
-
-	gs_vertex3f(0, 0, 0);
-	gs_vertex3f(size, 0, 0);
-	gs_vertex3f(size, 0, size);
-	cube_faces[4] = gs_render_save();
-	// Cara abajo (x = 0)
-	gs_vertex3f(0, size, size);
-	gs_vertex3f(size, size, size);
-	gs_vertex3f(0, size, 0);
-
-	gs_vertex3f(0, size, 0);
-	gs_vertex3f(size, size, 0);
-	gs_vertex3f(size, size, size);
-	cube_faces[5] = gs_render_save();
-
-
-		
-	//line_vert  = gs_render_save();
-
-
-	obs_leave_graphics();
-
-
-
-
-	// No liberar dot_data ni dot_data->points (la función gs_vertexbuffer_create toma la propiedad)
-}
+//static void update_vertices(void)
+//{
+//	obs_enter_graphics();
+//	gs_render_start(true);
+//	// --- LINE VERTICES ---
+//	////cara 1
+//
+//	// Cara frontal (z = size)
+//	size = 50;
+//	gs_vertex3f(0, 0, 0);
+//	gs_vertex3f(size, 0, 0);
+//	gs_vertex3f(0, size, 0);
+//
+//	gs_vertex3f(0, size, 0);
+//	gs_vertex3f(size, size, 0);
+//	gs_vertex3f(size, 0, 0);
+//	cube_faces[0] = gs_render_save();
+//	//atras
+//	gs_vertex3f(0, 0, size);
+//	gs_vertex3f(size, 0, size);
+//	gs_vertex3f(0, size, size);
+//
+//	gs_vertex3f(0, size, size);
+//	gs_vertex3f(size, size, size);
+//	gs_vertex3f(size, 0, size);
+//	cube_faces[1] = gs_render_save();
+//
+//	// Cara derexha (z = 0) SI
+//
+//	gs_vertex3f(size, 0, 0);
+//	gs_vertex3f(size, 0, size);
+//	gs_vertex3f(size, size, 0);
+//
+//	gs_vertex3f(size, size, 0);
+//	gs_vertex3f(size, size, size);
+//	gs_vertex3f(size, 0, size);
+//	cube_faces[2] = gs_render_save();
+//
+//	// Cara izquierda  SI
+//	gs_vertex3f(0, 0, size);
+//	gs_vertex3f(0, 0, 0);
+//	gs_vertex3f(0, size, size);
+//
+//	gs_vertex3f(0, size, size);
+//	gs_vertex3f(0, size, 0);
+//	gs_vertex3f(0, 0, 0);
+//	cube_faces[3] = gs_render_save();
+//	// Cara arriba (y = 0)
+//
+//	gs_vertex3f(0, 0, size);
+//	gs_vertex3f(size, 0, size);
+//	gs_vertex3f(0, 0, 0);
+//
+//	gs_vertex3f(0, 0, 0);
+//	gs_vertex3f(size, 0, 0);
+//	gs_vertex3f(size, 0, size);
+//	cube_faces[4] = gs_render_save();
+//	// Cara abajo (x = 0)
+//	gs_vertex3f(0, size, size);
+//	gs_vertex3f(size, size, size);
+//	gs_vertex3f(0, size, 0);
+//
+//	gs_vertex3f(0, size, 0);
+//	gs_vertex3f(size, size, 0);
+//	gs_vertex3f(size, size, size);
+//	cube_faces[5] = gs_render_save();
+//
+//
+//		
+//	//line_vert  = gs_render_save();
+//
+//
+//	obs_leave_graphics();
+//
+//
+//
+//
+//	// No liberar dot_data ni dot_data->points (la función gs_vertexbuffer_create toma la propiedad)
+//}
 // Función para crear una textura blanca para la pizarra
 void create_whiteboard_texture(struct cube_filter_data *data)
 {
@@ -209,31 +218,29 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 {
 	struct cube_filter_data *data =bzalloc(sizeof(struct cube_filter_data));
 	data->source = source;
-	data->pox = 0;
-	data->posy = 0;
-	data->rotation_z = 90;
+	
 	obs_enter_graphics();
 	gs_render_start(true);
 
-	struct gs_vb_data *vbd = gs_vbdata_create();
-	vbd->num = 8;
-	vbd->points = bmemdup(cube_vertices, sizeof(cube_vertices));
-	// Colores distintos por vértice
-	struct vec4 cube_colors[8] = {
-		{1, 0, 0, 1},    // Rojo
-		{0, 1, 0, 1},    // Verde
-		{0, 0, 1, 1},    // Azul
-		{1, 1, 0, 1},    // Amarillo
-		{1, 0, 1, 1},    // Magenta
-		{0, 1, 1, 1},
-		{1, 0.5f, 0, 1} // Naranja
-	};
+	//struct gs_vb_data *vbd = gs_vbdata_create();
+	//vbd->num = 8;
+	//vbd->points = bmemdup(cube_vertices, sizeof(cube_vertices));
+	//// Colores distintos por vértice
+	//struct vec4 cube_colors[8] = {
+	//	{1, 0, 0, 1},    // Rojo
+	//	{0, 1, 0, 1},    // Verde
+	//	{0, 0, 1, 1},    // Azul
+	//	{1, 1, 0, 1},    // Amarillo
+	//	{1, 0, 1, 1},    // Magenta
+	//	{0, 1, 1, 1},
+	//	{1, 0.5f, 0, 1} // Naranja
+	//};
 
-	vbd->colors = bmemdup(cube_colors, sizeof(cube_colors));
-	// Crear el vertex buffer con los 8 vértices únicos
-	vertexbuffer = gs_vertexbuffer_create(vbd, 0);
-	uint16_t *indices_dup = bmemdup(cube_indices, sizeof(cube_indices));
-	indexbuffer =gs_indexbuffer_create(GS_UNSIGNED_SHORT, indices_dup, 36, 0);
+	//vbd->colors = bmemdup(cube_colors, sizeof(cube_colors));
+	//// Crear el vertex buffer con los 8 vértices únicos
+	//vertexbuffer = gs_vertexbuffer_create(vbd, 0);
+	//uint16_t *indices_dup = bmemdup(cube_indices, sizeof(cube_indices));
+	//indexbuffer =gs_indexbuffer_create(GS_UNSIGNED_SHORT, indices_dup, 36, 0);
 	obs_leave_graphics();
 
 	load_model_c(
@@ -289,7 +296,45 @@ static void cube_filter_render(void *data, gs_effect_t *effect1)
 	}
 	obs_leave_graphics();
 }
+static obs_properties_t *cube_filter_properties(void *data)
+{
+	obs_properties_t *props = obs_properties_create();
 
+	// Grupo para posición
+	// obs_properties_add_group necesita la cabecera <obs-properties.h>
+	obs_properties_t *pos_group = obs_properties_add_group(props, "position_group", obs_module_text("Posición"),OBS_GROUP_NORMAL,props);
+	obs_properties_add_float_slider(props, "pos_x",obs_module_text("Posición X"), -1000.0f,1000.0f, 1.0f);
+	obs_properties_add_float_slider(props, "pos_y",obs_module_text("Posición Y"), -1000.0f,1000.0f, 1.0f);
+	obs_properties_add_float_slider(props, "pos_z",obs_module_text("Posición Z"), -1000.0f,1000.0f, 1.0f); // Posición Z
+	obs_properties_add_float_slider(props, "scale", obs_module_text("Escala"), 0.01f,10.0f,  0.01f); // Incremento más fino
+	// Control de Rotación en Z
+	obs_properties_add_float_slider(props, "rotation_z_slider_value",obs_module_text("Rotación Z (Grados)"),-360.0f, 360.0f, 1.0f); // Rotación en Z
+	obs_properties_add_float_slider(props, "rotation_x_slider_value",obs_module_text("Rotación Y (Grados)"),-360.0f, 360.0f, 1.0f); // Rotación en X
+	obs_properties_add_float_slider(props, "rotation_y_slider_value",obs_module_text("Rotación X (Grados)"),-360.0f, 360.0f, 1.0f); // Rotación en Y
+	// Añadir control para la ruta del modelo (OPCIONAL, pero muy útil)
+	obs_properties_add_path(props, "model_path", obs_module_text("Ruta del Modelo 3D"),OBS_PATH_FILE,"Modelos 3D (*.obj *.fbx *.dae *.gltf);;Todos los archivos (*.*)",NULL);
+
+	return props;
+}
+
+static void cube_filter_update(void *data, obs_data_t *settings)
+{
+	struct cube_filter_data *filter = data;
+
+	filter->pos_x = (float)obs_data_get_double(settings, "pos_x");
+	filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
+	filter->pos_z =(float)obs_data_get_double(settings, "pos_z"); // Obtener Z
+	filter->scale = (float)obs_data_get_double(settings, "scale");
+	filter->rotation_x_slider_value =(float)obs_data_get_double(settings, "rotation_x_slider_value");
+	filter->rotation_y_slider_value =(float)obs_data_get_double(settings, "rotation_y_slider_value");
+	filter->rotation_z_slider_value =(float)obs_data_get_double(settings, "rotation_z_slider_value");
+
+	// La rotación toma el valor directo del slider
+	filter->current_rotation_z_angle = filter->rotation_z_slider_value;
+	filter->current_rotation_x_angle = filter->rotation_x_slider_value;
+	filter->current_rotation_y_angle = filter->rotation_y_slider_value;
+
+}
 static void cue_filter_tick(void *data, float seconds)
 {
 	struct cube_filter_data *filter = data;
@@ -324,18 +369,15 @@ static void cue_filter_tick(void *data, float seconds)
 	gs_set_render_target(filter->texture, filter->zstencil); //TEXTURA
 	
 	
-	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,
-		 (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
+	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,(float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
 	gs_matrix_push();
 	gs_matrix_identity();
-	gs_matrix_translate3f(filter->pox + 500, filter->posy + 300,0.0f); 
-	filter->rotation_z += 45.0f * seconds;
-	if (filter->rotation_z >= 360.0f) filter->rotation_z -= 360.0f;
-	gs_matrix_rotaa4f(1.0f, 1.0f, 1.0f,filter->rotation_z * (float)M_PI / 180.0f);
-	gs_matrix_scale3f(1,1, 1);
-	//gs_matrix_scale3f(5, 5, 5);
+	gs_matrix_translate3f(filter->pos_x, filter->pos_y, filter->pos_z); 
+	gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,filter->current_rotation_z_angle * (float)M_PI /180.0f); 
+	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,filter->current_rotation_x_angle * (float)M_PI /180.0f); 
+	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,filter->current_rotation_y_angle * (float)M_PI /180.0f); 
+	gs_matrix_scale3f(filter->scale, filter->scale, filter->scale);
 	render_model_c();
-	
 	gs_matrix_pop();
 	gs_set_render_target(prev_render_target, prev_zstencil_target);
 
@@ -359,7 +401,8 @@ static struct obs_source_info cube_filter = {
 	.video_tick = cue_filter_tick,
 	.get_width = cube_source_get_width,
 	.get_height = cube_source_get_height,
-	
+	.get_properties = cube_filter_properties,
+	.update = cube_filter_update,
 	
 };
 
