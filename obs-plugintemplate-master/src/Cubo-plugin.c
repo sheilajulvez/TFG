@@ -39,7 +39,7 @@ struct cube_filter_data {
 	float current_rotation_x_angle;
 	float current_rotation_y_angle;
 
-	gs_texrender_t *texrender; //  Usa esto en su lugar
+	//gs_texrender_t *texrender; //  Usa esto en su lugar
 };
 
 static uint32_t cube_source_get_width(void *data)
@@ -75,36 +75,7 @@ void image_source_load(gs_image_file_t *image, const char *file)
 	}
 }
 
-//static gs_vertbuffer_t *cube_faces[6];
 
-static gs_indexbuffer_t *indexbuffer; //triangulos 
-static gs_vertbuffer_t *vertexbuffer; //vertices
-
-// Vértices del cubo (8 vértices)
-//struct vec3 cube_vertices[8] = {
-//	{0, 0, 0},   // 0
-//	{50, 0, 0},  // 1
-//	{0, 50, 0},  // 2
-//	{50, 50, 0}, // 3
-//	{0, 0, 50},  // 4
-//	{50, 0, 50}, // 5
-//	{0, 50, 50}, // 6
-//	{50, 50, 50} // 7
-//};
-//// Índices para las 12 caras del cubo (36 índices)
-//static const uint16_t cube_indices[] = {
-//    0, 1, 3,  3, 2, 0,  // Cara trasera  (Z=0)
-//    4, 6, 7,  7, 5, 4,  // Cara delantera (Z=50)
-//    0, 2, 6,  6, 4, 0,  // Cara izquierda (X=0)
-//    1, 5, 7,  7, 3, 1,  // Cara derecha  (X=50)
-//    2, 3, 7,  7, 6, 2,  // Cara superior (Y=50)
-//    0, 4, 5,  5, 1, 0   // Cara inferior (Y=0)
-//};
-
-//struct cube_vertex {
-//	struct vec3 pos;
-//	uint32_t color;
-//};
 
 // Función para crear una textura blanca para la pizarra
 void create_whiteboard_texture(struct cube_filter_data *data)
@@ -115,10 +86,7 @@ void create_whiteboard_texture(struct cube_filter_data *data)
 		gs_texture_destroy(data->texture);
 		data->texture = NULL;
 	}
-	data->texrender = gs_texrender_create(GS_RGBA, GS_Z32F);
-	if (!data->texrender) {
-		blog(LOG_ERROR, "❌ No se pudo crear texrender");
-	}
+
 	data->texture = gs_texture_create(data->width, data->height, GS_RGBA, 1,
 					  NULL, GS_RENDER_TARGET);
 	data->zstencil = gs_zstencil_create(data->width, data->height, GS_Z32F);
@@ -163,14 +131,7 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 
 static void cube_filter_destroy(void *data)
 {
-	if (vertexbuffer)
-		gs_vertexbuffer_destroy(vertexbuffer);
-	if (indexbuffer)
-		gs_indexbuffer_destroy(indexbuffer);
-	/*if (data->texrender)
-		gs_texrender_destroy(filter->texrender);*/
-
-	//bfree(filter);
+	 cleanup_global_meshes();
 }
 
 static void cube_filter_render(void *data, gs_effect_t *effect1)
@@ -187,7 +148,7 @@ static void cube_filter_render(void *data, gs_effect_t *effect1)
 		gs_matrix_identity();
 		//apply_textyre()
 		while (gs_effect_loop(effect, "Draw")) {
-			obs_source_draw(gs_texrender_get_texture(filter->texrender), 0, 0, filter->width, filter->height, false);
+			
 			obs_source_draw(filter->texture, 0, 0, 0, 0, false);
 		}
 
@@ -203,10 +164,10 @@ static obs_properties_t *cube_filter_properties(void *data)
 	// Grupo para posición
 	// obs_properties_add_group necesita la cabecera <obs-properties.h>
 	obs_properties_t *pos_group = obs_properties_add_group(props, "position_group", obs_module_text("Posición"),OBS_GROUP_NORMAL,props);
-	obs_properties_add_float_slider(props, "pos_x",obs_module_text("Posición X"), -1000.0f,1000.0f, 1.0f);
-	obs_properties_add_float_slider(props, "pos_y",obs_module_text("Posición Y"), -1000.0f,1000.0f, 1.0f);
-	obs_properties_add_float_slider(props, "pos_z",obs_module_text("Posición Z"), -1000.0f,1000.0f, 1.0f); // Posición Z
-	obs_properties_add_float_slider(props, "scale", obs_module_text("Escala"), 0.01f,10.0f,  0.01f); // Incremento más fino
+	obs_properties_add_float_slider(props, "pos_x",obs_module_text("Posición X"), -3000.0f,3000.0f, 10.0f);
+	obs_properties_add_float_slider(props, "pos_y",obs_module_text("Posición Y"), -3000.0f,3000.0f, 10.0f);
+	obs_properties_add_float_slider(props, "pos_z",obs_module_text("Posición Z"), -3000.0f,3000.0f, 10.0f); // Posición Z
+	obs_properties_add_float_slider(props, "scale", obs_module_text("Escala"), 0.01f,1000,  0.01f); // Incremento más fino
 	// Control de Rotación en Z
 	obs_properties_add_float_slider(props, "rotation_z_slider_value",obs_module_text("Rotación Z (Grados)"),-360.0f, 360.0f, 1.0f); // Rotación en Z
 	obs_properties_add_float_slider(props, "rotation_x_slider_value",obs_module_text("Rotación Y (Grados)"),-360.0f, 360.0f, 1.0f); // Rotación en X
@@ -245,9 +206,6 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 		// 3. Cargar el nuevo modelo si la ruta no está vacía
 		if (filter->model_path_str && strlen(filter->model_path_str) > 0) {
 			blog(LOG_INFO, "Cargando nuevo modelo desde: %s",filter->model_path_str);
-			// Llama a tu función para cargar el modelo 3D
-			// Debes asegurarte de que load_model_c libere cualquier modelo anterior.
-			// Pasa la ruta al cargador del modelo.
 			
 			load_model_c(filter->model_path_str);
 			
@@ -274,7 +232,7 @@ static void cue_filter_tick(void *data, float seconds)
 	gs_viewport_push();
 	gs_set_viewport(0, 0, filter->width, filter->height);
 	gs_projection_push();
-	gs_set_3d_mode(60.0f, 0.1f, 1000.0f);
+	gs_set_3d_mode(60.0f, 0.01f, 5000);
 	gs_blend_state_push();
 	gs_reset_blend_state();
 
@@ -282,7 +240,7 @@ static void cue_filter_tick(void *data, float seconds)
 	gs_depth_function(GS_LESS);
 	//gs_set_cull_mode(GS_BACK);
 
-	//// --- Cubo 1 TEXTURA
+
 	gs_texture_t *prev_render_target = gs_get_render_target();
 	gs_texture_t *prev_zstencil_target = gs_get_zstencil_target();
 	gs_set_render_target(filter->texture, filter->zstencil); //TEXTURA

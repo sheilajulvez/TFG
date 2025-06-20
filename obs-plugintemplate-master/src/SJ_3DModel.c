@@ -32,11 +32,63 @@ typedef struct {
 	uint32_t num_indices;
 	uint32_t num_vertex;  
 
-	gs_image_file_t *image; 
+
 	gs_texture_t *texture; 
 	 gs_effect_t *effect;
 } Mesh;
 
+// Puntero global a un array de mallas que componen el modelo cargado.
+static Mesh *g_meshes = NULL;
+// Contador del número de mallas en el array.
+static size_t g_mesh_count = 0;
+static void free_single_mesh(Mesh *mesh)
+{
+	if (!mesh)
+		return;
+	obs_enter_graphics();
+	if (mesh->vb) {
+		gs_vertexbuffer_destroy(mesh->vb);
+		mesh->vb = NULL;
+	}
+	if (mesh->ib) {
+		gs_indexbuffer_destroy(mesh->ib);
+		mesh->ib = NULL;
+	}
+	if (mesh->texture) {
+		gs_texture_destroy(mesh->texture);
+		mesh->texture = NULL;
+	}
+	// ¡Asegúrate de liberar aquí tus otras texturas si las tienes!
+	// if (mesh->normal_texture) { gs_texture_destroy(mesh->normal_texture); mesh->normal_texture = NULL; }
+	// if (mesh->specular_texture) { gs_texture_destroy(mesh->specular_texture); mesh->specular_texture = NULL; }
+
+	/*if (mesh->effect) {
+	gs_effect_destroy(mesh->effect);
+		mesh->effect = NULL;
+	}*/
+	obs_leave_graphics();
+}
+// --- Función ÚNICA para borrar g_meshes y g_mesh_count ---
+void cleanup_global_meshes(void)
+{
+	if (!g_meshes) {
+		blog(LOG_INFO, "No hay mallas globales para liberar.");
+		return;
+	}
+
+	blog(LOG_INFO, "Liberando %zu mallas globales.", g_mesh_count);
+
+	for (size_t i = 0; i < g_mesh_count; ++i) {
+		blog(LOG_INFO, "Liberando malla numerp%d.",i);
+		free_single_mesh(&g_meshes[i]); // Libera los recursos de cada malla individual
+	}
+
+	bfree(g_meshes);  // Libera el array completo de estructuras Mesh
+	g_meshes = NULL;  // Pone el puntero global a NULL
+	g_mesh_count = 0; // Reinicia el contador a cero
+
+	blog(LOG_INFO, "Mallas globales liberadas exitosamente.");
+}
 
 
 
@@ -70,10 +122,10 @@ bool load_effect(const char *filename, Mesh* mesh)
 		bfree(effect_path); // Libera la memoria incluso si fopen falla
 		return false; // Si el archivo no se encuentra con fopen, no tiene sentido intentar cargarlo con gs_effect_create_from_file
 	}
-	// --- FIN PRUEBA CON FOPEN ---
+
 
 	obs_enter_graphics();
-	// gs_render_start(true); // <--- ELIMINADO: Esta línea no debe estar aquí.
+
 
 	mesh->effect = gs_effect_create_from_file(effect_path, NULL);
 	obs_leave_graphics();
@@ -89,10 +141,6 @@ bool load_effect(const char *filename, Mesh* mesh)
 }
 
 
-// Puntero global a un array de mallas que componen el modelo cargado.
-static Mesh *g_meshes = NULL;
-// Contador del número de mallas en el array.
-static size_t g_mesh_count = 0;
 
 
 /**
@@ -122,18 +170,7 @@ bool load_model_c(const char *path)
 
 	// Si ya hay un modelo cargado (g_meshes no es nulo), se liberan sus recursos.
 	if (g_meshes) {
-		for (size_t i = 0; i < g_mesh_count; i++) {
-			gs_vertexbuffer_destroy(g_meshes[i].vb);
-			gs_indexbuffer_destroy(g_meshes[i].ib);
-			// Libera los recursos de la imagen si existen.
-			if (g_meshes[i].image) {
-				gs_image_file_free(g_meshes[i].image);
-				bfree(g_meshes[i].image);
-			}
-		}
-		bfree(g_meshes);
-		g_meshes = NULL;
-		g_mesh_count = 0;
+		cleanup_global_meshes();
 	}
 
 	// Asigna memoria para el nuevo conjunto de mallas del modelo.
@@ -251,8 +288,11 @@ bool load_model_c(const char *path)
 		gs_render_start(true);
 
 		// Crea el buffer de vértices y el buffer de índices.
-		gs_vertbuffer_t *vb = gs_vertexbuffer_create(vbd, 0);
-		gs_indexbuffer_t *ib = gs_indexbuffer_create(GS_UNSIGNED_LONG, indices, (uint32_t)idx_written, 0);
+		gs_vertbuffer_t *vb =
+			gs_vertexbuffer_create(vbd, GS_DUP_BUFFER);
+		gs_indexbuffer_t *ib = gs_indexbuffer_create(
+			GS_UNSIGNED_LONG, indices, (uint32_t)idx_written,
+			GS_DUP_BUFFER);
 
 		obs_leave_graphics();
 
@@ -317,7 +357,7 @@ bool load_model_c(const char *path)
 
 				if (image->loaded) {
 					blog(LOG_INFO, "Textura cargada: %s",fullTexPath);
-					g_meshes[m].image =image; // Guarda el objeto de imagen para gestión.
+				
 					g_meshes[m].texture =image->texture; // Guarda la textura para renderizar.
 				} else {
 					blog(LOG_WARNING,
@@ -349,6 +389,8 @@ bool load_model_c(const char *path)
  */
 void render_model_c()
 {
+	/*if (!g_meshes[0].texture)
+		render_model_c_NoTexture;*/
 	gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 
 	if (!default_effect) {
@@ -366,17 +408,17 @@ void render_model_c()
 	gs_technique_begin_pass(tech, 0);
 	
 	for (size_t i = 0; i < g_mesh_count; i++) {
-		if (!g_meshes[i].vb || !g_meshes[i].ib)
-			continue;
+		;
 		
-		if (!g_meshes[i].image->texture) {
+		if (!g_meshes[i].texture) {
 			blog(LOG_ERROR,
 			     "DEBUG: image_param es NULL antes de set_texture!");
 		} else {
-			gs_effect_set_texture(image_param, g_meshes[i].image->texture);
+			gs_effect_set_texture(image_param, g_meshes[i].texture);
 			blog(LOG_INFO, "DEBUG: image_param es válido.");
 		}
-	
+		if (!g_meshes[i].vb || !g_meshes[i].ib || !g_meshes[i].texture)
+			continue;
 
 		gs_load_vertexbuffer(g_meshes[i].vb);
 		gs_load_indexbuffer(g_meshes[i].ib);
@@ -387,44 +429,44 @@ void render_model_c()
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
 }
-// Modificación en render_model_c
 
 
 
 
-//void render_model_c()
-//{
-//	// Obtener el efecto sólido base de OBS.
-//	gs_effect_t *solid_effect = obs_get_base_effect(OBS_EFFECT_SOLID);
-//
-//	gs_eparam_t *color_param =gs_effect_get_param_by_name(solid_effect, "color");
-//	
-//	gs_technique_t *tech = gs_effect_get_technique(solid_effect, "Solid");
-//	
-//	gs_technique_begin(tech);
-//
-//	gs_technique_begin_pass(tech, 0);
-//
-//	
-//	//vector4
-//	struct vec4 solid_color = {1.0f, 0.0f, 0.0f, 1.0f}; // Rojo opaco
-//	gs_effect_set_vec4(color_param, &solid_color);
-//
-//	// Itera sobre cada malla del modelo.
-//	for (size_t i = 0; i < g_mesh_count;
-//	     i++) { 
-//		if (!g_meshes[i].vb || !g_meshes[i].ib)
-//			continue;
-//
-//		
-//		gs_load_vertexbuffer(g_meshes[i].vb);
-//		gs_load_indexbuffer(g_meshes[i].ib);
-//
-//	
-//		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
-//	}
-//
-//
-//	gs_technique_end_pass(tech);
-//	gs_technique_end(tech);
-//}
+
+void render_model_c_NoTexture()
+{
+	// Obtener el efecto sólido base de OBS.
+	gs_effect_t *solid_effect = obs_get_base_effect(OBS_EFFECT_SOLID);
+
+	gs_eparam_t *color_param =gs_effect_get_param_by_name(solid_effect, "color");
+	
+	gs_technique_t *tech = gs_effect_get_technique(solid_effect, "Solid");
+	
+	gs_technique_begin(tech);
+
+	gs_technique_begin_pass(tech, 0);
+
+	
+	//vector4
+	struct vec4 solid_color = {1.0f, 0.0f, 0.0f, 1.0f}; // Rojo opaco
+	gs_effect_set_vec4(color_param, &solid_color);
+
+	// Itera sobre cada malla del modelo.
+	for (size_t i = 0; i < g_mesh_count;
+	     i++) { 
+		if (!g_meshes[i].vb || !g_meshes[i].ib)
+			continue;
+
+		
+		gs_load_vertexbuffer(g_meshes[i].vb);
+		gs_load_indexbuffer(g_meshes[i].ib);
+
+	
+		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
+	}
+
+
+	gs_technique_end_pass(tech);
+	gs_technique_end(tech);
+}
