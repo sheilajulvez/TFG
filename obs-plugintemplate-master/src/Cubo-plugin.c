@@ -30,7 +30,7 @@ struct cube_filter_data {
 	float pos_x;
 	float pos_y;
 	float pos_z; 
-
+	char *model_path_str;
 	float scale; 
 	float rotation_y_slider_value;
 	float rotation_x_slider_value;
@@ -75,118 +75,37 @@ void image_source_load(gs_image_file_t *image, const char *file)
 	}
 }
 
-static gs_vertbuffer_t *cube_faces[6];
+//static gs_vertbuffer_t *cube_faces[6];
 
 static gs_indexbuffer_t *indexbuffer; //triangulos 
 static gs_vertbuffer_t *vertexbuffer; //vertices
 
 // Vértices del cubo (8 vértices)
-struct vec3 cube_vertices[8] = {
-	{0, 0, 0},   // 0
-	{50, 0, 0},  // 1
-	{0, 50, 0},  // 2
-	{50, 50, 0}, // 3
-	{0, 0, 50},  // 4
-	{50, 0, 50}, // 5
-	{0, 50, 50}, // 6
-	{50, 50, 50} // 7
-};
-// Índices para las 12 caras del cubo (36 índices)
-static const uint16_t cube_indices[] = {
-    0, 1, 3,  3, 2, 0,  // Cara trasera  (Z=0)
-    4, 6, 7,  7, 5, 4,  // Cara delantera (Z=50)
-    0, 2, 6,  6, 4, 0,  // Cara izquierda (X=0)
-    1, 5, 7,  7, 3, 1,  // Cara derecha  (X=50)
-    2, 3, 7,  7, 6, 2,  // Cara superior (Y=50)
-    0, 4, 5,  5, 1, 0   // Cara inferior (Y=0)
-};
+//struct vec3 cube_vertices[8] = {
+//	{0, 0, 0},   // 0
+//	{50, 0, 0},  // 1
+//	{0, 50, 0},  // 2
+//	{50, 50, 0}, // 3
+//	{0, 0, 50},  // 4
+//	{50, 0, 50}, // 5
+//	{0, 50, 50}, // 6
+//	{50, 50, 50} // 7
+//};
+//// Índices para las 12 caras del cubo (36 índices)
+//static const uint16_t cube_indices[] = {
+//    0, 1, 3,  3, 2, 0,  // Cara trasera  (Z=0)
+//    4, 6, 7,  7, 5, 4,  // Cara delantera (Z=50)
+//    0, 2, 6,  6, 4, 0,  // Cara izquierda (X=0)
+//    1, 5, 7,  7, 3, 1,  // Cara derecha  (X=50)
+//    2, 3, 7,  7, 6, 2,  // Cara superior (Y=50)
+//    0, 4, 5,  5, 1, 0   // Cara inferior (Y=0)
+//};
 
-struct cube_vertex {
-	struct vec3 pos;
-	uint32_t color;
-};
+//struct cube_vertex {
+//	struct vec3 pos;
+//	uint32_t color;
+//};
 
-//static int size = 50; // Ejemplo, ajustar según necesidad
-
-//static void update_vertices(void)
-//{
-//	obs_enter_graphics();
-//	gs_render_start(true);
-//	// --- LINE VERTICES ---
-//	////cara 1
-//
-//	// Cara frontal (z = size)
-//	size = 50;
-//	gs_vertex3f(0, 0, 0);
-//	gs_vertex3f(size, 0, 0);
-//	gs_vertex3f(0, size, 0);
-//
-//	gs_vertex3f(0, size, 0);
-//	gs_vertex3f(size, size, 0);
-//	gs_vertex3f(size, 0, 0);
-//	cube_faces[0] = gs_render_save();
-//	//atras
-//	gs_vertex3f(0, 0, size);
-//	gs_vertex3f(size, 0, size);
-//	gs_vertex3f(0, size, size);
-//
-//	gs_vertex3f(0, size, size);
-//	gs_vertex3f(size, size, size);
-//	gs_vertex3f(size, 0, size);
-//	cube_faces[1] = gs_render_save();
-//
-//	// Cara derexha (z = 0) SI
-//
-//	gs_vertex3f(size, 0, 0);
-//	gs_vertex3f(size, 0, size);
-//	gs_vertex3f(size, size, 0);
-//
-//	gs_vertex3f(size, size, 0);
-//	gs_vertex3f(size, size, size);
-//	gs_vertex3f(size, 0, size);
-//	cube_faces[2] = gs_render_save();
-//
-//	// Cara izquierda  SI
-//	gs_vertex3f(0, 0, size);
-//	gs_vertex3f(0, 0, 0);
-//	gs_vertex3f(0, size, size);
-//
-//	gs_vertex3f(0, size, size);
-//	gs_vertex3f(0, size, 0);
-//	gs_vertex3f(0, 0, 0);
-//	cube_faces[3] = gs_render_save();
-//	// Cara arriba (y = 0)
-//
-//	gs_vertex3f(0, 0, size);
-//	gs_vertex3f(size, 0, size);
-//	gs_vertex3f(0, 0, 0);
-//
-//	gs_vertex3f(0, 0, 0);
-//	gs_vertex3f(size, 0, 0);
-//	gs_vertex3f(size, 0, size);
-//	cube_faces[4] = gs_render_save();
-//	// Cara abajo (x = 0)
-//	gs_vertex3f(0, size, size);
-//	gs_vertex3f(size, size, size);
-//	gs_vertex3f(0, size, 0);
-//
-//	gs_vertex3f(0, size, 0);
-//	gs_vertex3f(size, size, 0);
-//	gs_vertex3f(size, size, size);
-//	cube_faces[5] = gs_render_save();
-//
-//
-//		
-//	//line_vert  = gs_render_save();
-//
-//
-//	obs_leave_graphics();
-//
-//
-//
-//
-//	// No liberar dot_data ni dot_data->points (la función gs_vertexbuffer_create toma la propiedad)
-//}
 // Función para crear una textura blanca para la pizarra
 void create_whiteboard_texture(struct cube_filter_data *data)
 {
@@ -203,8 +122,7 @@ void create_whiteboard_texture(struct cube_filter_data *data)
 	data->texture = gs_texture_create(data->width, data->height, GS_RGBA, 1,
 					  NULL, GS_RENDER_TARGET);
 	data->zstencil = gs_zstencil_create(data->width, data->height, GS_Z32F);
-	blog(LOG_INFO, "create whiteboard texture %d %d", data->width,
-	     data->height);
+	blog(LOG_INFO, "create whiteboard texture %d %d", data->width,data->height);
 
 	obs_leave_graphics();
 }
@@ -222,29 +140,11 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	obs_enter_graphics();
 	gs_render_start(true);
 
-	//struct gs_vb_data *vbd = gs_vbdata_create();
-	//vbd->num = 8;
-	//vbd->points = bmemdup(cube_vertices, sizeof(cube_vertices));
-	//// Colores distintos por vértice
-	//struct vec4 cube_colors[8] = {
-	//	{1, 0, 0, 1},    // Rojo
-	//	{0, 1, 0, 1},    // Verde
-	//	{0, 0, 1, 1},    // Azul
-	//	{1, 1, 0, 1},    // Amarillo
-	//	{1, 0, 1, 1},    // Magenta
-	//	{0, 1, 1, 1},
-	//	{1, 0.5f, 0, 1} // Naranja
-	//};
 
-	//vbd->colors = bmemdup(cube_colors, sizeof(cube_colors));
-	//// Crear el vertex buffer con los 8 vértices únicos
-	//vertexbuffer = gs_vertexbuffer_create(vbd, 0);
-	//uint16_t *indices_dup = bmemdup(cube_indices, sizeof(cube_indices));
-	//indexbuffer =gs_indexbuffer_create(GS_UNSIGNED_SHORT, indices_dup, 36, 0);
 	obs_leave_graphics();
 
-	load_model_c(
-		"C:\\Users\\USER\\Downloads\\10450_Rectangular_Grass_Patch_L3.123c827d110a-1347-4381-9208-e4f735762647\\10450_Rectangular_Grass_Patch_L3.123c827d110a-1347-4381-9208-e4f735762647\\10450_Rectangular_Grass_Patch_v1_iterations-2.obj");
+	//load_model_c(
+		//"C:\\Users\\USER\\Downloads\\10450_Rectangular_Grass_Patch_L3.123c827d110a-1347-4381-9208-e4f735762647\\10450_Rectangular_Grass_Patch_L3.123c827d110a-1347-4381-9208-e4f735762647\\10450_Rectangular_Grass_Patch_v1_iterations-2.obj");
 		//"C:/Users/USER/Downloads/89-1a/tazita.obj");
 		//"C:/Users/USER/Downloads/we1nywlheigw-1/semtex.obj");
 	// Obtener la resolución del vídeo de salida
@@ -328,12 +228,31 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 	filter->rotation_x_slider_value =(float)obs_data_get_double(settings, "rotation_x_slider_value");
 	filter->rotation_y_slider_value =(float)obs_data_get_double(settings, "rotation_y_slider_value");
 	filter->rotation_z_slider_value =(float)obs_data_get_double(settings, "rotation_z_slider_value");
-
+	const char *new_model_path_c_str =obs_data_get_string(settings, "model_path");
 	// La rotación toma el valor directo del slider
 	filter->current_rotation_z_angle = filter->rotation_z_slider_value;
 	filter->current_rotation_x_angle = filter->rotation_x_slider_value;
 	filter->current_rotation_y_angle = filter->rotation_y_slider_value;
+	if (!filter->model_path_str ||
+	    strcmp(filter->model_path_str, new_model_path_c_str) != 0) {
 
+		// Liberar la ruta anterior si existe
+		bfree(filter->model_path_str);
+
+		// Duplicar la nueva ruta para almacenarla
+		filter->model_path_str = bstrdup(new_model_path_c_str);
+
+		// 3. Cargar el nuevo modelo si la ruta no está vacía
+		if (filter->model_path_str && strlen(filter->model_path_str) > 0) {
+			blog(LOG_INFO, "Cargando nuevo modelo desde: %s",filter->model_path_str);
+			// Llama a tu función para cargar el modelo 3D
+			// Debes asegurarte de que load_model_c libere cualquier modelo anterior.
+			// Pasa la ruta al cargador del modelo.
+			
+			load_model_c(filter->model_path_str);
+			
+		} 
+	}
 }
 static void cue_filter_tick(void *data, float seconds)
 {

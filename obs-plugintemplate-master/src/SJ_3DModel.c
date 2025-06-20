@@ -34,17 +34,18 @@ typedef struct {
 
 	gs_image_file_t *image; 
 	gs_texture_t *texture; 
+	 gs_effect_t *effect;
 } Mesh;
 
 
-static gs_effect_t *effect = NULL;
-static gs_image_file_t *image = NULL;
+
+
 /**
  * @brief Carga un efecto (shader) desde un archivo para su uso en el renderizado.
  * @param filename Nombre del archivo de efecto (.effect) a cargar.
  * @return `true` si el efecto se cargó correctamente, `false` en caso contrario.
  */
-bool load_effect(const char *filename)
+bool load_effect(const char *filename, Mesh* mesh)
 {
 	char *effect_path = obs_module_file(filename);
 	if (!effect_path) {
@@ -74,12 +75,12 @@ bool load_effect(const char *filename)
 	obs_enter_graphics();
 	// gs_render_start(true); // <--- ELIMINADO: Esta línea no debe estar aquí.
 
-	effect = gs_effect_create_from_file(effect_path, NULL);
+	mesh->effect = gs_effect_create_from_file(effect_path, NULL);
 	obs_leave_graphics();
 
 	bfree(effect_path);
 
-	if (!effect) {
+	if (!mesh->effect) {
 		blog(LOG_ERROR, "No se pudo cargar el efecto: %s", filename);
 		return false;
 	}
