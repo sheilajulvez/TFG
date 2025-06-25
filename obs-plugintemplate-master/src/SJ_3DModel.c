@@ -17,30 +17,10 @@
 // Inclusión de bibliotecas estándar de C.
 #include <string.h> 
 #include <assimp/types.h> 
+#include "SJ_3DModel.h"
 
 
 
-/**	
- * @brief Estructura para representar una malla (mesh) de un modelo 3D.
- *
- * Contiene los buffers de vértices e índices necesarios para el renderizado,
- * así como la información de la textura asociada.
- */
-typedef struct {
-	gs_vertbuffer_t *vb;  
-	gs_indexbuffer_t *ib; 
-	uint32_t num_indices;
-	uint32_t num_vertex;  
-
-
-	gs_texture_t *texture; 
-	 gs_effect_t *effect;
-} Mesh;
-
-// Puntero global a un array de mallas que componen el modelo cargado.
-static Mesh *g_meshes = NULL;
-// Contador del número de mallas en el array.
-static size_t g_mesh_count = 0;
 static void free_single_mesh(Mesh *mesh)
 {
 	if (!mesh)
@@ -69,7 +49,7 @@ static void free_single_mesh(Mesh *mesh)
 	obs_leave_graphics();
 }
 // --- Función ÚNICA para borrar g_meshes y g_mesh_count ---
-void cleanup_global_meshes(void)
+void cleanup_global_meshes(Mesh *g_meshes,size_t g_mesh_count)
 {
 	if (!g_meshes) {
 		blog(LOG_INFO, "No hay mallas globales para liberar.");
@@ -152,7 +132,7 @@ bool load_effect(const char *filename, Mesh* mesh)
  * @param path Ruta al archivo del modelo 3D.
  * @return `true` si el modelo se cargó correctamente, `false` en caso contrario.
  */
-bool load_model_c(const char *path)
+bool load_model_c(const char *path, Mesh * g_meshes, size_t g_mesh_count)
 {
 	// Importa el archivo del modelo usando Assimp.
 	// `aiProcess_Triangulate`: Convierte todas las primitivas a triángulos.
@@ -170,7 +150,7 @@ bool load_model_c(const char *path)
 
 	// Si ya hay un modelo cargado (g_meshes no es nulo), se liberan sus recursos.
 	if (g_meshes) {
-		cleanup_global_meshes();
+		cleanup_global_meshes(g_meshes,g_mesh_count);
 	}
 
 	// Asigna memoria para el nuevo conjunto de mallas del modelo.
@@ -387,7 +367,7 @@ bool load_model_c(const char *path)
  *
  * Esta función debe ser llamada en cada fotograma dentro del ciclo de renderizado de OBS.
  */
-void render_model_c()
+void render_model_c(Mesh *g_meshes, size_t g_mesh_count)
 {
 	/*if (!g_meshes[0].texture)
 		render_model_c_NoTexture;*/
@@ -434,7 +414,7 @@ void render_model_c()
 
 
 
-void render_model_c_NoTexture()
+void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count)
 {
 	// Obtener el efecto sólido base de OBS.
 	gs_effect_t *solid_effect = obs_get_base_effect(OBS_EFFECT_SOLID);

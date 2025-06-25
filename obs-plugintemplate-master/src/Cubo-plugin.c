@@ -13,8 +13,6 @@
 
 
 
-
-
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("cube", "en-US")
 
@@ -38,6 +36,10 @@ struct cube_filter_data {
 	float current_rotation_z_angle; 
 	float current_rotation_x_angle;
 	float current_rotation_y_angle;
+	// Puntero global a un array de mallas que componen el modelo cargado.
+	struct Mesh *g_meshes;
+	// Contador del número de mallas en el array.
+	size_t g_mesh_count;
 
 	//gs_texrender_t *texrender; //  Usa esto en su lugar
 };
@@ -104,6 +106,9 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 {
 	struct cube_filter_data *data =bzalloc(sizeof(struct cube_filter_data));
 	data->source = source;
+	data->g_meshes = NULL;
+	data->g_mesh_count = 0;
+		
 	
 	obs_enter_graphics();
 	gs_render_start(true);
@@ -131,7 +136,8 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 
 static void cube_filter_destroy(void *data)
 {
-	 cleanup_global_meshes();
+	struct cube_filter_data *filter = (struct cube_filter_data *)data;
+	 cleanup_global_meshes(filter->g_meshes,filter->g_mesh_count);
 }
 
 static void cube_filter_render(void *data, gs_effect_t *effect1)
@@ -141,6 +147,9 @@ static void cube_filter_render(void *data, gs_effect_t *effect1)
 	// Obtener el efecto base por defecto
 	gs_effect_t* effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 	obs_enter_graphics();
+	obs_source_t *target = obs_filter_get_target(filter->source);
+	if (target)
+		obs_source_video_render(target);
 	if (effect) {
 		gs_blend_state_push();
 		gs_reset_blend_state();
@@ -207,7 +216,7 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 		if (filter->model_path_str && strlen(filter->model_path_str) > 0) {
 			blog(LOG_INFO, "Cargando nuevo modelo desde: %s",filter->model_path_str);
 			
-			load_model_c(filter->model_path_str);
+			load_model_c(filter->model_path_str,filter->g_meshes,filter->g_mesh_count);
 			
 		} 
 	}
@@ -254,7 +263,7 @@ static void cue_filter_tick(void *data, float seconds)
 	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,filter->current_rotation_x_angle * (float)M_PI /180.0f); 
 	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,filter->current_rotation_y_angle * (float)M_PI /180.0f); 
 	gs_matrix_scale3f(filter->scale, filter->scale, filter->scale);
-	render_model_c();
+	render_model_c(filter->g_meshes,filter->g_mesh_count);
 	gs_matrix_pop();
 	gs_set_render_target(prev_render_target, prev_zstencil_target);
 
@@ -269,15 +278,15 @@ static void cue_filter_tick(void *data, float seconds)
 
 static struct obs_source_info cube_filter = {
 	.id = "cube_filter",
-	.type = OBS_SOURCE_TYPE_INPUT,
+	.type = OBS_SOURCE_TYPE_FILTER,
 	.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_CUSTOM_DRAW,
 	.get_name = cube_filter_get_name,
 	.create = cube_filter_create,
 	.destroy = cube_filter_destroy,
 	.video_render = cube_filter_render,
 	.video_tick = cue_filter_tick,
-	.get_width = cube_source_get_width,
-	.get_height = cube_source_get_height,
+	/*.get_width = cube_source_get_width,
+	.get_height = cube_source_get_height,*/
 	.get_properties = cube_filter_properties,
 	.update = cube_filter_update,
 	
