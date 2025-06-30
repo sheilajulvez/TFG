@@ -18,6 +18,6 @@ typedef struct {
 	gs_effect_t *effect;
 } Mesh;
 // Declara tus funciones y tipos públicos:
-bool load_model_c(const char *path, Mesh* g_meshes, size_t g_mesh_count);
-void render_model_c(Mesh* g_meshes, size_t g_mesh_count);
-void cleanup_global_meshes(Mesh * g_meshes, size_t g_mesh_count);
+bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count);
+void render_model_c(Mesh *g_meshes, size_t g_mesh_count);
+void cleanup_global_meshes(Mesh **g_meshes, size_t *g_mesh_count);
