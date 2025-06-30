@@ -34,14 +34,8 @@ static void free_single_mesh(Mesh *mesh)
 		gs_texture_destroy(mesh->texture);
 		mesh->texture = NULL;
 	}
-	// ¡Asegúrate de liberar aquí tus otras texturas si las tienes!
-	// if (mesh->normal_texture) { gs_texture_destroy(mesh->normal_texture); mesh->normal_texture = NULL; }
-	// if (mesh->specular_texture) { gs_texture_destroy(mesh->specular_texture); mesh->specular_texture = NULL; }
+	
 
-	/*if (mesh->effect) {
-	gs_effect_destroy(mesh->effect);
-		mesh->effect = NULL;
-	}*/
 	obs_leave_graphics();
 }
 // --- Función ÚNICA para borrar g_meshes y g_mesh_count ---
@@ -64,51 +58,7 @@ void cleanup_global_meshes(Mesh **g_meshes, size_t *g_mesh_count)
 	blog(LOG_INFO, "Mallas globales liberadas exitosamente.");
 }
 
-/**
- * @brief Carga un efecto (shader) desde un archivo para su uso en el renderizado.
- * @param filename Nombre del archivo de efecto (.effect) a cargar.
- * @return `true` si el efecto se cargó correctamente, `false` en caso contrario.
- */
-bool load_effect(const char *filename, Mesh *mesh)
-{
-	char *effect_path = obs_module_file(filename);
-	if (!effect_path) {
-		blog(LOG_ERROR, "No se pudo construir la ruta del efecto: %s",
-		     filename);
-		return false;
-	}
 
-	blog(LOG_INFO, "Intentando cargar efecto desde: %s", effect_path);
-
-	// --- PRUEBA CON FOPEN PARA VERIFICAR LA EXISTENCIA DEL ARCHIVO ---
-	FILE *file = fopen(effect_path, "r");
-	if (file) {
-		blog(LOG_INFO,
-		     "DEBUG: El archivo de efecto '%s' FUE ENCONTRADO en la ruta especificada.",
-		     filename);
-		fclose(file); // Cierra el archivo inmediatamente
-	} else {
-		blog(LOG_ERROR,
-		     "DEBUG: El archivo de efecto '%s' NO FUE ENCONTRADO o no se pudo abrir en la ruta: %s",
-		     filename, effect_path);
-		bfree(effect_path); // Libera la memoria incluso si fopen falla
-		return false; // Si el archivo no se encuentra con fopen, no tiene sentido intentar cargarlo con gs_effect_create_from_file
-	}
-
-	obs_enter_graphics();
-
-	mesh->effect = gs_effect_create_from_file(effect_path, NULL);
-	obs_leave_graphics();
-
-	bfree(effect_path);
-
-	if (!mesh->effect) {
-		blog(LOG_ERROR, "No se pudo cargar el efecto: %s", filename);
-		return false;
-	}
-
-	return true;
-}
 
 /**
  * @brief Carga un modelo 3D desde un archivo utilizando Assimp.
@@ -125,9 +75,7 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count)
 	// `aiProcess_Triangulate`: Convierte todas las primitivas a triángulos.
 	// `aiProcess_FlipUVs`: Invierte las coordenadas de textura en el eje Y.
 	// `aiProcess_CalcTangentSpace`: Calcula las tangentes y bitangentes si no existen.
-	const struct aiScene *scene =
-		aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs |
-					   aiProcess_CalcTangentSpace);
+	const struct aiScene *scene =aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs |aiProcess_CalcTangentSpace);
 
 	// Verifica si la importación falló.
 	if (!scene) {
@@ -148,17 +96,14 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count)
 	for (size_t m = 0; m < *g_mesh_count; m++) {
 		struct aiMesh *mesh = scene->mMeshes[m];
 		size_t vert_count = mesh->mNumVertices;
-		size_t idx_count = mesh->mNumFaces *
-				   3; // Cada cara es un triángulo (3 índices).
+		size_t idx_count = mesh->mNumFaces *3; // Cada cara es un triángulo (3 índices).
 
 		// Estructura para almacenar los datos de los vértices antes de crear el buffer de OBS.
-		struct gs_vb_data *vbd =
-			(struct gs_vb_data *)bmalloc(sizeof(struct gs_vb_data));
+		struct gs_vb_data *vbd =(struct gs_vb_data *)bmalloc(sizeof(struct gs_vb_data));
 
 		// Asigna memoria para los datos de los vértices.
 		vbd->num = vert_count;
-		vbd->points = (struct vec3 *)bmalloc(sizeof(struct vec3) *
-						     vert_count);
+		vbd->points = (struct vec3 *)bmalloc(sizeof(struct vec3) *vert_count);
 		vbd->normals = (struct vec3 *)bmalloc(sizeof(struct vec3) *
 						      vert_count);
 		vbd->tangents = (struct vec3 *)bmalloc(sizeof(struct vec3) *
@@ -259,11 +204,8 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count)
 		gs_render_start(true);
 
 		// Crea el buffer de vértices y el buffer de índices.
-		gs_vertbuffer_t *vb =
-			gs_vertexbuffer_create(vbd, GS_DUP_BUFFER);
-		gs_indexbuffer_t *ib = gs_indexbuffer_create(
-			GS_UNSIGNED_LONG, indices, (uint32_t)idx_written,
-			GS_DUP_BUFFER);
+		gs_vertbuffer_t *vb =gs_vertexbuffer_create(vbd, GS_DUP_BUFFER);
+		gs_indexbuffer_t *ib = gs_indexbuffer_create(GS_UNSIGNED_LONG, indices, (uint32_t)idx_written,GS_DUP_BUFFER);
 
 		obs_leave_graphics();
 
@@ -288,8 +230,7 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count)
 		bfree(vbd);
 
 		// Procesa el material y la textura de la malla.
-		struct aiMaterial *material =
-			scene->mMaterials[mesh->mMaterialIndex];
+		struct aiMaterial *material =scene->mMaterials[mesh->mMaterialIndex];
 		// Comprueba si el material tiene una textura de tipo difuso.
 		if (material && aiGetMaterialTextureCount(
 					material, aiTextureType_DIFFUSE) > 0) {
@@ -321,36 +262,30 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count)
 				} else {
 					// Si no se encontró un separador (el modelo está en el "directorio raíz" de la búsqueda).
 					// Simplemente copia el nombre de la textura directamente, asumiendo que está en el mismo directorio.
-					strncpy(fullTexPath, texPath.data,
-						sizeof(fullTexPath) - 1);
-					fullTexPath[sizeof(fullTexPath) - 1] =
+					strncpy(fullTexPath, texPath.data,sizeof(fullTexPath) - 1);
+				fullTexPath[sizeof(fullTexPath) - 1] =
 						'\0';
 				}
 				// Cargar la imagen
 				obs_enter_graphics();
-				gs_image_file_t *image =
-					(gs_image_file_t *)bmalloc(
-						sizeof(gs_image_file_t));
+				gs_image_file_t *image =(gs_image_file_t *)bmalloc(sizeof(gs_image_file_t));
 				gs_image_file_init(image, fullTexPath);
 
 				gs_image_file_init_texture(image);
 				obs_leave_graphics();
 
 				if (image->loaded) {
-					blog(LOG_INFO, "Textura cargada: %s",
-					     fullTexPath);
-
-					(*g_meshes)[m].texture =
-						image->texture; // Guarda la textura para renderizar.
-					gs_image_file_free(
-						image); // Free internal image data
+					blog(LOG_INFO, "Textura cargada: %s",fullTexPath);
+					(*g_meshes)[m].texture =image->texture; // Guarda la textura para renderizar.
+					gs_image_file_free(image); // Free internal image data
 					bfree(image); // Free the image struct
 				} else {
-					blog(LOG_WARNING,
-					     "No se pudo cargar textura: %s",
-					     fullTexPath);
-					gs_image_file_free(
-						image); // Free internal image data
+					if (image->texture) {
+						gs_texture_destroy(image->texture);
+						image->texture = NULL;
+					}
+					blog(LOG_WARNING,"No se pudo cargar textura: %s", fullTexPath);
+					gs_image_file_free(image); // Free internal image data
 					bfree(image); // Free the image struct
 				}
 			}

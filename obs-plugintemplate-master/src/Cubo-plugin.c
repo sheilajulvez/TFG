@@ -126,6 +126,7 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 
 static void cube_filter_destroy(void *data)
 {
+	blog(LOG_WARNING, "CERRANDO");
 	struct cube_filter_data *filter = (struct cube_filter_data *)data;
 	cleanup_global_meshes(&filter->g_meshes, &filter->g_mesh_count);
 	obs_enter_graphics();
@@ -145,8 +146,7 @@ static void cube_filter_render(void *data, gs_effect_t *effect1)
 	struct cube_filter_data *filter = (struct cube_filter_data *)data;
 
 	obs_source_t *target = obs_filter_get_target(filter->source);
-	if (target)
-		obs_source_video_render(target);
+	if (target)obs_source_video_render(target);
 
 	gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 
@@ -202,12 +202,12 @@ static obs_properties_t *cube_filter_properties(void *data)
 static void cube_filter_update(void *data, obs_data_t *settings)
 {
 	struct cube_filter_data *filter = data;
-	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'scale': %f",
+	/*blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'scale': %f",
 	     obs_data_get_double(settings, "scale"));
 	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'posx': %f",
 	     obs_data_get_double(settings, "pos_x"));
 	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'pos_y': %f",
-	     obs_data_get_double(settings, "`pos_y"));
+	     obs_data_get_double(settings, "`pos_y"));*/
 	filter->pos_x = (float)obs_data_get_double(settings, "pos_x");
 	filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
 	filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
