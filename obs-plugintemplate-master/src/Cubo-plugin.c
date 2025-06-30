@@ -49,6 +49,8 @@ struct cube_filter_data {
 	size_t g_mesh_count;
 };
 
+
+
 static uint32_t cube_source_get_width(void *data)
 {
 	struct cube_filter_data *filter = data;
@@ -178,7 +180,7 @@ static obs_properties_t *cube_filter_properties(void *data)
 					obs_module_text("Posición Z"), -3000.0f,
 					3000.0f, 10.0f);
 	obs_properties_add_float_slider(
-		props, "scale", obs_module_text("Escala"), 0.01f, 1000, 0.01f);
+		props, "scale", obs_module_text("Escala"), 100.01f, 1000, 100.01f);
 	obs_properties_add_float_slider(props, "rotation_z_slider_value",
 					obs_module_text("Rotación Z (Grados)"),
 					-360.0f, 360.0f, 1.0f);
@@ -200,7 +202,12 @@ static obs_properties_t *cube_filter_properties(void *data)
 static void cube_filter_update(void *data, obs_data_t *settings)
 {
 	struct cube_filter_data *filter = data;
-
+	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'scale': %f",
+	     obs_data_get_double(settings, "scale"));
+	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'posx': %f",
+	     obs_data_get_double(settings, "pos_x"));
+	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'pos_y': %f",
+	     obs_data_get_double(settings, "`pos_y"));
 	filter->pos_x = (float)obs_data_get_double(settings, "pos_x");
 	filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
 	filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
@@ -219,7 +226,8 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 	filter->current_rotation_y_angle = filter->rotation_y_slider_value;
 
 	if (!filter->model_path_str ||
-	    strcmp(filter->model_path_str, new_model_path_c_str) != 0) {
+	    strcmp(filter->model_path_str, new_model_path_c_str) != 0 ||
+	    filter->g_mesh_count == 0) {
 		bfree(filter->model_path_str);
 		filter->model_path_str = bstrdup(new_model_path_c_str);
 
@@ -233,7 +241,7 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 	}
 }
 
-static void cue_filter_tick(void *data, float seconds)
+static void cube_filter_tick(void *data, float seconds)
 {
 	struct cube_filter_data *filter = data;
 	struct obs_video_info video_info;
@@ -267,6 +275,12 @@ static void cue_filter_tick(void *data, float seconds)
 		 (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
 	gs_matrix_push();
 	gs_matrix_identity();
+	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'scale': %f",
+	     filter->scale);
+	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'posx': %f",
+	     filter->pos_x);
+	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'pos_y': %f",
+	     filter->pos_y);
 	gs_matrix_translate3f(filter->pos_x, filter->pos_y, filter->pos_z);
 	gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,
 			  filter->current_rotation_z_angle * (float)M_PI /
@@ -289,6 +303,73 @@ static void cue_filter_tick(void *data, float seconds)
 	obs_leave_graphics();
 }
 
+
+
+static void cube_filter_save(void *data, obs_data_t *settings)
+{
+	struct cube_filter_data *filter = data;
+	blog(LOG_INFO, "[CUBE] Guardando valores");
+	obs_data_set_double(settings, "pos_x", filter->pos_x);
+	obs_data_set_double(settings, "pos_y", filter->pos_y);
+	obs_data_set_double(settings, "pos_z", filter->pos_z);
+	obs_data_set_double(settings, "scale", filter->scale);
+	obs_data_set_double(settings, "rotation_x_slider_value",
+			    filter->rotation_x_slider_value);
+	obs_data_set_double(settings, "rotation_y_slider_value",
+			    filter->rotation_y_slider_value);
+	obs_data_set_double(settings, "rotation_z_slider_value",
+			    filter->rotation_z_slider_value);
+
+	if (filter->model_path_str != NULL)
+		obs_data_set_string(settings, "model_path",
+				    filter->model_path_str);
+	blog(LOG_INFO, "[CUBE] Valor recibido para 'scale': %f",
+	     obs_data_get_double(settings, "scale"));
+	blog(LOG_INFO, "[CUBE] Valor recibido para 'posx': %f",
+	     obs_data_get_double(settings, "pos_x"));
+	blog(LOG_INFO, "[CUBE] Valor recibido para 'pos_y': %f",
+	     obs_data_get_double(settings, "`pos_y"));
+
+}
+void cube_filter_load(void *data, obs_data_t *settings)
+{
+	struct cube_filter_data *filter = data;
+	blog(LOG_INFO, "[CUBE] Cargando valores");
+
+	filter->pos_x = (float)obs_data_get_double(settings, "pos_x");
+	filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
+	filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
+	filter->scale = (float)obs_data_get_double(settings, "scale");
+
+	filter->rotation_x_slider_value =
+		(float)obs_data_get_double(settings, "rotation_x_slider_value");
+	filter->rotation_y_slider_value =
+		(float)obs_data_get_double(settings, "rotation_y_slider_value");
+	filter->rotation_z_slider_value =
+		(float)obs_data_get_double(settings, "rotation_z_slider_value");
+
+	const char *model_path = obs_data_get_string(settings, "model_path");
+	if (model_path && *model_path != '\0') {
+		filter->model_path_str = bstrdup(model_path);
+	}
+	cube_filter_update(data, settings);
+
+	blog(LOG_INFO, "[CUBE] Valor cargado para 'scale': %f", filter->scale);
+	blog(LOG_INFO, "[CUBE] Valor cargado para 'pos_x': %f", filter->pos_x);
+	blog(LOG_INFO, "[CUBE] Valor cargado para 'pos_y': %f", filter->pos_y);
+}
+static void cube_filter_defaults(obs_data_t *settings)
+{
+	obs_data_set_default_double(settings, "pos_x", 0.0);
+	obs_data_set_default_double(settings, "pos_y", 0.0);
+	obs_data_set_default_double(settings, "pos_z", 0.0);
+	obs_data_set_default_double(settings, "scale", 100.0);
+	obs_data_set_default_double(settings, "rotation_x_slider_value", 0.0);
+	obs_data_set_default_double(settings, "rotation_y_slider_value", 0.0);
+	obs_data_set_default_double(settings, "rotation_z_slider_value", 0.0);
+	obs_data_set_default_string(settings, "model_path", "");
+}
+
 static struct obs_source_info cube_filter = {
 	.id = "cube_filter",
 	.type = OBS_SOURCE_TYPE_FILTER,
@@ -297,11 +378,13 @@ static struct obs_source_info cube_filter = {
 	.create = cube_filter_create,
 	.destroy = cube_filter_destroy,
 	.video_render = cube_filter_render,
-	.video_tick = cue_filter_tick,
+	.video_tick = cube_filter_tick,
 	.get_properties = cube_filter_properties,
 	.update = cube_filter_update,
+	.save = cube_filter_save,
+	.get_defaults = cube_filter_defaults,
+	.load=cube_filter_load
 };
-
 bool obs_module_load(void)
 {
 	blog(LOG_INFO, "[CUBE] Registrando filtro");
