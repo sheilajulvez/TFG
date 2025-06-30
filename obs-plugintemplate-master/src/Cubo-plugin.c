@@ -26,7 +26,7 @@ OBS_MODULE_USE_DEFAULT_LOCALE("cube", "en-US")
 
 MODULE_EXPORT const char *obs_module_description(void)
 {
-	return "PLANO";
+	return "SJ_3D";
 }
 
 struct cube_filter_data {
@@ -101,7 +101,7 @@ void create_whiteboard_texture(struct cube_filter_data *data)
 static const char *cube_filter_get_name(void *unused)
 {
 	UNUSED_PARAMETER(unused);
-	return "Cubo 3D (Índices y UV, sin textura)";
+	return "SJ_3D";
 }
 
 static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
@@ -275,12 +275,7 @@ static void cube_filter_tick(void *data, float seconds)
 		 (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
 	gs_matrix_push();
 	gs_matrix_identity();
-	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'scale': %f",
-	     filter->scale);
-	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'posx': %f",
-	     filter->pos_x);
-	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'pos_y': %f",
-	     filter->pos_y);
+	
 	gs_matrix_translate3f(filter->pos_x, filter->pos_y, filter->pos_z);
 	gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,
 			  filter->current_rotation_z_angle * (float)M_PI /
@@ -323,13 +318,7 @@ static void cube_filter_save(void *data, obs_data_t *settings)
 	if (filter->model_path_str != NULL)
 		obs_data_set_string(settings, "model_path",
 				    filter->model_path_str);
-	blog(LOG_INFO, "[CUBE] Valor recibido para 'scale': %f",
-	     obs_data_get_double(settings, "scale"));
-	blog(LOG_INFO, "[CUBE] Valor recibido para 'posx': %f",
-	     obs_data_get_double(settings, "pos_x"));
-	blog(LOG_INFO, "[CUBE] Valor recibido para 'pos_y': %f",
-	     obs_data_get_double(settings, "`pos_y"));
-
+	
 }
 void cube_filter_load(void *data, obs_data_t *settings)
 {
@@ -354,9 +343,6 @@ void cube_filter_load(void *data, obs_data_t *settings)
 	}
 	cube_filter_update(data, settings);
 
-	blog(LOG_INFO, "[CUBE] Valor cargado para 'scale': %f", filter->scale);
-	blog(LOG_INFO, "[CUBE] Valor cargado para 'pos_x': %f", filter->pos_x);
-	blog(LOG_INFO, "[CUBE] Valor cargado para 'pos_y': %f", filter->pos_y);
 }
 static void cube_filter_defaults(obs_data_t *settings)
 {

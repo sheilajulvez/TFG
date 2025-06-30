@@ -15,7 +15,7 @@ typedef struct {
 	uint32_t num_vertex;
 
 	gs_texture_t *texture;
-	gs_effect_t *effect;
+
 } Mesh;
 // Declara tus funciones y tipos públicos:
 bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count);

@@ -24,15 +24,15 @@ link_directories   ("${CMAKE_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/libob
 find_package(libobs REQUIRED)
 find_package(OpenGL REQUIRED)
 
-if(ENABLE_FRONTEND_API)
+if(ENABLE_FRONTEND_API )
     find_package(obs-frontend-api REQUIRED)
 endif()
 
 if(ENABLE_QT)
-    list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/.deps/obs-deps-qt6-2024-09-12-x64")
+    list(APPEND CMAKE_PREFIX_PATH  "${CMAKE_SOURCE_DIR}/.deps/obs-deps-qt6-2024-09-12-x64")
     find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets)
     set_target_properties(${_name} PROPERTIES
-        AUTOMOC ON
+        AUTOMOC ON 
         AUTOUIC ON
         AUTORCC ON
     )
