@@ -17,11 +17,12 @@
 #include <assimp/types.h>
 #include "SJ_3DModel.h"
 
-static void free_single_mesh(Mesh *mesh)
+static void free_single_mesh(Mesh *mesh, gs_texture_t *user_texture_to_exclude) // <-- Nuevo parámetro
 {
-	if (!mesh)
-		return;
+	if (!mesh) return;
+
 	obs_enter_graphics();
+
 	if (mesh->vb) {
 		gs_vertexbuffer_destroy(mesh->vb);
 		mesh->vb = NULL;
@@ -30,32 +31,44 @@ static void free_single_mesh(Mesh *mesh)
 		gs_indexbuffer_destroy(mesh->ib);
 		mesh->ib = NULL;
 	}
-	if (mesh->texture) {
+
+    // ¡La parte crucial!
+    // Solo destruye la textura de la malla si NO es la textura que el usuario ha seleccionado.
+    // Si mesh->texture es igual a user_texture_to_exclude, significa que es la textura compartida,
+    // y esa debe ser destruida solo una vez por el filtro (en cube_filter_destroy).
+	if (mesh->texture && mesh->texture != user_texture_to_exclude) {
 		gs_texture_destroy(mesh->texture);
 		mesh->texture = NULL;
-	}
-	
+	} else if (mesh->texture == user_texture_to_exclude) {
+        // Si la textura de la malla es la textura del usuario,
+        // simplemente anula el puntero para que esta malla no intente destruirla.
+        // La instancia real de la textura será destruida por el filtro más tarde.
+        mesh->texture = NULL;
+    }
+    // Si mesh->texture es NULL, no hacemos nada.
 
 	obs_leave_graphics();
 }
 // --- Función ÚNICA para borrar g_meshes y g_mesh_count ---
-void cleanup_global_meshes(Mesh **g_meshes, size_t *g_mesh_count)
+// IMPORTANT: This function now requires the shared user texture pointer
+// to correctly manage memory and avoid double-frees.
+void cleanup_global_meshes(Mesh **g_meshes, size_t *g_mesh_count, gs_texture_t *user_texture_to_exclude)
 {
-	if (!*g_meshes) { // Comprueba el puntero desreferenciado
-		blog(LOG_INFO, "No hay mallas globales para liberar.");
+	if (!*g_meshes) { // Check the dereferenced pointer
+		blog(LOG_INFO, "No global meshes to free.");
 		return;
 	}
-	blog(LOG_INFO, "Liberando %zu mallas globales.", *g_mesh_count);
+	blog(LOG_INFO, "Freeing %zu global meshes.", *g_mesh_count);
 	for (size_t i = 0; i < *g_mesh_count; ++i) {
-		blog(LOG_INFO, "Liberando malla numerp%d.", i);
-		free_single_mesh(&(
-			*g_meshes)[i]); // Desreferencia g_meshes para acceder a los elementos
+		blog(LOG_INFO, "Freeing mesh number %zu.", i); // Use %zu for size_t
+		// Pass the shared user texture to free_single_mesh
+		free_single_mesh(&(*g_meshes)[i], user_texture_to_exclude);
 	}
 	bfree(*g_meshes);
 	*g_meshes = NULL;
 	*g_mesh_count = 0;
 
-	blog(LOG_INFO, "Mallas globales liberadas exitosamente.");
+	blog(LOG_INFO, "Global meshes freed successfully.");
 }
 
 
@@ -85,7 +98,7 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count)
 
 	// Si ya hay un modelo cargado (g_meshes no es nulo), se liberan sus recursos.
 	if (*g_meshes) {
-		cleanup_global_meshes(g_meshes, g_mesh_count);
+		cleanup_global_meshes(g_meshes, g_mesh_count, NULL);
 	}
 
 	// Asigna memoria para el nuevo conjunto de mallas del modelo.

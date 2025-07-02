@@ -47,6 +47,7 @@ struct cube_filter_data {
 	float current_rotation_x_angle;
 	float current_rotation_y_angle;
 	struct Mesh *g_meshes;
+	gs_texture_t *loaded_texture;
 	size_t g_mesh_count;
 };
 
@@ -158,7 +159,7 @@ static void cube_filter_destroy(void *data)
 {
 	blog(LOG_WARNING, "CERRANDO");
 	struct cube_filter_data *filter = (struct cube_filter_data *)data;
-	cleanup_global_meshes(&filter->g_meshes, &filter->g_mesh_count);
+	cleanup_global_meshes(&filter->g_meshes, &filter->g_mesh_count,filter->loaded_texture );
 	obs_enter_graphics();
 	if (filter->texture) {
 		gs_texture_destroy(filter->texture);
@@ -280,9 +281,9 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 		bfree(filter->texture_path_str);
 		filter->texture_path_str = bstrdup(new_texture_path_c_str);
 
-		gs_texture_t *text = load_texture_file(filter->texture_path_str);
-		if (text) {
-			apply_texture_to_all_meshes(filter->g_meshes,filter->g_mesh_count,text);
+		filter->loaded_texture = load_texture_file(filter->texture_path_str);
+		if (filter->loaded_texture) {
+			apply_texture_to_all_meshes(filter->g_meshes,filter->g_mesh_count,filter->loaded_texture );
 		}
 
 	}

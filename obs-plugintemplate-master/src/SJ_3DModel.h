@@ -20,5 +20,5 @@ typedef struct {
 // Declara tus funciones y tipos públicos:
 bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count);
 void render_model_c(Mesh *g_meshes, size_t g_mesh_count);
-void cleanup_global_meshes(Mesh **g_meshes, size_t *g_mesh_count);
+void cleanup_global_meshes(Mesh **g_meshes, size_t *g_mesh_count,gs_texture_t *user_texture_to_exclude);
 void apply_texture_to_all_meshes(Mesh *g_meshes, size_t g_mesh_count, gs_texture_t *new_texture);
