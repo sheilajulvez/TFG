@@ -275,18 +275,41 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 				     &filter->g_mesh_count);
 		}
 	}
-	if (!filter->texture_path_str ||
-	    strcmp(filter->texture_path_str, new_texture_path_c_str) != 0) {
+	if (!filter->texture_path_str || strcmp(filter->texture_path_str, new_texture_path_c_str) != 0 &&filter->g_meshes ) {
 
+		// 1. Liberar la ruta de la textura ALMACENADA ANTERIORMENTE
 		bfree(filter->texture_path_str);
+		// 2. Duplicar la NUEVA ruta para guardarla en el filtro
 		filter->texture_path_str = bstrdup(new_texture_path_c_str);
 
-		filter->loaded_texture = load_texture_file(filter->texture_path_str);
+		// 3. ¡PASO CRÍTICO! Destruir la TEXTURA ANTERIOR cargada en 'filter->loaded_texture'
+		// Esto evita la fuga de memoria al cargar una nueva.
 		if (filter->loaded_texture) {
-			apply_texture_to_all_meshes(filter->g_meshes,filter->g_mesh_count,filter->loaded_texture );
+			obs_enter_graphics(); // Entrar al contexto de gráficos para operar con texturas
+			gs_texture_destroy(filter->loaded_texture);
+			filter->loaded_texture =NULL; // Importante: poner a NULL después de destruir para evitar punteros colgantes
+			obs_leave_graphics(); // Salir del contexto de gráficos
 		}
 
+		// 4. Cargar la NUEVA textura si la ruta no está vacía
+		if (filter->texture_path_str &&strlen(filter->texture_path_str) > 0) {
+			// Asumo que 'load_texture_file' es tu función para cargar gs_texture_t* desde una ruta
+			filter->loaded_texture =load_texture_file(filter->texture_path_str);
+			if (filter->loaded_texture) {
+				blog(LOG_INFO, "Nueva textura cargada desde: %s", filter->texture_path_str);
+				apply_texture_to_all_meshes(filter->g_meshes, filter->g_mesh_count,filter->loaded_texture);
+			} else {
+				blog(LOG_WARNING, "No se pudo cargar la nueva textura desde: %s",filter->texture_path_str);
+			}
+		} else {
+			// Si la ruta está vacía, no hay textura para cargar (filter->loaded_texture ya es NULL)
+			blog(LOG_INFO,"Ruta de textura vacía. Se eliminará la textura de las mallas.");
+		}
 	}
+
+	
+		
+	
 }
 
 static void cube_filter_tick(void *data, float seconds)
