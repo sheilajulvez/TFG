@@ -38,6 +38,7 @@ struct cube_filter_data {
 	float pos_y;
 	float pos_z;
 	char *model_path_str;
+	char *texture_path_str;
 	float scale;
 	float rotation_y_slider_value;
 	float rotation_x_slider_value;
@@ -61,6 +62,35 @@ static uint32_t cube_source_get_height(void *data)
 {
 	struct cube_filter_data *filter = data;
 	return filter->height;
+}
+static gs_texture_t *load_texture_file(const char *path)
+{
+	if (!path || strlen(path) == 0) {
+		return NULL;
+	}
+
+	obs_enter_graphics();
+	gs_image_file_t image;
+	gs_image_file_init(&image, path);
+	gs_image_file_init_texture(&image);
+	obs_leave_graphics();
+
+	if (image.loaded) {
+		blog(LOG_INFO, "Textura de usuario cargada: %s", path);
+		gs_texture_t *new_texture = image.texture;
+		gs_image_file_free(
+			&image); // Libera los datos internos de la imagen, no la textura
+		return new_texture;
+	} else {
+		if (image.texture) { // Si hubo un intento de crear la textura pero falló la carga
+			gs_texture_destroy(image.texture);
+		}
+		blog(LOG_WARNING, "No se pudo cargar la textura de usuario: %s",
+		     path);
+		gs_image_file_free(
+			&image); // Asegúrate de liberar la estructura de imagen
+		return NULL;
+	}
 }
 
 void image_source_load(gs_image_file_t *image, const char *file)
@@ -180,7 +210,7 @@ static obs_properties_t *cube_filter_properties(void *data)
 					obs_module_text("Posición Z"), -3000.0f,
 					3000.0f, 10.0f);
 	obs_properties_add_float_slider(
-		props, "scale", obs_module_text("Escala"), 100.01f, 1000, 100.01f);
+		props, "scale", obs_module_text("Escala"), 1, 1000, 1);
 	obs_properties_add_float_slider(props, "rotation_z_slider_value",
 					obs_module_text("Rotación Z (Grados)"),
 					-360.0f, 360.0f, 1.0f);
@@ -193,8 +223,13 @@ static obs_properties_t *cube_filter_properties(void *data)
 	obs_properties_add_path(
 		props, "model_path", obs_module_text("Ruta del Modelo 3D"),
 		OBS_PATH_FILE,
-		"Modelos 3D (*.obj *.fbx *.dae *.gltf);;Todos los archivos (*.*)",
+		"Modelos 3D (*.obj *.dae *.gltf *.blend);;Todos los archivos (*.*)",
 		NULL);
+	 obs_properties_add_path(
+        props, "texture_path", obs_module_text("Ruta de la Textura (Opcional)"),
+        OBS_PATH_FILE,
+        "Archivos de Imagen (*.png *.jpg *.jpeg *.bmp *.tga);;Todos los archivos (*.*)",
+        NULL);
 
 	return props;
 }
@@ -224,7 +259,7 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 	filter->current_rotation_z_angle = filter->rotation_z_slider_value;
 	filter->current_rotation_x_angle = filter->rotation_x_slider_value;
 	filter->current_rotation_y_angle = filter->rotation_y_slider_value;
-
+	 const char *new_texture_path_c_str = obs_data_get_string(settings, "texture_path"); 
 	if (!filter->model_path_str ||
 	    strcmp(filter->model_path_str, new_model_path_c_str) != 0 ||
 	    filter->g_mesh_count == 0) {
@@ -238,6 +273,18 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 			load_model_c(filter->model_path_str, &filter->g_meshes,
 				     &filter->g_mesh_count);
 		}
+	}
+	if (!filter->texture_path_str ||
+	    strcmp(filter->texture_path_str, new_texture_path_c_str) != 0) {
+
+		bfree(filter->texture_path_str);
+		filter->texture_path_str = bstrdup(new_texture_path_c_str);
+
+		gs_texture_t *text = load_texture_file(filter->texture_path_str);
+		if (text) {
+			apply_texture_to_all_meshes(filter->g_meshes,filter->g_mesh_count,text);
+		}
+
 	}
 }
 

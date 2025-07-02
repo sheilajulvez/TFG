@@ -63,6 +63,7 @@ target_link_libraries(${_name} PRIVATE
     # Assimp: rutas absolutas por configuración
     $<$<CONFIG:Debug>:${ASSIMP_DIR}/lib/Debug/assimp-vc143-mtd.lib>
     $<$<CONFIG:Release>:${ASSIMP_DIR}/lib/Release/assimp-vc143-mt.lib>
+
 )
 
 # ==== Incluir headers de OBS (obs-module.h, obs.h, etc.) ====

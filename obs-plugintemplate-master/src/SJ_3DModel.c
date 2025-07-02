@@ -300,56 +300,6 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count)
 	blog(LOG_INFO, "Modelo cargado con %zu mallas", *g_mesh_count);
 	return true;
 }
-
-/**
- * @brief Renderiza todas las mallas del modelo cargado.
- *
- * Esta función debe ser llamada en cada fotograma dentro del ciclo de renderizado de OBS.
- */
-void render_model_c(Mesh *g_meshes, size_t g_mesh_count)
-{
-	/*if (!g_meshes[0].texture)
-		render_model_c_NoTexture;*/
-	gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-
-	if (!default_effect) {
-		return;
-	}
-
-	gs_eparam_t *image_param =
-		gs_effect_get_param_by_name(default_effect, "image");
-	if (!image_param) {
-		return;
-	}
-
-	gs_technique_t *tech = gs_effect_get_technique(default_effect, "Draw");
-
-	gs_technique_begin(tech);
-	gs_technique_begin_pass(tech, 0);
-
-	for (size_t i = 0; i < g_mesh_count; i++) {
-		;
-
-		if (!g_meshes[i].texture) {
-			blog(LOG_ERROR,
-			     "DEBUG: image_param es NULL antes de set_texture!");
-		} else {
-			gs_effect_set_texture(image_param, g_meshes[i].texture);
-			blog(LOG_INFO, "DEBUG: image_param es válido.");
-		}
-		if (!g_meshes[i].vb || !g_meshes[i].ib || !g_meshes[i].texture)
-			continue;
-
-		gs_load_vertexbuffer(g_meshes[i].vb);
-		gs_load_indexbuffer(g_meshes[i].ib);
-
-		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
-	}
-
-	gs_technique_end_pass(tech);
-	gs_technique_end(tech);
-}
-
 void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count)
 {
 	// Obtener el efecto sólido base de OBS.
@@ -381,4 +331,92 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count)
 
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
+}
+/**
+ * @brief Renderiza todas las mallas del modelo cargado.
+ *
+ * Esta función debe ser llamada en cada fotograma dentro del ciclo de renderizado de OBS.
+ */
+void render_model_c(Mesh *g_meshes, size_t g_mesh_count)
+{
+	/*if (!g_meshes[0].texture)
+		render_model_c_NoTexture;*/
+	gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+
+	if (!default_effect) {
+		return;
+	}
+
+	gs_eparam_t *image_param =
+		gs_effect_get_param_by_name(default_effect, "image");
+	if (!image_param) {
+		return;
+	}
+
+	gs_technique_t *tech = gs_effect_get_technique(default_effect, "Draw");
+
+	gs_technique_begin(tech);
+	gs_technique_begin_pass(tech, 0);
+
+	for (size_t i = 0; i < g_mesh_count; i++) {
+		
+
+		if (!g_meshes[i].texture) {
+			blog(LOG_ERROR,
+			     "DEBUG: image_param es NULL antes de set_texture!");
+
+			gs_technique_end_pass(tech);
+			gs_technique_end(tech);
+			render_model_c_NoTexture(g_meshes, g_mesh_count);
+			break;
+		} else {
+			gs_effect_set_texture(image_param, g_meshes[i].texture);
+			blog(LOG_INFO, "DEBUG: image_param es válido.");
+		}
+		if (!g_meshes[i].vb || !g_meshes[i].ib || !g_meshes[i].texture)
+			continue;
+
+		gs_load_vertexbuffer(g_meshes[i].vb);
+		gs_load_indexbuffer(g_meshes[i].ib);
+
+		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
+	}
+
+	gs_technique_end_pass(tech);
+	gs_technique_end(tech);
+}
+/**
+ * @brief Aplica una textura dada a todas las mallas del modelo 3D.
+ *
+ * Esta función itera a través de todas las mallas en el array 'g_meshes'
+ * y asigna 'new_texture' a la propiedad 'texture' de cada malla.
+ * Es crucial que 'new_texture' sea gestionada externamente (creada y destruida)
+ * y que 'free_single_mesh' esté adaptada para no destruir esta textura compartida
+ * si se asigna a múltiples mallas.
+ *
+ * @param g_meshes Puntero al array de mallas.
+ * @param g_mesh_count Número de mallas en el array.
+ * @param new_texture La textura (gs_texture_t*) que se asignará a todas las mallas.
+ * Puede ser NULL para "desaplicar" una textura y volver al estado sin textura.
+ */
+void apply_texture_to_all_meshes(Mesh *g_meshes, size_t g_mesh_count, gs_texture_t *new_texture)
+{
+    if (!g_meshes) {
+        blog(LOG_WARNING, "No hay mallas para aplicar la textura.");
+        return;
+    }
+
+    for (size_t i = 0; i < g_mesh_count; ++i) {
+        // Importante: No destruimos la textura anterior de la malla aquí.
+        // La gestión de la memoria de las texturas (ya sean las de Assimp o la 'new_texture')
+        // debe ser manejada por las funciones de limpieza (free_single_mesh y cleanup_global_meshes)
+        // para evitar "double frees" o fugas de memoria, especialmente si 'new_texture' es compartida.
+        g_meshes[i].texture = new_texture; // Asigna directamente la nueva textura a la malla
+    }
+
+    if (new_texture) {
+        blog(LOG_INFO, "Textura '%p' aplicada a todas las %zu mallas.", (void*)new_texture, g_mesh_count);
+    } else {
+        blog(LOG_INFO, "Textura eliminada de todas las %zu mallas.", g_mesh_count);
+    }
 }
