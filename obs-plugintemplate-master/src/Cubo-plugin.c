@@ -210,8 +210,8 @@ static obs_properties_t *cube_filter_properties(void *data)
 	obs_properties_add_float_slider(props, "pos_z",
 					obs_module_text("Posición Z"), -3000.0f,
 					3000.0f, 10.0f);
-	obs_properties_add_float_slider(
-		props, "scale", obs_module_text("Escala"), 1, 1000, 1);
+	obs_properties_add_float_slider(props, "scale", obs_module_text("Escala"), 0.01f, 1000, 10.01f);
+
 	obs_properties_add_float_slider(props, "rotation_z_slider_value",
 					obs_module_text("Rotación Z (Grados)"),
 					-360.0f, 360.0f, 1.0f);
