@@ -2,7 +2,21 @@
 #pragma once
 #include <stdbool.h>
 
-// Declara tus funciones y tipos públicos:
-bool load_model_c(const char *path);
-void render_model_c();
-void cleanup_global_meshes(void);
+/**	
+ * @brief Estructura para representar una malla (mesh) de un modelo 3D.
+ *
+ * Contiene los buffers de vértices e índices necesarios para el renderizado,
+ * así como la información de la textura asociada.
+ */
+typedef struct Mesh {
+	gs_vertbuffer_t *vb;
+	gs_indexbuffer_t *ib;
+	uint32_t num_indices;
+	uint32_t num_vertex;
+	gs_texture_t *texture;
+
+} Mesh;
+	 // Declara tus funciones y tipos públicos:
+bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float **mesh_widths, float **mesh_heights);
+void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float* width, float* height,float scale );
+void cleanup_global_meshes(struct Mesh **g_meshes, size_t *g_mesh_count,float **mesh_widths, float **mesh_heights);
