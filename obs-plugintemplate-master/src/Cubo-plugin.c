@@ -36,26 +36,26 @@ struct cube_filter_data {
 	gs_zstencil_t *zstencil;
 	obs_source_t *source;
 	gs_texture_t *texture;
-	float width_screen; 
+	float width_screen;
 	float height_screen;
+
 	float *model_width;
-	float * model_height;
+	float *model_height;
+	struct Mesh *g_meshes;
+	size_t g_mesh_count;
+	char *model_path_str;
+	// Parámetros de posición / escala / rotación manual
 	float pos_x;
 	float pos_y;
 	float pos_z;
-	char *model_path_str;
 	float scale;
-	float rotation_y_slider_value;
-	float rotation_x_slider_value;
-	float rotation_z_slider_value;
-	float current_rotation_z_angle;
-	float current_rotation_x_angle;
-	float current_rotation_y_angle;
-	struct Mesh *g_meshes;
-	ArucoResult last_result;
-	size_t g_mesh_count;
+	float rotation_x;
+	float rotation_y;
+	float rotation_z;
 
-
+	// Resultados del ArUco
+	ArucoDetector *detector; // 
+	ArucoResult last_result; //
 };
 
 
@@ -79,7 +79,7 @@ cube_filter_filter_video(void *data, struct obs_source_frame *frame)
 		blog(LOG_INFO,
 		     "Formato BGRA detectado, procesando directamente");
 
-		detected = process_frame_rgba(frame->data[0], frame->width,
+		detected = process_frame_rgba(filter->detector,frame->data[0], frame->width,
 					      frame->height,
 					      filter->width_screen,
 					      filter->height_screen,
@@ -110,7 +110,7 @@ cube_filter_filter_video(void *data, struct obs_source_frame *frame)
 		bgra_buffer = bmalloc(image_size);
 		convert_yuv_to_bgra_generic(frame, bgra_buffer, get_uv);
 
-		detected = process_frame_rgba(bgra_buffer, frame->width,
+		detected = process_frame_rgba(filter->detector,bgra_buffer, frame->width,
 					      frame->height,
 					      filter->width_screen,
 					      filter->height_screen,
@@ -124,9 +124,9 @@ cube_filter_filter_video(void *data, struct obs_source_frame *frame)
 		filter->pos_y = filter->last_result.screen_pos_y;
 		filter->pos_z = 0;
 
-		filter->current_rotation_x_angle = filter->last_result.euler_x;
-		filter->current_rotation_y_angle = filter->last_result.euler_y;
-		filter->current_rotation_z_angle = filter->last_result.euler_z;
+		filter->rotation_x = filter->last_result.euler_x;
+		filter->rotation_y = filter->last_result.euler_y;
+		filter->rotation_z = filter->last_result.euler_z;
 	} else {
 		filter->last_result.detected = false;
 	}
@@ -195,7 +195,9 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	data->model_width = NULL;  // 
 	data->model_height = NULL; // 
 
-	initialize_aruco_detector();
+	data->detector = initialize_aruco_detector(0.1f);
+
+
 	struct obs_video_info ovi;
 	if (obs_get_video_info(&ovi)) {
 		data->width_screen = ovi.base_width;
@@ -303,22 +305,14 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 	filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
 	filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
 	filter->scale = (float)obs_data_get_double(settings, "scale");
-	filter->rotation_x_slider_value =
-		(float)obs_data_get_double(settings, "rotation_x_slider_value");
-	filter->rotation_y_slider_value =
-		(float)obs_data_get_double(settings, "rotation_y_slider_value");
-	filter->rotation_z_slider_value =
-		(float)obs_data_get_double(settings, "rotation_z_slider_value");
-	const char *new_model_path_c_str =
-		obs_data_get_string(settings, "model_path");
+	filter->rotation_x =(float)obs_data_get_double(settings, "rotation_x_slider_value");
+	filter->rotation_y =(float)obs_data_get_double(settings, "rotation_y_slider_value");
+	filter->rotation_z =(float)obs_data_get_double(settings, "rotation_z_slider_value");
+	const char *new_model_path_c_str =obs_data_get_string(settings, "model_path");
 
-	filter->current_rotation_z_angle = filter->rotation_z_slider_value;
-	filter->current_rotation_x_angle = filter->rotation_x_slider_value;
-	filter->current_rotation_y_angle = filter->rotation_y_slider_value;
+	
 
-	if (!filter->model_path_str ||
-	    strcmp(filter->model_path_str, new_model_path_c_str) != 0 ||
-	    filter->g_mesh_count == 0) {
+	if (!filter->model_path_str || strcmp(filter->model_path_str, new_model_path_c_str) != 0 ||filter->g_mesh_count == 0) {
 		bfree(filter->model_path_str);
 		filter->model_path_str = bstrdup(new_model_path_c_str);
 
@@ -376,10 +370,11 @@ static void cube_filter_tick(void *data, float seconds)
 			);
 
 	
-	//gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, filter->current_rotation_z_angle );
-	//gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,filter->current_rotation_y_angle );
-	//gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,filter->current_rotation_x_angle );
+	/*gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, filter->rotation_x );
+	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,filter->rotation_y );
+	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,filter->rotation_z );*/
 	//gs_matrix_scale3f(filter->scale, filter->scale, filter->scale);
+	gs_matrix_scale3f(filter->scale, filter->scale, filter->scale);
 	render_model_c(filter->g_meshes, filter->g_mesh_count,filter->model_width,filter->model_height,filter->scale);
 	gs_matrix_pop();
 	gs_set_render_target(prev_render_target, prev_zstencil_target);
@@ -402,11 +397,11 @@ static void cube_filter_save(void *data, obs_data_t *settings)
 	obs_data_set_double(settings, "pos_z", filter->pos_z);
 	obs_data_set_double(settings, "scale", filter->scale);
 	obs_data_set_double(settings, "rotation_x_slider_value",
-			    filter->rotation_x_slider_value);
+			    filter->rotation_x);
 	obs_data_set_double(settings, "rotation_y_slider_value",
-			    filter->rotation_y_slider_value);
+			    filter->rotation_y);
 	obs_data_set_double(settings, "rotation_z_slider_value",
-			    filter->rotation_z_slider_value);
+			    filter->rotation_z);
 
 	if (filter->model_path_str != NULL)
 		obs_data_set_string(settings, "model_path",
@@ -423,11 +418,11 @@ void cube_filter_load(void *data, obs_data_t *settings)
 	filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
 	filter->scale = (float)obs_data_get_double(settings, "scale");
 
-	filter->rotation_x_slider_value =
+	filter->rotation_x =
 		(float)obs_data_get_double(settings, "rotation_x_slider_value");
-	filter->rotation_y_slider_value =
+	filter->rotation_y =
 		(float)obs_data_get_double(settings, "rotation_y_slider_value");
-	filter->rotation_z_slider_value =
+	filter->rotation_z =
 		(float)obs_data_get_double(settings, "rotation_z_slider_value");
 
 	const char *model_path = obs_data_get_string(settings, "model_path");

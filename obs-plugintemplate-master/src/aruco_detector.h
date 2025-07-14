@@ -1,46 +1,44 @@
 #pragma once
-
+#include <stdint.h>
 #include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/** Resultado de detección de un marcador ArUco */
+/** Parámetros y estado interno, opaque en C */
+typedef struct ArucoDetector ArucoDetector;
+
+/** Resultado de la detección */
 typedef struct {
 	bool detected;
 	int id;
 	float tvec[3];
 	float rvec[3];
 	float corners[4][2];
-	float screen_pos_x; // Centro en pantalla X
-	float screen_pos_y; // Centro en pantalla Y
-	float euler_x;      // Rotación en grados X (pitch)
-	float euler_y;      // Rotación en grados Y (yaw)
-	float euler_z;      // Rotación en grados Z (roll)
+	float screen_pos_x;
+	float screen_pos_y;
+	float euler_x;
+	float euler_y;
+	float euler_z;
 } ArucoResult;
 
 /**
- * @brief Inicializa el detector ArUco (diccionario, parámetros, cámara virtual).
+ * @brief Crea e inicializa un detector ArUco.
+ * @param marker_size_meters  Tamaño (m) de tu marcador.
+ * @return Puntero opaque (liberar con cleanup).
  */
-void initialize_aruco_detector(void);
+ArucoDetector *initialize_aruco_detector(float marker_size_meters);
+
+/** @brief Libera el detector */
+void cleanup_aruco_detector(ArucoDetector *det);
 
 /**
- * @brief Libera los recursos del detector ArUco.
+ * @brief Procesa un frame BGRA y rellena ArucoResult.
+ * @return true si detectó al menos un marcador.
  */
-void cleanup_aruco_detector(void);
-
-/**
- * @brief Procesa un frame BGRA y detecta marcadores ArUco.
- * 
- * @param frame_data   Puntero al buffer de imagen (BGRA, 8 bits)
- * @param width        Ancho del frame
- * @param height       Alto del frame
- * @param result       Puntero a la estructura donde se guarda el resultado
- * @return true si se detectó algún marcador, false si no
- */
-bool process_frame_rgba(const unsigned char *frame_data, int width, int height,
-			int filter_width, int filter_height,
+bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data,
+			int width, int height, int filter_w, int filter_h,
 			ArucoResult *result);
 
 #ifdef __cplusplus
