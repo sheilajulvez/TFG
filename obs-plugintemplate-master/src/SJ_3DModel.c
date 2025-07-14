@@ -19,6 +19,7 @@
 
 
 #include <float.h>
+float center_x = 0, center_y = 0;
 
 static void free_single_mesh(Mesh *mesh)
 {
@@ -231,7 +232,8 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float 
 		(*g_meshes)[m].texture = NULL; // Initialize to NULL
 		(*mesh_heights)[m] = max_y - min_y;
 		(*mesh_widths)[m] = max_x - min_x;
-
+		center_x = (max_x + min_x) * 0.5f;
+		center_y = (max_y + min_y) * 0.5f;
 		blog(LOG_WARNING, "MESH %zu HEIGHT: %f, WIDTH: %f", m,(*mesh_heights)[m], (*mesh_widths)[m]);
 		// Libera la memoria temporal usada para los datos de vértices e índices.
 		bfree(indices);
@@ -346,25 +348,27 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,
 
 		gs_matrix_push();
 
-		// Calcular traslación en X y Y para centrar la malla
-		float translate_x = -(widths[i] * 0.5f) * scale;
-		float translate_y = -(heights[i] * 0.5f) * scale;
+		//// Calcular traslación en X y Y para centrar la malla
+		//float translate_x = -(widths[i] * 0.5f) * scale;
+		//float translate_y = -(heights[i] * 0.5f) * scale;
+		//blog(LOG_INFO,
+		//     "Malla %zu (sin textura): Centro X = %.3f (ancho = %.3f), Centro Y = %.3f (alto = %.3f), escala = %.3f",
+		//     i, center_x, widths[i], center_y, heights[i], scale);
 
-		blog(LOG_INFO,
-			 "Malla %zu (sin textura): X = %f (ancho = %f), Y = %f (altura = %f), escala = %f",
-			 i, translate_x, widths[i], translate_y, heights[i], scale);
 
-		// Aplicar traslación para centrar
-		gs_matrix_translate3f(translate_x, translate_y, 0.0f);
 
+		//
+		//gs_matrix_translate3f(-(center_x*scale), -(center_y*scale), 0.0f);
 		// Aplicar escala
 		gs_matrix_scale3f(scale, scale, scale);
-		
+		// Aplicar traslación para centrar
+	
+
 		gs_load_vertexbuffer(g_meshes[i].vb);
 		gs_load_indexbuffer(g_meshes[i].ib);
 		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
 
-			gs_matrix_pop();
+			//gs_matrix_pop();
 	}
 
 	gs_technique_end_pass(tech);
@@ -411,18 +415,22 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,float *he
 			return; // Salimos completamente de esta función
 		}
 
+		
 		gs_matrix_push();
 
-		// Calcular traslación en X y Y para centrar la malla
-		float translate_x = -(widths[i] * 0.5f) * scale;
-		float translate_y = -(heights[i] * 0.5f) * scale;
+		//// Calcular traslación en X y Y para centrar la malla
+		//float translate_x = -(widths[i] * 0.5f)*scale;
+		//float translate_y = -(heights[i] * 0.5f)*scale;
 
-		blog(LOG_INFO,
-		     "Malla %zu (sin textura): X = %f (ancho = %f), Y = %f (altura = %f), escala = %f",
-		     i, translate_x, widths[i], translate_y, heights[i], scale);
+		//blog(LOG_INFO,
+		//	 "Malla %zu (sin textura): X = %f (ancho = %f), Y = %f (altura = %f), escala = %f",
+		//	 i, translate_x, widths[i], translate_y, heights[i], scale);
 
-		// Aplicar traslación para centrar
-		gs_matrix_translate3f(translate_x, translate_y, 0.0f);
+		//// Aplicar traslación para centrar
+		//gs_matrix_translate3f(translate_x, translate_y, 0.0f);
+
+		//// Aplicar escala
+		gs_matrix_scale3f(scale, scale, scale);
 
 
 		// Aplica textura y dibuja

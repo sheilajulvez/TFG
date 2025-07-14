@@ -126,36 +126,27 @@ void rvec_to_rotation_matrix(const float rvec[3], float R[3][3])
  * Esta función extrae los ángulos de Euler (ZYX - Yaw, Pitch, Roll) de una matriz de rotación.
  * Maneja el caso de "gimbal lock" cuando el pitch es +/- 90 grados.
  */
-void rotation_matrix_to_euler(const float R[3][3], float &out_pitch,
-			      float &out_yaw, float &out_roll)
+void rotation_matrix_to_euler(const float R[3][3], float &out_pitch,float &out_yaw, float &out_roll)
 {
 	// Umbral para detectar gimbal lock (pitch cerca de +/- 90 grados)
 	// R[2][0] = -sin(pitch)
 	if (std::abs(R[2][0]) >= 1.0f - std::numeric_limits<float>::epsilon()) {
-		// Caso de gimbal lock: pitch es +/- 90 grados
-		// En este caso, yaw y roll se acoplan. Asumimos roll = 0 y calculamos yaw.
-		out_yaw = std::atan2(
-			-R[0][1],
-			R[0][2]); // atan2(sin(yaw), cos(yaw)) si roll=0
-		out_pitch = (R[2][0] < 0) ? (M_PI_2)
-					  : (-M_PI_2); // +90 o -90 grados
-		out_roll =0.0f; // Se establece roll a cero para resolver la ambigüedad
+		// Gimbal lock: pitch = ±90°
+		out_pitch = (R[2][0] < 0) ? M_PI_2 : -M_PI_2; // ← cambio aquí
+
+		// Establecemos roll = 0, y calculamos yaw de forma aproximada
+		out_yaw = std::atan2(-R[0][1], R[0][2]);
+		out_roll = 0.0f;
 	} else {
-		// Caso general: no hay gimbal lock
-		// Pitch (rotación alrededor de Y): sin(pitch) = -R[2][0]
 		out_pitch = -std::asin(R[2][0]);
-
-		// Yaw (rotación alrededor de Z): sin(yaw) = R[1][0]/cos(pitch), cos(yaw) = R[0][0]/cos(pitch)
 		out_yaw = std::atan2(R[1][0], R[0][0]);
-
-		// Roll (rotación alrededor de X): sin(roll) = R[2][1]/cos(pitch), cos(roll) = R[2][2]/cos(pitch)
 		out_roll = std::atan2(R[2][1], R[2][2]);
 	}
 
 	// Convertir a grados
-	out_pitch = out_pitch * 180.0f / M_PI;
-	out_yaw = out_yaw * 180.0f / M_PI;
-	out_roll = out_roll * 180.0f / M_PI;
+	out_pitch *= 180.0f / M_PI;
+	out_yaw *= 180.0f / M_PI;
+	out_roll *= 180.0f / M_PI;
 }
 
 bool process_frame_rgba(const uint8_t *frame_data, int width, int height,
@@ -175,8 +166,7 @@ bool process_frame_rgba(const uint8_t *frame_data, int width, int height,
 
 	// Crear imagen BGRA
 	mat_bgra.create(height, width, CV_8UC4);
-	memcpy(mat_bgra.data, frame_data,
-	       static_cast<size_t>(width) * height * 4);
+	memcpy(mat_bgra.data, frame_data,static_cast<size_t>(width) * height * 4);
 
 	// Convertir a escala de grises directamente
 	cv::Mat mat_gray;
@@ -232,25 +222,38 @@ bool process_frame_rgba(const uint8_t *frame_data, int width, int height,
 		cx += result->corners[i][0];
 		cy += result->corners[i][1];
 	}
-	cx /= 4.0f;
+	cx /= 2.0f;
 	cy /= 4.0f;
 
 	// Convertir a espacio del filtro de OBS (si es diferente al tamaño del frame)
-	result->screen_pos_x = cx * (filter_width / (float)width);
-	result->screen_pos_y = cy * (filter_height / (float)height);
+	result->screen_pos_x = cx;
+	result->screen_pos_y = cy;
 
 	// Convierte rvec a matriz de rotación y luego a ángulos de Euler
-	float R[3][3];
-	rvec_to_rotation_matrix(result->rvec, R);
+	// Convertir rvec[3] a cv::Mat para usar con Rodrigues
+	cv::Mat rvec_cv(3, 1, CV_32F, (void *)result->rvec);
+	cv::Mat R_cv;
 
-	float pitch_rad, yaw_rad,roll_rad; // Variables temporales para los ángulos en radianes
-	// La función ahora devuelve los ángulos correctamente mapeados
+	// Convertir rvec a matriz de rotación 3x3
+	cv::Rodrigues(rvec_cv, R_cv);
+
+	// Convertir R_cv (cv::Mat 3x3) a float R[3][3] para usar con tu función
+	float R[3][3];
+	for (int i = 0; i < 3; ++i) {
+		for (int j = 0; j < 3; ++j) {
+			R[i][j] = static_cast<float>(R_cv.at<float>(i, j));
+		}
+	}
+
+	// Convertir matriz de rotación a ángulos de Euler
+	float pitch_rad, yaw_rad, roll_rad;
 	rotation_matrix_to_euler(R, pitch_rad, yaw_rad, roll_rad);
 
-	// Asigna los ángulos de Euler a la estructura de resultados
-	result->euler_x = pitch_rad; // Ahora euler_x es Pitch
-	result->euler_y = yaw_rad;   // Ahora euler_y es Yaw
-	result->euler_z = roll_rad;  // Ahora euler_z es Roll
+	// Guardar los ángulos en el resultado
+	result->euler_x = pitch_rad;
+	result->euler_y = yaw_rad;
+	result->euler_z = roll_rad;
+
 
 	blog(LOG_INFO, "Screen position: (%.2f, %.2f)", result->screen_pos_x,result->screen_pos_y);
 	blog(LOG_INFO, "Euler angles (deg): Pitch=%.2f, Yaw=%.2f, Roll=%.2f", result->euler_x, result->euler_y, result->euler_z);

@@ -65,7 +65,8 @@ set(OPENCV_LIBS_RELEASE
     "${OpenCV_ROOT_DIR}/lib/opencv_imgproc460.lib"
     "${OpenCV_ROOT_DIR}/lib/opencv_highgui460.lib"
     "${OpenCV_ROOT_DIR}/lib/opencv_videoio460.lib"
-    "${OpenCV_ROOT_DIR}/lib/opencv_imgcodecs460.lib"   # <-- Añadido
+    "${OpenCV_ROOT_DIR}/lib/opencv_imgcodecs460.lib"
+    "${OpenCV_ROOT_DIR}/lib/opencv_calib3d460.lib"  # <-- Añadido
 )
 
 set(OPENCV_LIBS_DEBUG
@@ -74,8 +75,10 @@ set(OPENCV_LIBS_DEBUG
     "${OpenCV_ROOT_DIR}/lib/opencv_imgproc460d.lib"
     "${OpenCV_ROOT_DIR}/lib/opencv_highgui460d.lib"
     "${OpenCV_ROOT_DIR}/lib/opencv_videoio460d.lib"
-    "${OpenCV_ROOT_DIR}/lib/opencv_imgcodecs460d.lib"  # <-- Añadido
+    "${OpenCV_ROOT_DIR}/lib/opencv_imgcodecs460d.lib"
+    "${OpenCV_ROOT_DIR}/lib/opencv_calib3d460d.lib"  # <-- Añadido
 )
+
 
 
 target_link_libraries(${_name} PRIVATE

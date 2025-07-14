@@ -240,31 +240,15 @@ static struct obs_source_frame * cube_filter_filter_video(void *data, struct obs
 			convert_i422_to_bgra(frame, bgra_buffer);
 
 			
-			bool detected = process_frame_rgba(
-				bgra_buffer, frame->width, frame->height,
-				filter->width_screen, filter->height_screen,
-				&filter->last_result);
-
-				if (detected && filter->last_result.detected) {
+			bool detected = process_frame_rgba(bgra_buffer, frame->width, frame->height,filter->width_screen, filter->height_screen,&filter->last_result);
+			if (detected && filter->last_result.detected) {
 				filter->pos_x = filter->last_result.screen_pos_x;
 				filter->pos_y = filter->last_result.screen_pos_y;
 
-			
-				// filter->pos_z = filter->last_result.tvec[2]; // Opción 2: Usar la profundidad real del marcador
-
-				// Rotaciones Euler para orientar el modelo 3D
-				// euler_x, euler_y, euler_z ya contienen Pitch, Yaw y Roll en grados.
 				filter->current_rotation_x_angle = filter->last_result.euler_x; // Pitch (rotación alrededor del eje Y)
 				filter->current_rotation_y_angle = filter->last_result.euler_y; // Yaw (rotación alrededor del eje Z)
 				filter->current_rotation_z_angle = filter->last_result.euler_z; // Roll (rotación alrededor del eje X)
-
-				blog(LOG_INFO,
-					 "Marcador ID %d detectado, pos=(%.2f, %.2f, %.2f), rot=(%.2f, %.2f, %.2f)",
-					 filter->last_result.id, filter->pos_x,
-					 filter->pos_y, filter->pos_z,
-				     filter->current_rotation_x_angle,
-				     filter->current_rotation_y_angle,
-				     filter->current_rotation_z_angle);
+			
 			} else {
 				filter->last_result.detected = false;
 			}
@@ -453,12 +437,7 @@ static obs_properties_t *cube_filter_properties(void *data)
 static void cube_filter_update(void *data, obs_data_t *settings)
 {
 	struct cube_filter_data *filter = data;
-	/*blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'scale': %f",
-	     obs_data_get_double(settings, "scale"));
-	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'posx': %f",
-	     obs_data_get_double(settings, "pos_x"));
-	blog(LOG_INFO, "[CUBE][UPDATE] Valor recibido para 'pos_y': %f",
-	     obs_data_get_double(settings, "`pos_y"));*/
+	
 	filter->pos_x = (float)obs_data_get_double(settings, "pos_x");
 	filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
 	filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
@@ -529,7 +508,12 @@ static void cube_filter_tick(void *data, float seconds)
 	gs_matrix_push();
 	gs_matrix_identity();
 	
-	gs_matrix_translate3f(filter->pos_x, filter->pos_y, filter->pos_z);
+	gs_matrix_translate3f(
+				filter->pos_x,          // X real
+			   filter->pos_y,          // invertimos Y
+				filter->pos_z           // Z real
+			);
+
 	
 	//gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, filter->current_rotation_z_angle );
 	//gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,filter->current_rotation_y_angle );
