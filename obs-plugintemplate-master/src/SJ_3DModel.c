@@ -416,18 +416,18 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,float *he
 		}
 
 		
-		//gs_matrix_push();
+		gs_matrix_push();
 
-		//// Calcular traslación en X y Y para centrar la malla
-		float translate_x = -(widths[i] * 0.5f)*scale;
-		float translate_y = -(heights[i] * 0.5f)*scale;
+		////// Calcular traslación en X y Y para centrar la malla
+		float translate_x = (widths[i] );
+		float translate_y = (heights[i] );
 
-		/*blog(LOG_INFO,
-			 "Malla %zu (sin textura): X = %f (ancho = %f), Y = %f (altura = %f), escala = %f",
-			 i, translate_x, widths[i], translate_y, heights[i], scale);*/
+		///*blog(LOG_INFO,
+		//	 "Malla %zu (sin textura): X = %f (ancho = %f), Y = %f (altura = %f), escala = %f",
+		//	 i, translate_x, widths[i], translate_y, heights[i], scale);*/
 
-		// Aplicar traslación para centrar
-		//gs_matrix_translate3f(translate_x, 0, 0.0f);
+		//// Aplicar traslación para centrar
+		gs_matrix_translate3f(translate_x, translate_y, 0.0f);
 
 		////// Aplicar escala
 		//gs_matrix_scale3f(scale, scale, scale);
@@ -441,7 +441,7 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,float *he
 		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
 
 		// Pop matriz para restaurar estado anterior
-		//gs_matrix_pop();
+		gs_matrix_pop();
 	}
 
 	// Solo cerramos técnica si no hubo salida prematura por falta de textura

@@ -173,7 +173,7 @@ void create_whiteboard_texture(struct cube_filter_data *data)
 	}
 
 	data->texture = gs_texture_create(data->width_screen, data->height_screen, GS_RGBA, 1, NULL, GS_RENDER_TARGET);
-	data->zstencil = gs_zstencil_create(data->width_screen, data->height_screen, GS_Z32F);
+	data->zstencil = gs_zstencil_create(data->width_screen, data->height_screen, GS_Z16);
 	blog(LOG_INFO, "create whiteboard texture %d %d", data->width_screen, data->height_screen);
 
 	obs_leave_graphics();
@@ -228,38 +228,96 @@ static void cube_filter_destroy(void *data)
 	bfree(filter);
 }
 
-static void cube_filter_render(void *data, gs_effect_t *effect1)
+static void cube_filter_render(void *data, gs_effect_t *effect)
 {
-	/*blog(LOG_INFO, "Filter tick called");*/
-	struct cube_filter_data *filter = (struct cube_filter_data *)data;
-
-	 // Capturamos los píxeles justo antes de salir del contexto gráfico:
-
-	obs_enter_graphics();
-
+	struct cube_filter_data *filter = data;
 	obs_source_t *target = obs_filter_get_target(filter->source);
-	if (target)obs_source_video_render(target);
-
-	gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-
-	if (effect) {
-		gs_blend_state_push();
-		gs_reset_blend_state();
-		gs_matrix_push();
-		gs_matrix_identity();
-		while (gs_effect_loop(effect, "Draw")) {
-			obs_source_draw(filter->texture, 0, 0, 0, 0, false);
-		}
-		gs_matrix_pop();
-		gs_blend_state_pop();
+	if (!target) {
+		return;
 	}
-	  uint8_t *final_frame_pixels = NULL;
-    uint32_t final_frame_pitch = 0;
 
-  
+	// Get target dimensions
+	uint32_t width = obs_source_get_width(target);
+	uint32_t height = obs_source_get_height(target);
 
-    obs_leave_graphics();
+	// If there's no model or valid dimensions, just draw the original source
+	if (!filter->g_meshes || width == 0 || height == 0) {
+		obs_source_skip_video_filter(filter->source);
+		return;
+	}
+
+	// --- Texture and Z-buffer management ---
+	obs_enter_graphics();
+	if (!filter->texture ||
+	    gs_texture_get_width(filter->texture) != width ||
+	    gs_texture_get_height(filter->texture) != height) {
+		if (filter->texture)
+			gs_texture_destroy(filter->texture);
+		if (filter->zstencil)
+			gs_zstencil_destroy(filter->zstencil);
+
+		filter->texture = gs_texture_create(width, height, GS_RGBA, 1,
+						    NULL, GS_RENDER_TARGET);
+		filter->zstencil = gs_zstencil_create(width, height, GS_Z16);
+	}
+
+	// --- Render the 3D model to our texture ---
+	gs_texture_t *prev_render_target = gs_get_render_target();
+	gs_zstencil_t *prev_zstencil_target = gs_get_zstencil_target();
+
+	gs_set_render_target(filter->texture, filter->zstencil);
+	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,
+		 (struct vec4[]){{0.0f, 0.0f, 0.0f, 0.0f}}, 1.0f, 0);
+
+	gs_projection_push();
+	gs_set_3d_mode(60.0f, 0.1f, 5000.0f); // Use a reasonable near/far plane
+	gs_enable_depth_test(true);
+	gs_depth_function(GS_LESS);
+
+	gs_matrix_push();
+	gs_matrix_identity();
+
+	// Apply transformations
+	gs_matrix_translate3f(filter->pos_x, filter->pos_y, filter->pos_z);
+
+	// IMPORTANT: Apply rotations in the correct order (e.g., Z, then Y, then X)
+	// OBS uses a right-handed coordinate system. Rotations are typically applied in a specific order.
+	// The function gs_matrix_rotaa4f rotates around an axis-angle.
+	gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,(float)M_PI * filter->rotation_z /
+				  180.0f); // Z-axis rotation (Roll)
+	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, (float)M_PI * filter->rotation_y /180.0f); // Y-axis rotation (Yaw)
+	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI * filter->rotation_x /180.0f); // X-axis rotation (Pitch)
+	gs_matrix_scale3f(filter->scale, filter->scale, filter->scale);
+	render_model_c(filter->g_meshes, filter->g_mesh_count,
+		       filter->model_width, filter->model_height,
+		       filter->scale);
+
+	gs_matrix_pop();
+	gs_projection_pop();
+	gs_enable_depth_test(false);
+
+	gs_set_render_target(prev_render_target, prev_zstencil_target);
+	obs_leave_graphics();
+
+	// --- Blend the original source and our 3D model texture ---
+	obs_enter_graphics();
+	// 1. Draw the original video frame
+	obs_source_video_render(target);
+
+	// 2. Blend our 3D model on top
+	gs_blend_state_push();
+	gs_enable_blending(true);
+	gs_blend_function(GS_BLEND_SRCALPHA,GS_BLEND_INVSRCALPHA); // Standard alpha blending
+
+	gs_effect_t *base_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+	while (gs_effect_loop(base_effect, "Draw")) {
+		obs_source_draw(filter->texture, 0, 0, 0, 0, false);
+	}
+
+	gs_blend_state_pop();
+	obs_leave_graphics();
 }
+
 
 static obs_properties_t *cube_filter_properties(void *data)
 {
@@ -343,47 +401,6 @@ static void cube_filter_tick(void *data, float seconds)
 
 
 
-	obs_enter_graphics();
-	gs_render_start(true);
-	gs_viewport_push();
-	gs_set_viewport(0, 0, filter->width_screen, filter->height_screen);
-	gs_projection_push();
-	gs_set_3d_mode(60.0f, 0.01f, 5000);
-	gs_blend_state_push();
-	gs_reset_blend_state();
-
-	gs_enable_depth_test(true);
-	gs_depth_function(GS_LESS);
-
-	gs_texture_t *prev_render_target = gs_get_render_target();
-	gs_texture_t *prev_zstencil_target = gs_get_zstencil_target();
-	gs_set_render_target(filter->texture, filter->zstencil);
-
-	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,(float[]){0.0f, 0.0f, 0.0f, 0.0f}, 1.0f, 0);
-	gs_matrix_push();
-	gs_matrix_identity();
-	
-	gs_matrix_translate3f(
-				filter->pos_x,          // X real
-			   filter->pos_y,          // invertimos Y
-				filter->pos_z          // Z real
-			);
-
-	
-	/*gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, filter->rotation_x );
-	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,filter->rotation_y );
-	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,filter->rotation_z );*/
-	//gs_matrix_scale3f(filter->scale, filter->scale, filter->scale);
-	gs_matrix_scale3f(filter->scale, filter->scale, filter->scale);
-	render_model_c(filter->g_meshes, filter->g_mesh_count,filter->model_width,filter->model_height,filter->scale);
-	gs_matrix_pop();
-	gs_set_render_target(prev_render_target, prev_zstencil_target);
-
-	gs_projection_pop();
-	gs_viewport_pop();
-	gs_blend_state_pop();
-	gs_render_start(false);
-	obs_leave_graphics();
 }
 
 
