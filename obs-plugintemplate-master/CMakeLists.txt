@@ -105,6 +105,7 @@ target_sources(${_name} PRIVATE
     src/Cubo-plugin.c
     src/SJ_3DModel.c
     src/aruco_detector.cpp
+    src/yuv2bgra.cpp
 
 )
 

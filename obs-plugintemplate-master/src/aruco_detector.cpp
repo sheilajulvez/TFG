@@ -175,15 +175,14 @@ bool process_frame_rgba(const uint8_t *frame_data, int width, int height,
 	// Redimensionar a la mitad para acelerar la detección
 	cv::Mat mat_gray_resized;
 	cv::resize(mat_gray, mat_gray_resized, cv::Size(), 0.5, 0.5);
-
+	cv::imwrite("C:\\temp\\debug_gray_resized.png", mat_gray_resized);
 	// Detectar marcadores en la imagen reducida
 	std::vector<std::vector<cv::Point2f>> corners;
 	std::vector<int> ids;
-	cv::aruco::detectMarkers(mat_gray_resized, dictionary, corners, ids,
-				 detector_params);
+	cv::aruco::detectMarkers(mat_gray_resized, dictionary, corners, ids,detector_params);
 
 	if (ids.empty()) {
-		//blog(LOG_INFO, "process_frame_rgba: No se detectaron marcadores");
+		blog(LOG_INFO, "process_frame_rgba: No se detectaron marcadores");
 		result->detected = false;
 		return false;
 	}
@@ -222,7 +221,7 @@ bool process_frame_rgba(const uint8_t *frame_data, int width, int height,
 		cx += result->corners[i][0];
 		cy += result->corners[i][1];
 	}
-	cx /= 2.0f;
+	cx /= 4.0f;
 	cy /= 4.0f;
 
 	// Convertir a espacio del filtro de OBS (si es diferente al tamaño del frame)
