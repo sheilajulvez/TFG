@@ -19,8 +19,7 @@ static void yuv_to_bgra(uint8_t y, uint8_t u, uint8_t v, uint8_t *b, uint8_t *g,
 
 // Implementaciones específicas para obtener U y V según formato YUV
 
-void get_uv_i420(const struct obs_source_frame *frame, int x, int y, uint8_t *u,
-		 uint8_t *v)
+void get_uv_i420(const struct obs_source_frame *frame, int x, int y, uint8_t *u,uint8_t *v)
 {
 	int u_pitch = frame->linesize[1];
 	int v_pitch = frame->linesize[2];
@@ -30,8 +29,7 @@ void get_uv_i420(const struct obs_source_frame *frame, int x, int y, uint8_t *u,
 	*v = V[(y / 2) * v_pitch + (x / 2)];
 }
 
-void get_uv_nv12(const struct obs_source_frame *frame, int x, int y, uint8_t *u,
-		 uint8_t *v)
+void get_uv_nv12(const struct obs_source_frame *frame, int x, int y, uint8_t *u,uint8_t *v)
 {
 	int uv_pitch = frame->linesize[1];
 	const uint8_t *UV = frame->data[1];
@@ -39,8 +37,7 @@ void get_uv_nv12(const struct obs_source_frame *frame, int x, int y, uint8_t *u,
 	*v = UV[(y / 2) * uv_pitch + (x | 1)];
 }
 
-void get_uv_i422(const struct obs_source_frame *frame, int x, int y, uint8_t *u,
-		 uint8_t *v)
+void get_uv_i422(const struct obs_source_frame *frame, int x, int y, uint8_t *u,uint8_t *v)
 {
 	int u_pitch = frame->linesize[1];
 	int v_pitch = frame->linesize[2];
@@ -51,8 +48,7 @@ void get_uv_i422(const struct obs_source_frame *frame, int x, int y, uint8_t *u,
 }
 
 // Función genérica para convertir cualquier YUV a BGRA usando función get_uv
-void convert_yuv_to_bgra_generic(const struct obs_source_frame *frame,
-				 uint8_t *dst_bgra, get_uv_func get_uv)
+void convert_yuv_to_bgra_generic(const struct obs_source_frame *frame,uint8_t *dst_bgra, get_uv_func get_uv)
 {
 	int width = frame->width;
 	int height = frame->height;

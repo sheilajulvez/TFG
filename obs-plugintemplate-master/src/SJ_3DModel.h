@@ -18,5 +18,5 @@ typedef struct Mesh {
 } Mesh;
 	 // Declara tus funciones y tipos públicos:
 bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float **mesh_widths, float **mesh_heights);
-void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float* width, float* height,float scale );
+void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths, float *heights, float scale,float rot_x_deg, float rot_y_deg, float rot_z_deg);
 void cleanup_global_meshes(struct Mesh **g_meshes, size_t *g_mesh_count,float **mesh_widths, float **mesh_heights);

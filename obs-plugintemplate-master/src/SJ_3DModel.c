@@ -316,137 +316,152 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float 
 	blog(LOG_INFO, "Modelo cargado con %zu mallas", *g_mesh_count);
 	return true;
 }
-
 void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,
-			      float *widths, float *heights, float scale)
+			      float *widths, float *heights, float scale,
+			      float pitch_deg, float yaw_deg, float roll_deg)
 {
-	// Obtener el efecto sólido base de OBS.
-	gs_effect_t *solid_effect = obs_get_base_effect(OBS_EFFECT_SOLID);
-	if (!solid_effect)
+	// 1) Efecto sólido de OBS
+	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+	if (!solid)
 		return;
-
-	gs_eparam_t *color_param =
-		gs_effect_get_param_by_name(solid_effect, "color");
-	if (!color_param)
+	gs_eparam_t *col = gs_effect_get_param_by_name(solid, "color");
+	if (!col)
 		return;
-
-	gs_technique_t *tech = gs_effect_get_technique(solid_effect, "Solid");
+	gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
 	if (!tech)
 		return;
 
+	// Convertir ángulos a radianes
+	float pitch = pitch_deg * (float)M_PI / 180.0f; // X
+	float yaw = yaw_deg * (float)M_PI / 180.0f;     // Y
+	float roll = roll_deg * (float)M_PI / 180.0f;   // Z
+
+	// Color sólido (rojo)
+	struct vec4 c = {1.0f, 0.0f, 0.0f, 1.0f};
+
 	gs_technique_begin(tech);
 	gs_technique_begin_pass(tech, 0);
+	gs_effect_set_vec4(col, &c);
 
-	// Color sólido (rojo opaco)
-	struct vec4 solid_color = {1.0f, 0.0f, 0.0f, 1.0f};
-	gs_effect_set_vec4(color_param, &solid_color);
-
-	// Itera sobre cada malla del modelo.
 	for (size_t i = 0; i < g_mesh_count; i++) {
-		if (!g_meshes[i].vb || !g_meshes[i].ib)
+		Mesh *m = &g_meshes[i];
+		if (!m->vb || !m->ib)
 			continue;
 
-		//gs_matrix_push();
+		// Centro local de la malla
+		float cx = widths[i] * 0.5f;
+		float cy = heights[i] * 0.5f;
 
-		//		//// Calcular traslación en X y Y para centrar la malla
-		////float translate_x = -(widths[i] * 0.5f) * scale;
-		////float translate_y = -(heights[i] * 0.5f) * scale;
+		
 
-		/////*blog(LOG_INFO,
-		////	 "Malla %zu (sin textura): X = %f (ancho = %f), Y = %f (altura = %f), escala = %f",
-		////	 i, translate_x, widths[i], translate_y, heights[i], scale);*/
+		
 
-		////// Aplicar traslación para centrar
-		////gs_matrix_translate3f(translate_x, 0, 0.0f);
+		gs_matrix_push();
+		// **No** hacemos identity() aquí, así respetamos la traslación global
 
-		////// Aplicar escala
-		//gs_matrix_scale3f(scale, scale, scale);
-		//// Aplicar traslación para centrar
-	
+		//// 1) Mover pivote al origen local (coordenadas NEGATIVAS)
+		//	gs_matrix_translate3f(cx, cy, 0.0f);
+		gs_matrix_translate3f(-cx, -cy, 0.0f);
+		// 2) Aplicar rotaciones en el orden que desees
+		//    Por ejemplo: Pitch (X), Yaw (Y), Roll (Z)
+		//gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, d*M_PI/180); // Pitch
+		//gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, d * M_PI / 180); // Yaw
+		//gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, d * M_PI / 180); // Roll
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, pitch);
+		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, yaw);
+		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, roll);
 
-		gs_load_vertexbuffer(g_meshes[i].vb);
-		gs_load_indexbuffer(g_meshes[i].ib);
-		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
+		//// 3) Volver a mover el pivote de regreso (coordenadas POSITIVAS)
 
-			//gs_matrix_pop();
+		// 4) Escalado uniforme
+		gs_matrix_scale3f(scale, scale, scale);
+		gs_matrix_translate3f(-cx, -cy, 0.0f);
+
+		// Dibujar
+		gs_load_vertexbuffer(m->vb);
+		gs_load_indexbuffer(m->ib);
+		gs_draw(GS_TRIS, 0, m->num_indices);
+
+		gs_matrix_pop();
 	}
 
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
 }
 
+int d = 0;
 /**
  * @brief Renderiza todas las mallas del modelo cargado.
  *
  * Esta función debe ser llamada en cada fotograma dentro del ciclo de renderizado de OBS.
  */
-void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,float *heights, float scale)
+void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
+		    float *heights, float scale, float rot_x_deg,
+		    float rot_y_deg, float rot_z_deg)
 {
 	gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-	if (!default_effect) {
-		return;
-	}
+	if (!default_effect)return;
 
 	gs_eparam_t *image_param =
 		gs_effect_get_param_by_name(default_effect, "image");
-	if (!image_param) {
+	if (!image_param)
 		return;
-	}
-
+	d = d + 30 * 0.1;
 	gs_technique_t *tech = gs_effect_get_technique(default_effect, "Draw");
-
 	gs_technique_begin(tech);
 	gs_technique_begin_pass(tech, 0);
+
+	// Convertir ángulos a radianes
+	float rx = (float)M_PI * rot_x_deg / 180.0f;
+	float ry = (float)M_PI * rot_y_deg / 180.0f;
+	float rz = (float)M_PI * rot_z_deg / 180.0f;
 
 	for (size_t i = 0; i < g_mesh_count; i++) {
 		if (!g_meshes[i].vb || !g_meshes[i].ib)
 			continue;
 
-		// Si no hay textura, sal del renderizado con textura y llama a la función sin texturas
 		if (!g_meshes[i].texture) {
-			// Finaliza el efecto actual con textura antes de pasar a uno sin textura
 			gs_technique_end_pass(tech);
 			gs_technique_end(tech);
-
-			/*blog(LOG_WARNING,
-			     "Malla %zu no tiene textura, usando render_model_c_NoTexture",
-			     i);*/
-			render_model_c_NoTexture(g_meshes, g_mesh_count, widths, heights,scale);
-			return; // Salimos completamente de esta función
+			render_model_c_NoTexture(g_meshes, g_mesh_count, widths, heights, scale, rot_x_deg,rot_y_deg,rot_z_deg);
+			return;
 		}
 
-		
+		// Pivote (centro de la malla)
+		float cx = widths[i] * 0.5f;
+		float cy = heights[i] * 0.5f;
+
 		gs_matrix_push();
+		// **No** hacemos identity() aquí, así respetamos la traslación global
 
-		////// Calcular traslación en X y Y para centrar la malla
-		float translate_x = (widths[i] );
-		float translate_y = (heights[i] );
+	//// 1) Mover pivote al origen local (coordenadas NEGATIVAS)
+	//	gs_matrix_translate3f(cx, cy, 0.0f);
+		gs_matrix_translate3f(-cx, -cy, 0.0f);
+		// 2) Aplicar rotaciones en el orden que desees
+		//    Por ejemplo: Pitch (X), Yaw (Y), Roll (Z)
+		//gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, d*M_PI/180); // Pitch
+		//gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, d * M_PI / 180); // Yaw
+		//gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, d * M_PI / 180); // Roll
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, rx);
+		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, ry);
+		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, rz);
 
-		///*blog(LOG_INFO,
-		//	 "Malla %zu (sin textura): X = %f (ancho = %f), Y = %f (altura = %f), escala = %f",
-		//	 i, translate_x, widths[i], translate_y, heights[i], scale);*/
-
-		//// Aplicar traslación para centrar
-		gs_matrix_translate3f(translate_x, translate_y, 0.0f);
-
-		////// Aplicar escala
-		//gs_matrix_scale3f(scale, scale, scale);
+		//// 3) Volver a mover el pivote de regreso (coordenadas POSITIVAS)
+	
 
 
-		// Aplica textura y dibuja
+		// 4) Escalado uniforme
+		gs_matrix_scale3f(scale, scale, scale);
+
+		// Dibujar la malla
 		gs_effect_set_texture(image_param, g_meshes[i].texture);
-
 		gs_load_vertexbuffer(g_meshes[i].vb);
 		gs_load_indexbuffer(g_meshes[i].ib);
 		gs_draw(GS_TRIS, 0, g_meshes[i].num_indices);
 
-		// Pop matriz para restaurar estado anterior
 		gs_matrix_pop();
 	}
 
-	// Solo cerramos técnica si no hubo salida prematura por falta de textura
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
 }
-
-

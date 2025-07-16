@@ -37,9 +37,12 @@ void cleanup_aruco_detector(ArucoDetector *det);
  * @brief Procesa un frame BGRA y rellena ArucoResult.
  * @return true si detectó al menos un marcador.
  */
-bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data,
-			int width, int height, int filter_w, int filter_h,
-			ArucoResult *result);
+bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data,int width, int height, int filter_w, int filter_h,ArucoResult *result);
+
+
+ void set_marker_size(ArucoDetector *det,float size);
+
+ void set_marker_id(ArucoDetector *det,int id);
 
 #ifdef __cplusplus
 }
