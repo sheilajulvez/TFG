@@ -316,9 +316,7 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float 
 	blog(LOG_INFO, "Modelo cargado con %zu mallas", *g_mesh_count);
 	return true;
 }
-void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,
-			      float *widths, float *heights, float scale,
-			      float pitch_deg, float yaw_deg, float roll_deg)
+void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count, float *widths, float *heights, float scale,float pitch_deg, float yaw_deg, float roll_deg)
 {
 	// 1) Efecto sólido de OBS
 	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
@@ -353,7 +351,10 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,
 		float cy = heights[i] * 0.5f;
 
 		
-
+		// Convertir ángulos a radianes
+		float rx = (float)M_PI * pitch_deg / 180.0f;
+		float ry = (float)M_PI * yaw_deg / 180.0f;
+		float rz = (float)M_PI * roll_deg / 180.0f;
 		
 
 		gs_matrix_push();
@@ -367,16 +368,15 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,
 		//gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, d*M_PI/180); // Pitch
 		//gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, d * M_PI / 180); // Yaw
 		//gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, d * M_PI / 180); // Roll
-		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, pitch);
-		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, yaw);
-		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, roll);
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, rx);
+		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, ry);
+		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, rz);
 
 		//// 3) Volver a mover el pivote de regreso (coordenadas POSITIVAS)
 
 		// 4) Escalado uniforme
 		gs_matrix_scale3f(scale, scale, scale);
-		gs_matrix_translate3f(-cx, -cy, 0.0f);
-
+		
 		// Dibujar
 		gs_load_vertexbuffer(m->vb);
 		gs_load_indexbuffer(m->ib);

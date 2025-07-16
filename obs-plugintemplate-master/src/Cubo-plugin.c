@@ -75,7 +75,7 @@ cube_filter_filter_video(void *data, struct obs_source_frame *frame)
 	uint8_t *bgra_buffer = NULL;
 	int image_size = frame->width * frame->height * 4;
 	get_uv_func get_uv = NULL;
-	blog(LOG_WARNING, "FILTER VIDEO");
+	//blog(LOG_WARNING, "FILTER VIDEO");
 	switch (frame->format) {
 	case VIDEO_FORMAT_BGRA:
 		blog(LOG_INFO,
@@ -99,7 +99,7 @@ cube_filter_filter_video(void *data, struct obs_source_frame *frame)
 		break;
 
 	case VIDEO_FORMAT_I422:
-		blog(LOG_INFO, "Formato I422 detectado, convirtiendo a BGRA");
+		//blog(LOG_INFO, "Formato I422 detectado, convirtiendo a BGRA");
 		get_uv = get_uv_i422;
 		break;
 
