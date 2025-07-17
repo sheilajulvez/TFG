@@ -1,8 +1,4 @@
-﻿// Inclusión de la biblioteca Assimp (Open Asset Import Library) para la carga de modelos 3D.
-#include <assimp/cimport.h>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <assimp/material.h>
+﻿
 
 // Inclusión de las cabeceras del API de OBS Studio.
 #include <obs-module.h>
@@ -14,7 +10,6 @@
 
 // Inclusión de bibliotecas estándar de C.
 #include <string.h>
-#include <assimp/types.h>
 #include "SJ_3DModel.h"
 
 // For M_PI on Windows
@@ -41,9 +36,11 @@ struct cube_filter_data {
 
 	float *model_width;
 	float *model_height;
+
 	struct Mesh *g_meshes;
 	size_t g_mesh_count;
 	char *model_path_str;
+	char *texture_path_str;
 	// Parámetros de posición / escala / rotación manual
 	float pos_x;
 	float pos_y;
@@ -52,7 +49,7 @@ struct cube_filter_data {
 	float rotation_x;
 	float rotation_y;
 	float rotation_z;
-
+	gs_texture_t *loaded_texture;
 	float marker_size;
 	int marker_id;
 	// Resultados del ArUco
@@ -61,8 +58,7 @@ struct cube_filter_data {
 };
 
 
-static struct obs_source_frame *
-cube_filter_filter_video(void *data, struct obs_source_frame *frame)
+static struct obs_source_frame *cube_filter_filter_video(void *data, struct obs_source_frame *frame)
 {
 	struct cube_filter_data *filter = data;
 
@@ -147,7 +143,32 @@ static uint32_t cube_source_get_height(void *data)
 	struct cube_filter_data *filter = data;
 	return filter->height_screen;
 }
+ gs_texture_t *load_texture_file(const char *path)
+{
+	if (!path || strlen(path) == 0) {
+		return NULL;
+	}
 
+	obs_enter_graphics();
+	gs_image_file_t image;
+	gs_image_file_init(&image, path);
+	gs_image_file_init_texture(&image);
+	obs_leave_graphics();
+
+	if (image.loaded) {
+		blog(LOG_INFO, "Textura de usuario cargada: %s", path);
+		gs_texture_t *new_texture = image.texture;
+		gs_image_file_free(&image); // Libera los datos internos de la imagen, no la textura
+		return new_texture;
+	} else {
+		if (image.texture) { // Si hubo un intento de crear la textura pero falló la carga
+			gs_texture_destroy(image.texture);
+		}
+		blog(LOG_WARNING, "No se pudo cargar la textura de usuario: %s",path);
+		gs_image_file_free(&image); // Asegúrate de liberar la estructura de imagen
+		return NULL;
+	}
+}
 void image_source_load(gs_image_file_t *image, const char *file)
 {
 	obs_enter_graphics();
@@ -196,7 +217,7 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	data->g_mesh_count = 0;
 	data->model_width = NULL;  // 
 	data->model_height = NULL; // 
-
+	data->loaded_texture = NULL;
 	data->detector = initialize_aruco_detector(0.1f);
 
 
@@ -216,17 +237,22 @@ static void cube_filter_destroy(void *data)
 {
 	/*blog(LOG_WARNING, "CERRANDO");*/
 	struct cube_filter_data *filter = (struct cube_filter_data *)data;
-	cleanup_global_meshes(&filter->g_meshes, &filter->g_mesh_count, &filter->model_width, &filter->model_height);
+	cleanup_global_meshes(&filter->g_meshes, &filter->g_mesh_count, &filter->model_width, &filter->model_height, filter->loaded_texture);
 	obs_enter_graphics();
 	if (filter->texture) {
 		gs_texture_destroy(filter->texture);
+	}
+	if (filter->loaded_texture) {
+		gs_texture_destroy(filter->loaded_texture);
 	}
 	if (filter->zstencil) {
 		gs_zstencil_destroy(filter->zstencil);
 	}	
 	
+	
 	obs_leave_graphics();
 	bfree(filter->model_path_str);
+	bfree(filter->texture_path_str);
 	bfree(filter);
 }
 
@@ -248,7 +274,6 @@ static void cube_filter_render(void *data, gs_effect_t *effect)
 		return;
 	}
 
-	// --- Texture and Z-buffer management ---
 	obs_enter_graphics();
 	if (!filter->texture ||
 	    gs_texture_get_width(filter->texture) != width ||
@@ -324,6 +349,7 @@ static obs_properties_t *cube_filter_properties(void *data)
 	obs_properties_add_path(props, "model_path", obs_module_text("Ruta del Modelo 3D"),OBS_PATH_FILE,"Modelos 3D (*.obj *.fbx *.dae *.gltf);;Todos los archivos (*.*)",NULL);
 	obs_properties_add_int(props, "marker_id", "ID del Marker", 0, 100, 1);
 	obs_properties_add_float_slider(props, "marker_size",obs_module_text("maker_size "),0.1f,10.f, 1.0f);
+	obs_properties_add_path( props, "texture_path", obs_module_text("Ruta de la Textura (Opcional)"), OBS_PATH_FILE,"Archivos de Imagen (*.png *.jpg *.jpeg *.bmp *.tga);;Todos los archivos (*.*)", NULL);
 	return props;
 }
 
@@ -362,6 +388,39 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 			load_model_c(filter->model_path_str, &filter->g_meshes,&filter->g_mesh_count, &filter->model_width,&filter->model_height);
 		}
 	}
+	const char *new_texture_path_c_str = obs_data_get_string(settings, "texture_path"); 
+	if (!filter->texture_path_str || strcmp(filter->texture_path_str, new_texture_path_c_str) != 0 &&filter->g_meshes ) {
+
+		// 1. Liberar la ruta de la textura ALMACENADA ANTERIORMENTE
+		bfree(filter->texture_path_str);
+		// 2. Duplicar la NUEVA ruta para guardarla en el filtro
+		filter->texture_path_str = bstrdup(new_texture_path_c_str);
+
+		// 3 Destruir la TEXTURA ANTERIOR cargada en 'filter->loaded_texture'
+		// Esto evita la fuga de memoria al cargar una nueva.
+		if (filter->loaded_texture) {
+			obs_enter_graphics(); // Entrar al contexto de gráficos para operar con texturas
+			gs_texture_destroy(filter->loaded_texture);
+			filter->loaded_texture =NULL; // Importante: poner a NULL después de destruir para evitar punteros colgantes
+			obs_leave_graphics(); // Salir del contexto de gráficos
+		}
+
+		// 4. Cargar la NUEVA textura si la ruta no está vacía
+		if (filter->texture_path_str &&strlen(filter->texture_path_str) > 0) {
+			// Asumo que 'load_texture_file' es tu función para cargar gs_texture_t* desde una ruta
+			filter->loaded_texture =load_texture_file(filter->texture_path_str);
+			if (filter->loaded_texture) {
+				blog(LOG_INFO, "Nueva textura cargada desde: %s", filter->texture_path_str);
+				apply_texture_to_all_meshes(filter->g_meshes, filter->g_mesh_count,filter->loaded_texture);
+			} else {
+				blog(LOG_WARNING, "No se pudo cargar la nueva textura desde: %s",filter->texture_path_str);
+			}
+		} else {
+			// Si la ruta está vacía, no hay textura para cargar (filter->loaded_texture ya es NULL)
+			blog(LOG_INFO,"Ruta de textura vacía. Se eliminará la textura de las mallas.");
+		}
+	}
+
 }
 
 
@@ -399,7 +458,7 @@ static void cube_filter_save(void *data, obs_data_t *settings)
 	obs_data_set_double(settings, "marker_size", filter->marker_size);
 	obs_data_set_int(settings, "marker_id", filter->marker_id);
 	if (filter->model_path_str != NULL)obs_data_set_string(settings, "model_path",  filter->model_path_str);
-	
+	if (filter->texture_path_str != NULL)obs_data_set_string(settings, "texture_path",  filter->texture_path_str);
 }
 void cube_filter_load(void *data, obs_data_t *settings)
 {
@@ -421,6 +480,10 @@ void cube_filter_load(void *data, obs_data_t *settings)
 	if (model_path && *model_path != '\0') {
 		filter->model_path_str = bstrdup(model_path);
 	}
+	const char *texture_path = obs_data_get_string(settings, "texture_path");
+	if (model_path && *model_path != '\0') {
+		filter->model_path_str = bstrdup(model_path);
+	}
 	cube_filter_update(data, settings);
 
 }
@@ -436,6 +499,7 @@ static void cube_filter_defaults(obs_data_t *settings)
 	obs_data_set_default_double(settings, "marker_size", 0.1);
 	obs_data_set_default_int(settings, "marker_id", 0);
 	obs_data_set_default_string(settings, "model_path", "");
+	obs_data_set_default_string(settings, "texture_path", "");
 }
 static struct obs_source_info cube_filter = {
 	.id = "cube_filter",
