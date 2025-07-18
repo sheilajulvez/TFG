@@ -71,17 +71,12 @@ static struct obs_source_frame *cube_filter_filter_video(void *data, struct obs_
 	uint8_t *bgra_buffer = NULL;
 	int image_size = frame->width * frame->height * 4;
 	get_uv_func get_uv = NULL;
-	//blog(LOG_WARNING, "FILTER VIDEO");
+	blog(LOG_WARNING, "FILTER VIDEO");
 	switch (frame->format) {
 	case VIDEO_FORMAT_BGRA:
-		blog(LOG_INFO,
-		     "Formato BGRA detectado, procesando directamente");
+		blog(LOG_INFO,"Formato BGRA detectado, procesando directamente");
 
-		detected = process_frame_rgba(filter->detector,frame->data[0], frame->width,
-					      frame->height,
-					      filter->width_screen,
-					      filter->height_screen,
-					      &filter->last_result);
+		detected = process_frame_rgba(filter->detector,frame->data[0], frame->width,frame->height, filter->width_screen, filter->height_screen, &filter->last_result);
 		break;
 
 	case VIDEO_FORMAT_I420:
@@ -108,11 +103,7 @@ static struct obs_source_frame *cube_filter_filter_video(void *data, struct obs_
 		bgra_buffer = bmalloc(image_size);
 		convert_yuv_to_bgra_generic(frame, bgra_buffer, get_uv);
 
-		detected = process_frame_rgba(filter->detector,bgra_buffer, frame->width,
-					      frame->height,
-					      filter->width_screen,
-					      filter->height_screen,
-					      &filter->last_result);
+		detected = process_frame_rgba(filter->detector,bgra_buffer, frame->width,frame->height,filter->width_screen,  filter->height_screen, &filter->last_result);
 
 		bfree(bgra_buffer);
 	}
@@ -265,8 +256,8 @@ static void cube_filter_render(void *data, gs_effect_t *effect)
 	}
 
 	// Get target dimensions
-	uint32_t width = obs_source_get_width(target);
-	uint32_t height = obs_source_get_height(target);
+	uint32_t width = obs_source_get_width(filter->source);
+	uint32_t height = obs_source_get_height(filter->source);
 
 	// If there's no model or valid dimensions, just draw the original source
 	if (!filter->g_meshes || width == 0 || height == 0) {
@@ -278,10 +269,8 @@ static void cube_filter_render(void *data, gs_effect_t *effect)
 	if (!filter->texture ||
 	    gs_texture_get_width(filter->texture) != width ||
 	    gs_texture_get_height(filter->texture) != height) {
-		if (filter->texture)
-			gs_texture_destroy(filter->texture);
-		if (filter->zstencil)
-			gs_zstencil_destroy(filter->zstencil);
+		if (filter->texture)gs_texture_destroy(filter->texture);
+		if (filter->zstencil)gs_zstencil_destroy(filter->zstencil);
 
 		filter->texture = gs_texture_create(width, height, GS_RGBA, 1, NULL, GS_RENDER_TARGET);
 		filter->zstencil = gs_zstencil_create(width, height, GS_Z16);
@@ -349,7 +338,7 @@ static obs_properties_t *cube_filter_properties(void *data)
 	obs_properties_add_path(props, "model_path", obs_module_text("Ruta del Modelo 3D"),OBS_PATH_FILE,"Modelos 3D (*.obj *.fbx *.dae *.gltf);;Todos los archivos (*.*)",NULL);
 	obs_properties_add_int(props, "marker_id", "ID del Marker", 0, 100, 1);
 	obs_properties_add_float_slider(props, "marker_size",obs_module_text("maker_size "),0.1f,10.f, 1.0f);
-	obs_properties_add_path( props, "texture_path", obs_module_text("Ruta de la Textura (Opcional)"), OBS_PATH_FILE,"Archivos de Imagen (*.png *.jpg *.jpeg *.bmp *.tga);;Todos los archivos (*.*)", NULL);
+	obs_properties_add_path( props, "texture_path", obs_module_text("Ruta de la Textura"), OBS_PATH_FILE,"Archivos de Imagen (*.png *.jpg *.jpeg *.bmp *.tga);;Todos los archivos (*.*)", NULL);
 	return props;
 }
 
@@ -376,9 +365,6 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 		set_marker_id(filter->detector, id);
 	}
 	const char *new_model_path_c_str =obs_data_get_string(settings, "model_path");
-
-	
-
 	if (!filter->model_path_str || strcmp(filter->model_path_str, new_model_path_c_str) != 0 ||filter->g_mesh_count == 0) {
 		bfree(filter->model_path_str);
 		filter->model_path_str = bstrdup(new_model_path_c_str);

@@ -94,8 +94,7 @@ static void get_euler_angles_from_pose(const cv::Vec3d &rvec,
 	yaw = eulerAngles[1];   // Rotación alrededor del eje Y
 	roll = eulerAngles[2];  // Rotación alrededor del eje Z
 }
-bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data, int w,
-			int h, int fw, int fh, ArucoResult *res)
+bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data, int w,int h, int fw, int fh, ArucoResult *res)
 {
 	if (!det || !frame_data || w <= 0 || h <= 0 || !res)
 		return false;
@@ -175,9 +174,8 @@ bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data, int w,
 
 	// 8) Calcular ángulos de Euler con el método robusto
 	float pitch, yaw, roll;
-	get_euler_angles_from_pose(rvecs[marker_index_to_process],
-				   tvecs[marker_index_to_process], pitch, yaw,
-				   roll);
+	get_euler_angles_from_pose(rvecs[marker_index_to_process], tvecs[marker_index_to_process], pitch, yaw,
+ roll);
 	res->euler_x = pitch;
 	res->euler_y = yaw;
 	res->euler_z = roll;

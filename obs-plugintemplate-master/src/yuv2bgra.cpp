@@ -1,8 +1,7 @@
 #include "yuv2bgra.h"
 
 // Función interna para convertir un píxel YUV a BGRA
-static void yuv_to_bgra(uint8_t y, uint8_t u, uint8_t v, uint8_t *b, uint8_t *g,
-			uint8_t *r)
+static void yuv_to_bgra(uint8_t y, uint8_t u, uint8_t v, uint8_t *b, uint8_t *g,uint8_t *r)
 {
 	int c = y - 16;
 	int d = u - 128;
@@ -68,7 +67,7 @@ void convert_yuv_to_bgra_generic(const struct obs_source_frame *frame,uint8_t *d
 			dst_bgra[dst_index + 0] = b;
 			dst_bgra[dst_index + 1] = g;
 			dst_bgra[dst_index + 2] = r;
-			dst_bgra[dst_index + 3] = 255; // Alpha
+			dst_bgra[dst_index + 3] = 255; 
 		}
 	}
 }

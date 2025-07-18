@@ -19,7 +19,7 @@
 
 
 #include <float.h>
-float center_x = 0, center_y = 0;
+
 
 static void free_single_mesh(Mesh *mesh, gs_texture_t *user_texture_to_exclude)
 {
@@ -136,6 +136,8 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float 
 		float max_y = -FLT_MAX;
 		float min_x = FLT_MAX;
 		float max_x = -FLT_MAX;
+
+		float center_x = 0, center_y = 0;
 		// --- FIN: CÁLCULO DE ANCHO Y ALTO ---
 		// Copia los datos de cada vértice desde la estructura de Assimp a nuestra estructura.
 		for (size_t i = 0; i < vert_count; i++) {
@@ -264,10 +266,7 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float 
 					material, aiTextureType_DIFFUSE) > 0) {
 			struct aiString texPath;
 			// Obtiene la ruta de la primera textura difusa.
-			if (aiGetMaterialTexture(
-				    material, aiTextureType_DIFFUSE, 0,
-				    &texPath, NULL, NULL, NULL, NULL, NULL,
-				    NULL) == AI_SUCCESS) {
+			if (aiGetMaterialTexture( material, aiTextureType_DIFFUSE, 0, &texPath, NULL, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				char fullTexPath[512] = {0};
 				// Intenta construir la ruta completa de la textura, asumiendo que es relativa al archivo del modelo.
 
