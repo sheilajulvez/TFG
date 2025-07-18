@@ -467,7 +467,7 @@ void cube_filter_load(void *data, obs_data_t *settings)
 		filter->model_path_str = bstrdup(model_path);
 	}
 	const char *texture_path = obs_data_get_string(settings, "texture_path");
-	if (model_path && *model_path != '\0') {
+	if (texture_path && *texture_path != '\0') {
 		filter->model_path_str = bstrdup(model_path);
 	}
 	cube_filter_update(data, settings);
