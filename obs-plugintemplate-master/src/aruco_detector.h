@@ -6,6 +6,13 @@
 extern "C" {
 #endif
 
+	// Valores “puros C” para elegir el diccionario
+#define ARUCO_DICT_ORIGINAL 0
+#define ARUCO_DICT_4X4_100 1
+#define ARUCO_DICT_5X5_100 2
+#define ARUCO_DICT_6X6_100 3
+#define ARUCO_DICT_7X7_100 4
+#define ARUCO_DICT_MIP_ORIGINAL 5
 /** Parámetros y estado interno, opaque en C */
 typedef struct ArucoDetector ArucoDetector;
 
@@ -28,7 +35,7 @@ typedef struct {
  * @param marker_size_meters  Tamaño (m) de tu marcador.
  * @return Puntero opaque (liberar con cleanup).
  */
-ArucoDetector *initialize_aruco_detector(float marker_size_meters);
+ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict);
 
 /** @brief Libera el detector */
 void cleanup_aruco_detector(ArucoDetector *det);
@@ -39,7 +46,7 @@ void cleanup_aruco_detector(ArucoDetector *det);
  */
 bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data,int width, int height, int filter_w, int filter_h,ArucoResult *result);
 
-
+void set_marker_dictionary(ArucoDetector *det, int dict_id);
  void set_marker_size(ArucoDetector *det,float size);
 
  void set_marker_id(ArucoDetector *det,int id);

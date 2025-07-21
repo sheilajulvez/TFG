@@ -52,6 +52,8 @@ struct cube_filter_data {
 	gs_texture_t *loaded_texture;
 	float marker_size;
 	int marker_id;
+
+	int marker_dict;
 	// Resultados del ArUco
 	ArucoDetector *detector; // 
 	ArucoResult last_result; //
@@ -209,7 +211,8 @@ static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
 	data->model_width = NULL;  // 
 	data->model_height = NULL; // 
 	data->loaded_texture = NULL;
-	data->detector = initialize_aruco_detector(0.1f);
+	data->marker_dict = ARUCO_DICT_ORIGINAL;
+	data->detector = initialize_aruco_detector(0.1f, ARUCO_DICT_ORIGINAL);
 
 
 	struct obs_video_info ovi;
@@ -254,7 +257,17 @@ static void cube_filter_render(void *data, gs_effect_t *effect)
 	if (!target) {
 		return;
 	}
-
+	//obs_enter_graphics();
+	//struct obs_source_frame *frame = obs_source_get_frame(filter->source);
+	//if (frame) {
+	//
+	//
+	//obs_source_release_frame(filter->source, frame);
+	//}
+	//else{
+	//	blog(LOG_WARNING, "MMMAMAMAMA");
+	//}
+	//obs_leave_graphics();
 	// Get target dimensions
 	uint32_t width = obs_source_get_width(filter->source);
 	uint32_t height = obs_source_get_height(filter->source);
@@ -339,6 +352,20 @@ static obs_properties_t *cube_filter_properties(void *data)
 	obs_properties_add_int(props, "marker_id", "ID del Marker", 0, 100, 1);
 	obs_properties_add_float_slider(props, "marker_size",obs_module_text("maker_size "),0.1f,10.f, 1.0f);
 	obs_properties_add_path( props, "texture_path", obs_module_text("Ruta de la Textura"), OBS_PATH_FILE,"Archivos de Imagen (*.png *.jpg *.jpeg *.bmp *.tga);;Todos los archivos (*.*)", NULL);
+	obs_property_t *p = obs_properties_add_list(
+        props, "marker_dict",
+        obs_module_text("Marker Dictionary"),
+        OBS_COMBO_TYPE_LIST,
+        OBS_COMBO_FORMAT_INT
+    );
+
+    obs_property_list_add_int(p, "Original",    0);
+    obs_property_list_add_int(p, "4×4 (100)",  ARUCO_DICT_4X4_100);
+    obs_property_list_add_int(p, "5×5 (100)",   ARUCO_DICT_5X5_100);
+    obs_property_list_add_int(p, "6×6 (100)",  ARUCO_DICT_6X6_100);
+    obs_property_list_add_int(p, "7×7 (100)",  ARUCO_DICT_7X7_100);
+    obs_property_list_add_int(p, "Original", ARUCO_DICT_ORIGINAL);
+    obs_property_list_add_int(p, "MIP", ARUCO_DICT_MIP_ORIGINAL);
 	return props;
 }
 
@@ -374,6 +401,7 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 			load_model_c(filter->model_path_str, &filter->g_meshes,&filter->g_mesh_count, &filter->model_width,&filter->model_height);
 		}
 	}
+
 	const char *new_texture_path_c_str = obs_data_get_string(settings, "texture_path"); 
 	if (!filter->texture_path_str || strcmp(filter->texture_path_str, new_texture_path_c_str) != 0 &&filter->g_meshes ) {
 
@@ -406,7 +434,11 @@ static void cube_filter_update(void *data, obs_data_t *settings)
 			blog(LOG_INFO,"Ruta de textura vacía. Se eliminará la textura de las mallas.");
 		}
 	}
-
+	int marker_dict= obs_data_get_int(settings, "marker_dict");
+	if (marker_dict != filter->marker_dict) {
+		filter->marker_dict = marker_dict;
+		set_marker_dictionary(filter->detector, filter->marker_dict);
+	}
 }
 
 
@@ -443,6 +475,7 @@ static void cube_filter_save(void *data, obs_data_t *settings)
 	obs_data_set_double(settings, "rotation_z_slider_value", filter->rotation_z);
 	obs_data_set_double(settings, "marker_size", filter->marker_size);
 	obs_data_set_int(settings, "marker_id", filter->marker_id);
+
 	if (filter->model_path_str != NULL)obs_data_set_string(settings, "model_path",  filter->model_path_str);
 	if (filter->texture_path_str != NULL)obs_data_set_string(settings, "texture_path",  filter->texture_path_str);
 }
@@ -460,7 +493,12 @@ void cube_filter_load(void *data, obs_data_t *settings)
 	filter->rotation_y =(float)obs_data_get_double(settings, "rotation_y_slider_value");
 	filter->rotation_z =(float)obs_data_get_double(settings, "rotation_z_slider_value");
 
-	filter->marker_id=(int)obs_data_get_int(settings, "marker_id");
+	int id=(int)obs_data_get_int(settings, "marker_id");
+	if (id != filter->marker_id) {
+		filter->marker_id = id;
+		set_marker_id(filter->detector, filter->marker_id);
+	
+	}
 	filter->marker_size=(float)obs_data_get_double(settings, "marker_size");
 	const char *model_path = obs_data_get_string(settings, "model_path");
 	if (model_path && *model_path != '\0') {
@@ -469,6 +507,11 @@ void cube_filter_load(void *data, obs_data_t *settings)
 	const char *texture_path = obs_data_get_string(settings, "texture_path");
 	if (texture_path && *texture_path != '\0') {
 		filter->model_path_str = bstrdup(model_path);
+	}
+	int marker_dict = obs_data_get_int(settings, "marker_dict");
+	if (marker_dict != filter->marker_dict) {
+		filter->marker_dict = marker_dict;
+		set_marker_dictionary(filter->detector, filter->marker_dict);
 	}
 	cube_filter_update(data, settings);
 
@@ -486,6 +529,7 @@ static void cube_filter_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "marker_id", 0);
 	obs_data_set_default_string(settings, "model_path", "");
 	obs_data_set_default_string(settings, "texture_path", "");
+	obs_data_set_default_int(settings, "marker_dict", ARUCO_DICT_ORIGINAL);
 }
 static struct obs_source_info cube_filter = {
 	.id = "cube_filter",

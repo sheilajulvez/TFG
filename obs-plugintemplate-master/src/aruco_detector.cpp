@@ -22,13 +22,14 @@ struct ArucoDetector {
 
 extern "C" {
 
-ArucoDetector *initialize_aruco_detector(float marker_size_meters)
+ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict)
 {
 	auto *det = new ArucoDetector;
-	det->dictionary =cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_100);
+	set_marker_dictionary(det, dict);
 	det->detector_params = cv::aruco::DetectorParameters::create();
-	det->marker_size = marker_size_meters;
+	set_marker_size(det, marker_size_meters);
 	// Cámara simulada
+	det->id = 0;
 	det->camera_matrix = (cv::Mat_<double>(3, 3) << 2000.0, 0.0, 1233.0,0.0, 2000.0, 718.0, 0.0, 0.0, 1.0);
 	det->dist_coeffs = cv::Mat::zeros(1, 5, CV_64F);
 	return det;
@@ -183,7 +184,39 @@ bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data, int w,int
 	return true;
 }
 
- void set_marker_size(ArucoDetector *det,float size) {
+ void set_marker_dictionary(ArucoDetector *det, int dict_id) {
+	 cv::aruco::PREDEFINED_DICTIONARY_NAME cv_dict;
+	 det->dictionary.release();
+	 switch (dict_id) {
+	 case ARUCO_DICT_ORIGINAL:
+		 cv_dict = cv::aruco::DICT_ARUCO_ORIGINAL;
+		 break;
+	 case ARUCO_DICT_4X4_100:
+		 cv_dict = cv::aruco::DICT_4X4_100;
+		 break;
+	 case ARUCO_DICT_5X5_100:
+		 cv_dict = cv::aruco::DICT_5X5_100;
+		 break;
+	 case ARUCO_DICT_6X6_100:
+		 cv_dict = cv::aruco::DICT_6X6_100;
+		 break;
+	 case ARUCO_DICT_7X7_100:
+		 cv_dict = cv::aruco::DICT_7X7_100;
+		 break;
+	 case ARUCO_DICT_MIP_ORIGINAL:
+		 cv_dict = cv::aruco::
+			 DICT_ARUCO_ORIGINAL; // o el que corresponda a “MIP”
+		 break;
+	 default:
+		 cv_dict = cv::aruco::DICT_4X4_100;
+		 break;
+	 }
+
+	 det->dictionary = cv::aruco::getPredefinedDictionary(cv_dict);
+ }
+
+void set_marker_size(ArucoDetector *det, float size)
+{
 	det->marker_size = size;
 }
 
