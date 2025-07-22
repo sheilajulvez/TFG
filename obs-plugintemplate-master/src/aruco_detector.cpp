@@ -4,7 +4,10 @@
 #include <opencv2/calib3d.hpp>
 #include <cmath>
 #include <limits>
-
+#include <opencv2/core.hpp>
+#include <opencv2/calib3d.hpp>
+#include <opencv2/aruco.hpp>
+#include <obs-module.h>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
 #endif
@@ -18,25 +21,92 @@ struct ArucoDetector {
 	cv::Mat camera_matrix, dist_coeffs, mat_bgra;
 	float marker_size;
 	int id;
+	int marker_dict;
+	std::string calibration_path;
 };
+void set_default_camera_params(ArucoDetector *det)
+{
+	// Intrinsics por defecto: fx = fy = 2000, principal point (cx, cy) = (1233, 718)
+	det->camera_matrix = (cv::Mat_<double>(3, 3) << 2000.0, 0.0, 1233.0,
+			      0.0, 2000.0, 718.0, 0.0, 0.0, 1.0);
 
+	// Distorsión por defecto: cero en todos los coeficientes
+	det->dist_coeffs = cv::Mat::zeros(1, 5, CV_64F);
+
+	blog(LOG_WARNING,
+	     "[CUBE] Usando parámetros de cámara por defecto (fx=fy=2000, cx=1233, cy=718).");
+}
 extern "C" {
+// Esta es la función que abre el YAML y rellena las matrices
+bool load_camera_calibration(const std::string &filename,cv::Mat &camera_matrix, cv::Mat &dist_coeffs)
+{
+	camera_matrix.release();
+	dist_coeffs.release();
+	cv::FileStorage fs(filename, cv::FileStorage::READ);
+	if (!fs.isOpened()) {
+		blog(LOG_ERROR,"[CUBE] No se pudo abrir el archivo de calibración: %s", filename.c_str());
+		return false;
+	}
 
-ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict)
+	fs["camera_matrix"] >> camera_matrix;
+	fs["distortion_coefficients"] >> dist_coeffs;
+
+	if (camera_matrix.empty() || dist_coeffs.empty()) {
+		blog(LOG_ERROR,"[CUBE] Parámetros inválidos en el archivo de calibración.");
+		return false;
+	}
+
+	blog(LOG_INFO, "[CUBE] Archivo de calibración cargado con éxito.");
+	return true;
+}
+
+// Y esta es la versión C que llama a la anterior y guarda el path
+bool set_camera_calibration(ArucoDetector *det, const char *filename)
+{
+	if (!det || !filename || *filename == '\0')
+		return false;
+
+	// Aquí invocamos la función correcta, no a nosotros mismos
+	if (!load_camera_calibration(filename, det->camera_matrix,
+				     det->dist_coeffs)) {
+		// Si falla, usar valores por defecto
+		blog(LOG_WARNING,"[CUBE] Usando parámetros de cámara por defecto.");
+		set_default_camera_params(det);
+	} else {
+		det->calibration_path = filename;
+		blog(LOG_INFO,"[CUBE] Calibración cargada y establecida desde %s", filename);
+	}
+
+	return true;
+}
+ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,const char * calibration_file)
 {
 	auto *det = new ArucoDetector;
 	set_marker_dictionary(det, dict);
 	det->detector_params = cv::aruco::DetectorParameters::create();
 	set_marker_size(det, marker_size_meters);
-	// Cámara simulada
 	det->id = 0;
-	det->camera_matrix = (cv::Mat_<double>(3, 3) << 2000.0, 0.0, 1233.0,0.0, 2000.0, 718.0, 0.0, 0.0, 1.0);
-	det->dist_coeffs = cv::Mat::zeros(1, 5, CV_64F);
+	blog(LOG_WARNING,"[CUBE] catgar cpsitas");
+	if (!set_camera_calibration(det, calibration_file)) {
+		// Si falla, usar valores por defecto
+		blog(LOG_WARNING,"[CUBE] Usando parámetros de cámara por defecto.");
+		det->camera_matrix = (cv::Mat_<double>(3, 3) << 2000.0, 0.0,
+				      1233.0, 0.0, 2000.0, 718.0, 0.0, 0.0,
+				      1.0);
+		det->dist_coeffs = cv::Mat::zeros(1, 5, CV_64F);
+	}
 	return det;
 }
 
+
 void cleanup_aruco_detector(ArucoDetector *det)
 {
+	det->detector_params.release();
+	det->camera_matrix.release();
+	det->dictionary.release();
+	det->camera_matrix.release();
+	det->dist_coeffs.release();
+	det->mat_bgra.release();
 	delete det;
 }
 
@@ -73,8 +143,7 @@ static void rotation_to_euler(const cv::Mat &R, float &pitch, float &yaw,
  * @param yaw Referencia para guardar el ángulo de yaw (rotación en Y).
  * @param roll Referencia para guardar el ángulo de roll (rotación en Z).
  */
-static void get_euler_angles_from_pose(const cv::Vec3d &rvec,
-				       const cv::Vec3d &tvec, float &pitch,
+static void get_euler_angles_from_pose(const cv::Vec3d &rvec,const cv::Vec3d &tvec, float &pitch,
 				       float &yaw, float &roll)
 {
 	// 1. Convertir el vector de rotación (rvec) a una matriz de rotación (R)
@@ -97,8 +166,7 @@ static void get_euler_angles_from_pose(const cv::Vec3d &rvec,
 }
 bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data, int w,int h, int fw, int fh, ArucoResult *res)
 {
-	if (!det || !frame_data || w <= 0 || h <= 0 || !res)
-		return false;
+	if (!det || !frame_data || w <= 0 || h <= 0 || !res)return false;
 
 	// 1) Copiar BGRA y convertir a gris
 	det->mat_bgra.create(h, w, CV_8UC4);
@@ -109,8 +177,7 @@ bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data, int w,int
 	// 2) Detectar marcadores en la imagen completa
 	std::vector<std::vector<cv::Point2f>> corners;
 	std::vector<int> ids;
-	cv::aruco::detectMarkers(gray, det->dictionary, corners, ids,
-				 det->detector_params);
+	cv::aruco::detectMarkers(gray, det->dictionary, corners, ids,det->detector_params);
 
 	// 3) Si no se detecta NINGÚN marcador, salimos.
 	if (ids.empty()) {
@@ -135,9 +202,7 @@ bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data, int w,int
 
 	// 5) Estimar la pose sólo del marcador seleccionado
 	std::vector<cv::Vec3d> rvecs, tvecs;
-	cv::aruco::estimatePoseSingleMarkers(corners, det->marker_size,
-					     det->camera_matrix,
-					     det->dist_coeffs, rvecs, tvecs);
+	cv::aruco::estimatePoseSingleMarkers(corners, det->marker_size,det->camera_matrix, det->dist_coeffs, rvecs, tvecs);
 
 	if (rvecs.empty() || tvecs.empty()) {
 		res->detected = false;
@@ -175,8 +240,7 @@ bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data, int w,int
 
 	// 8) Calcular ángulos de Euler con el método robusto
 	float pitch, yaw, roll;
-	get_euler_angles_from_pose(rvecs[marker_index_to_process], tvecs[marker_index_to_process], pitch, yaw,
- roll);
+	get_euler_angles_from_pose(rvecs[marker_index_to_process], tvecs[marker_index_to_process], pitch, yaw,roll);
 	res->euler_x = pitch;
 	res->euler_y = yaw;
 	res->euler_z = roll;
@@ -205,7 +269,7 @@ bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data, int w,int
 		 break;
 	 case ARUCO_DICT_MIP_ORIGINAL:
 		 cv_dict = cv::aruco::
-			 DICT_ARUCO_ORIGINAL; // o el que corresponda a “MIP”
+			 DICT_ARUCO_ORIGINAL; 
 		 break;
 	 default:
 		 cv_dict = cv::aruco::DICT_4X4_100;
@@ -215,12 +279,41 @@ bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data, int w,int
 	 det->dictionary = cv::aruco::getPredefinedDictionary(cv_dict);
  }
 
-void set_marker_size(ArucoDetector *det, float size)
-{
+void set_marker_size(ArucoDetector *const det, float size)
+ {
 	det->marker_size = size;
+
 }
 
- void set_marker_id(ArucoDetector *det,int id) {
+ void set_marker_id(ArucoDetector *const det, int id)
+{
 	det->id = id;
 }
-} // extern "C"
+ const int get_marker_dictionary(const ArucoDetector *const det)
+ {
+	
+	 return det->marker_dict;
+ }
+ const int get_marker_size(const ArucoDetector *const det)
+ {
+	 return det->marker_size;
+ }
+ const int get_marker_id(const ArucoDetector * const det)
+ {
+	 return det->id;
+ }
+ const char *get_calibration_path(const ArucoDetector * const det)
+ {
+	 return det ? det->calibration_path.c_str() : NULL;
+ }
+
+ void set_calibration_path(ArucoDetector *det, const char *const path)
+ {
+	 if (det && path &&  load_camera_calibration(path, det->camera_matrix, det->dist_coeffs)) {
+		 det->calibration_path = path;
+		
+	 } else set_default_camera_params(det);
+ }
+
+
+ } // extern "C"

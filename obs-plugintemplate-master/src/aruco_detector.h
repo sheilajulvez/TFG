@@ -35,7 +35,7 @@ typedef struct {
  * @param marker_size_meters  Tamaño (m) de tu marcador.
  * @return Puntero opaque (liberar con cleanup).
  */
-ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict);
+ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,const char * calibration_file);
 
 /** @brief Libera el detector */
 void cleanup_aruco_detector(ArucoDetector *det);
@@ -46,11 +46,15 @@ void cleanup_aruco_detector(ArucoDetector *det);
  */
 bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data,int width, int height, int filter_w, int filter_h,ArucoResult *result);
 
-void set_marker_dictionary(ArucoDetector *det, int dict_id);
- void set_marker_size(ArucoDetector *det,float size);
-
- void set_marker_id(ArucoDetector *det,int id);
-
+ void set_marker_dictionary(ArucoDetector *const det, int dict_id);
+ void set_marker_size(ArucoDetector *const det, float size);
+ void set_marker_id(ArucoDetector *const det, int id);
+ bool set_camera_calibration(ArucoDetector *det, const char *filename);
+ const int get_marker_dictionary(const ArucoDetector  *const det);
+ const int get_marker_size(const ArucoDetector  *const det);
+ const int get_marker_id(const ArucoDetector  *const det);
+ void set_calibration_path(ArucoDetector *det, const char * const path);
+ const char *get_calibration_path(const ArucoDetector * const det);
 #ifdef __cplusplus
 }
 #endif

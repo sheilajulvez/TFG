@@ -37,7 +37,7 @@ static void free_single_mesh(Mesh *mesh, gs_texture_t *user_texture_to_exclude)
 	
 	 // Solo destruye la textura de la malla si NO es la textura que el usuario ha seleccionado.
 	// Si mesh->texture es igual a user_texture_to_exclude, significa que es la textura compartida,
-	// y esa debe ser destruida solo una vez por el filtro (en cube_filter_destroy).
+	// y esa debe ser destruida solo una vez por el filtro (en filter_destroy).
 	if (mesh->texture && mesh->texture != user_texture_to_exclude) {
 		gs_texture_destroy(mesh->texture);
 		mesh->texture = NULL;
