@@ -62,7 +62,8 @@
 		struct cube_filter_data *filter = data;
 
 		if (!frame) {
-			blog(LOG_WARNING, "cube_filter_filter_video: frame es NULL");
+			blog(LOG_WARNING,
+			     "cube_filter_filter_video: frame es NULL");
 			return NULL;
 		}
 
@@ -73,18 +74,39 @@
 		blog(LOG_WARNING, "FILTER VIDEO");
 		switch (frame->format) {
 		case VIDEO_FORMAT_BGRA:
-			blog(LOG_INFO,"Formato BGRA detectado, procesando directamente");
+			blog(LOG_INFO,
+			     "Formato BGRA detectado, procesando directamente");
 
-			detected = process_frame_rgba(filter->detector,frame->data[0], frame->width,frame->height, filter->width_screen, filter->height_screen, &filter->last_result);
+			detected = process_frame_rgba(
+				filter->detector, frame->data[0], frame->width,
+				frame->height, filter->width_screen,
+				filter->height_screen, &filter->last_result);
 			break;
 
+		/* ----- INICIO DE LA MODIFICACIÓN ----- */
+		case VIDEO_FORMAT_YUY2:
+			blog(LOG_INFO,
+			     "Formato YUY2 detectado, convirtiendo a BGRA");
+			bgra_buffer = bmalloc(image_size);
+			convert_yuy2_to_bgra(
+				frame, bgra_buffer); // Usa la función de ayuda
+			detected = process_frame_rgba(
+				filter->detector, bgra_buffer, frame->width,
+				frame->height, filter->width_screen,
+				filter->height_screen, &filter->last_result);
+			bfree(bgra_buffer);
+			break;
+			/* ----- FIN DE LA MODIFICACIÓN ----- */
+
 		case VIDEO_FORMAT_I420:
-			blog(LOG_INFO, "Formato I420 detectado, convirtiendo a BGRA");
+			blog(LOG_INFO,
+			     "Formato I420 detectado, convirtiendo a BGRA");
 			get_uv = get_uv_i420;
 			break;
 
 		case VIDEO_FORMAT_NV12:
-			blog(LOG_INFO, "Formato NV12 detectado, convirtiendo a BGRA");
+			blog(LOG_INFO,
+			     "Formato NV12 detectado, convirtiendo a BGRA");
 			get_uv = get_uv_nv12;
 			break;
 
@@ -94,7 +116,8 @@
 			break;
 
 		default:
-			blog(LOG_WARNING, "Formato no compatible: %d", frame->format);
+			blog(LOG_WARNING, "Formato no compatible: %d",
+			     frame->format);
 			break;
 		}
 
@@ -102,7 +125,10 @@
 			bgra_buffer = bmalloc(image_size);
 			convert_yuv_to_bgra_generic(frame, bgra_buffer, get_uv);
 
-			detected = process_frame_rgba(filter->detector,bgra_buffer, frame->width,frame->height,filter->width_screen,  filter->height_screen, &filter->last_result);
+			detected = process_frame_rgba(
+				filter->detector, bgra_buffer, frame->width,
+				frame->height, filter->width_screen,
+				filter->height_screen, &filter->last_result);
 
 			bfree(bgra_buffer);
 		}

@@ -45,7 +45,43 @@ void get_uv_i422(const struct obs_source_frame *frame, int x, int y, uint8_t *u,
 	*u = U[y * u_pitch + x];
 	*v = V[y * v_pitch + x];
 }
+void convert_yuy2_to_bgra(const struct obs_source_frame *frame,
+			  uint8_t *dst_bgra)
+{
+	const int width = frame->width;
+	const int height = frame->height;
+	const uint8_t *yuy2 = frame->data[0];
+	const int pitch = frame->linesize[0];
 
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x += 2) {
+			const uint8_t *macropixel = yuy2 + y * pitch + x * 2;
+
+			uint8_t y0 = macropixel[0];
+			uint8_t u = macropixel[1];
+			uint8_t y1 = macropixel[2];
+			uint8_t v = macropixel[3];
+
+			uint8_t r, g, b;
+
+			yuv_to_bgra(y0, u, v, &b, &g, &r);
+			int dst_index0 = (y * width + x) * 4;
+			dst_bgra[dst_index0 + 0] = b;
+			dst_bgra[dst_index0 + 1] = g;
+			dst_bgra[dst_index0 + 2] = r;
+			dst_bgra[dst_index0 + 3] = 255;
+
+			if (x + 1 < width) {
+				yuv_to_bgra(y1, u, v, &b, &g, &r);
+				int dst_index1 = (y * width + x + 1) * 4;
+				dst_bgra[dst_index1 + 0] = b;
+				dst_bgra[dst_index1 + 1] = g;
+				dst_bgra[dst_index1 + 2] = r;
+				dst_bgra[dst_index1 + 3] = 255;
+			}
+		}
+	}
+}
 // Función genérica para convertir cualquier YUV a BGRA usando función get_uv
 void convert_yuv_to_bgra_generic(const struct obs_source_frame *frame,uint8_t *dst_bgra, get_uv_func get_uv)
 {
