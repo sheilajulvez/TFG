@@ -20,64 +20,27 @@
 
 #include <float.h>
 
-
 static void free_single_mesh(Mesh *mesh, gs_texture_t *user_texture_to_exclude)
 {
-	if (!mesh)
-		return;
-	obs_enter_graphics();
-	if (mesh->vb) {
-		gs_vertexbuffer_destroy(mesh->vb);
-		mesh->vb = NULL;
-	}
-	if (mesh->ib) {
-		gs_indexbuffer_destroy(mesh->ib);
-		mesh->ib = NULL;
-	}
-	
-	 // Solo destruye la textura de la malla si NO es la textura que el usuario ha seleccionado.
-	// Si mesh->texture es igual a user_texture_to_exclude, significa que es la textura compartida,
-	// y esa debe ser destruida solo una vez por el filtro (en filter_destroy).
-	if (mesh->texture && mesh->texture != user_texture_to_exclude) {
-		gs_texture_destroy(mesh->texture);
-		mesh->texture = NULL;
-	} else if (mesh->texture == user_texture_to_exclude) {
-		// Si la textura de la malla es la textura del usuario,
-		// simplemente anula el puntero para que esta malla no intente destruirla.
-		// La instancia real de la textura ser� destruida por el filtro m�s tarde.
-		mesh->texture = NULL;
-	}
-	// Si mesh->texture es NULL, no hacemos nada.
-
-	obs_leave_graphics();
+    if (!mesh) return;
+    blog(LOG_INFO, "[CUBE] free_single_mesh: mesh=%p, texture=%p", mesh, mesh->texture);
+    obs_enter_graphics();
+    if (mesh->vb) { gs_vertexbuffer_destroy(mesh->vb); mesh->vb = NULL; }
+    if (mesh->ib) { gs_indexbuffer_destroy(mesh->ib); mesh->ib = NULL; }
+    if (mesh->texture) { blog(LOG_INFO, "[CUBE] free_single_mesh: anulando textura de malla %p", mesh->texture); mesh->texture = NULL; }
+    obs_leave_graphics();
 }
-// --- Función ÚNICA para borrar g_meshes y g_mesh_count ---
-void cleanup_global_meshes(struct Mesh **g_meshes, size_t *g_mesh_count,float **mesh_widths, float **mesh_heights, gs_texture_t *user_texture_to_exclude)
+void cleanup_global_meshes(struct Mesh **g_meshes, size_t *g_mesh_count, float **mesh_widths, float **mesh_heights, gs_texture_t *user_texture_to_exclude)
 {
-	if (!*g_meshes)
-		return;
-
-	blog(LOG_INFO, "Liberando %zu mallas globales.", *g_mesh_count);
-
-	for (size_t i = 0; i < *g_mesh_count; ++i) {
-		free_single_mesh(&(*g_meshes)[i], user_texture_to_exclude);
-	}
-
-	bfree(*g_meshes);
-	*g_meshes = NULL;
-	*g_mesh_count = 0;
-
-	if (mesh_widths && *mesh_widths) {
-		bfree(*mesh_widths);
-		*mesh_widths = NULL;
-	}
-
-	if (mesh_heights && *mesh_heights) {
-		bfree(*mesh_heights);
-		*mesh_heights = NULL;
-	}
-
-	blog(LOG_INFO,"Mallas y arrays de dimensiones liberados correctamente.");
+    if (!*g_meshes) return;
+    blog(LOG_INFO, "[CUBE] cleanup_global_meshes: liberando %zu mallas", *g_mesh_count);
+    for (size_t i = 0; i < *g_mesh_count; ++i) free_single_mesh(&(*g_meshes)[i], user_texture_to_exclude);
+    bfree(*g_meshes);
+    *g_meshes = NULL;
+    *g_mesh_count = 0;
+    if (mesh_widths && *mesh_widths) { bfree(*mesh_widths); *mesh_widths = NULL; }
+    if (mesh_heights && *mesh_heights) { bfree(*mesh_heights); *mesh_heights = NULL; }
+    blog(LOG_INFO, "[CUBE] Todas las mallas y arrays de dimensiones han sido liberados.");
 }
 
 
@@ -436,7 +399,7 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count, float *widths
 	gs_technique_end(tech);
 }
 
-int d = 0;
+
 /**
  * @brief Renderiza todas las mallas del modelo cargado.
  *
@@ -453,7 +416,7 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		gs_effect_get_param_by_name(default_effect, "image");
 	if (!image_param)
 		return;
-	d = d + 30 * 0.1;
+	
 	gs_technique_t *tech = gs_effect_get_technique(default_effect, "Draw");
 	gs_technique_begin(tech);
 	gs_technique_begin_pass(tech, 0);
@@ -511,4 +474,19 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
+}
+void replace_mesh_textures(struct Mesh *meshes, size_t count, gs_texture_t *new_tex,  gs_texture_t *old_tex)
+{
+    // Para cada sub-malla, libera textura antigua y asigna la nueva
+    for (size_t i = 0; i < count; i++) {
+        struct Mesh *m = &meshes[i];
+        if (old_tex && m->texture == old_tex) {
+            gs_texture_destroy(m->texture);
+            m->texture = NULL;
+        }
+        if (new_tex) {
+            m->texture = new_tex;
+            // Si quieres hacer un gs_texture_addref(new_tex) según tu gestión de referencias
+        }
+    }
 }

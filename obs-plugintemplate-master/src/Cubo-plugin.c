@@ -358,41 +358,59 @@
 		gs_blend_state_pop();
 		obs_leave_graphics();
 	}
+static bool render_mode_changed(obs_properties_t *props, obs_property_t *property, obs_data_t *settings) {
+    int mode = (int)obs_data_get_int(settings, "render_mode");
+    bool show_3d = (mode == 0);
+    bool show_ar = (mode == 1);
+    obs_property_set_visible(obs_properties_get(props, "pos_x"), show_3d);
+    obs_property_set_visible(obs_properties_get(props, "pos_y"), show_3d);
+    obs_property_set_visible(obs_properties_get(props, "pos_z"), show_3d);
+    obs_property_set_visible(obs_properties_get(props, "scale"), show_3d);
+    obs_property_set_visible(obs_properties_get(props, "rotation_x_slider_value"), show_3d);
+    obs_property_set_visible(obs_properties_get(props, "rotation_y_slider_value"), show_3d);
+    obs_property_set_visible(obs_properties_get(props, "rotation_z_slider_value"), show_3d);
+    obs_property_set_visible(obs_properties_get(props, "texture_path"), show_3d);
+    obs_property_set_visible(obs_properties_get(props, "model_path"), show_ar);
+    obs_property_set_visible(obs_properties_get(props, "marker_id"), show_ar);
+    obs_property_set_visible(obs_properties_get(props, "marker_size"), show_ar);
+    obs_property_set_visible(obs_properties_get(props, "marker_dict"), show_ar);
+    obs_property_set_visible(obs_properties_get(props, "calibration_path"), show_ar);
+    return true;
+}
+
+static obs_properties_t *filter_properties(void *data) {
+    obs_properties_t *props = obs_properties_create();
+    obs_property_t *combo = obs_properties_add_list(props, "render_mode", "Modo de renderizado", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+    obs_property_list_add_int(combo, "3D", 0);
+    obs_property_list_add_int(combo, "AR", 1);
+    obs_property_set_modified_callback(combo, render_mode_changed);
+    obs_properties_add_float_slider(props, "pos_x", "Posición X", -3000.0f, 3000.0f, 10.0f);
+    obs_properties_add_float_slider(props, "pos_y", "Posición Y", -3000.0f, 3000.0f, 10.0f);
+    obs_properties_add_float_slider(props, "pos_z", "Posición Z", -3000.0f, 3000.0f, 10.0f);
+    obs_properties_add_float_slider(props, "scale", "Escala", 0.1f, 1000.0f, 0.01f);
+    obs_properties_add_float_slider(props, "rotation_x_slider_value", "Rotación X (Grados)", -360.0f, 360.0f, 1.0f);
+    obs_properties_add_float_slider(props, "rotation_y_slider_value", "Rotación Y (Grados)", -360.0f, 360.0f, 1.0f);
+    obs_properties_add_float_slider(props, "rotation_z_slider_value", "Rotación Z (Grados)", -360.0f, 360.0f, 1.0f);
+    obs_properties_add_path(props, "texture_path", "Ruta de la Textura", OBS_PATH_FILE, "Imágenes (*.png *.jpg *.jpeg *.bmp *.tga);;Todos (*.*)", NULL);
+    obs_properties_add_path(props, "model_path", "Ruta del Modelo 3D", OBS_PATH_FILE, "Modelos 3D (*.obj *.fbx *.dae *.gltf);;Todos (*.*)", NULL);
+    obs_properties_add_int(props, "marker_id", "ID del Marker", 0, 100, 1);
+    obs_properties_add_float_slider(props, "marker_size", "Tamaño del Marker", 0.1f, 10.0f, 0.1f);
+    obs_property_t *dict = obs_properties_add_list(props, "marker_dict", "Diccionario de Marker", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+    obs_property_list_add_int(dict, "Original", ARUCO_DICT_ORIGINAL);
+    obs_property_list_add_int(dict, "4×4 (100)", ARUCO_DICT_4X4_100);
+    obs_property_list_add_int(dict, "5×5 (100)", ARUCO_DICT_5X5_100);
+    obs_property_list_add_int(dict, "6×6 (100)", ARUCO_DICT_6X6_100);
+    obs_property_list_add_int(dict, "7×7 (100)", ARUCO_DICT_7X7_100);
+    obs_property_list_add_int(dict, "MIP Original", ARUCO_DICT_MIP_ORIGINAL);
+    obs_properties_add_path(props, "calibration_path", "Archivo de Calibración", OBS_PATH_FILE, "YAML (*.yml *.yaml);;Todos (*.*)", NULL);
+    obs_data_t *temp_settings = obs_data_create();
+    render_mode_changed(props, combo, temp_settings);
+    obs_data_release(temp_settings);
+    return props;
+}
 
 
-	static obs_properties_t *filter_properties(void *data)
-	{
-		obs_properties_t *props = obs_properties_create();
-		obs_properties_add_group(props, "position_group",obs_module_text("Posición"), OBS_GROUP_NORMAL,props);
-		obs_properties_add_float_slider(props, "pos_x",obs_module_text("Posición X"), -3000.0f,3000.0f, 10.0f);
-		obs_properties_add_float_slider(props, "pos_y",obs_module_text("Posición Y"), -3000.0f,3000.0f, 10.0f);
-		obs_properties_add_float_slider(props, "pos_z",obs_module_text("Posición Z"), -3000.0f,3000.0f, 10.0f);
-		obs_properties_add_float_slider(props, "scale", obs_module_text("Escala"), 0.1f, 1000, 0.01f);
-		obs_properties_add_float_slider(props, "rotation_z_slider_value",obs_module_text("Rotación Z (Grados)"),-360.0f, 360.0f, 1.0f);
-		obs_properties_add_float_slider(props, "rotation_x_slider_value",obs_module_text("Rotación Y (Grados)"),-360.0f, 360.0f, 1.0f);
-		obs_properties_add_float_slider(props, "rotation_y_slider_value",obs_module_text("Rotación X (Grados)"),-360.0f, 360.0f, 1.0f);
-		obs_properties_add_path(props, "model_path", obs_module_text("Ruta del Modelo 3D"),OBS_PATH_FILE,"Modelos 3D (*.obj *.fbx *.dae *.gltf);;Todos los archivos (*.*)",NULL);
-		obs_properties_add_int(props, "marker_id", "ID del Marker", 0, 100, 1);
-		obs_properties_add_float_slider(props, "marker_size",obs_module_text("maker_size "),0.1f,10.f, 1.0f);
-		obs_properties_add_path( props, "texture_path", obs_module_text("Ruta de la Textura"), OBS_PATH_FILE,"Archivos de Imagen (*.png *.jpg *.jpeg *.bmp *.tga);;Todos los archivos (*.*)", NULL);
-		obs_property_t *p = obs_properties_add_list(
-			props, "marker_dict",
-			obs_module_text("Marker Dictionary"),
-			OBS_COMBO_TYPE_LIST,
-			OBS_COMBO_FORMAT_INT
-		);
 
-		obs_property_list_add_int(p, "Original",    0);
-		obs_property_list_add_int(p, "4×4 (100)",  ARUCO_DICT_4X4_100);
-		obs_property_list_add_int(p, "5×5 (100)",   ARUCO_DICT_5X5_100);
-		obs_property_list_add_int(p, "6×6 (100)",  ARUCO_DICT_6X6_100);
-		obs_property_list_add_int(p, "7×7 (100)",  ARUCO_DICT_7X7_100);
-		obs_property_list_add_int(p, "Original", ARUCO_DICT_ORIGINAL);
-		obs_property_list_add_int(p, "MIP", ARUCO_DICT_MIP_ORIGINAL);
-
-		obs_properties_add_path(props, "calibration_path", "Camera Calibration File",OBS_PATH_FILE,"YAML Files (*.yml *.yaml);;All Files (*.*)", NULL);
-		return props;
-	}
 
 	static void filter_update(void *data, obs_data_t *settings)
 	{
@@ -416,47 +434,35 @@
 	
 			set_marker_id(filter->detector, id);
 		}
-		const char *new_model_path_c_str =obs_data_get_string(settings, "model_path");
-		if (!filter->model_path_str || strcmp(filter->model_path_str, new_model_path_c_str) != 0 ||filter->g_mesh_count == 0) {
+		const char *new_model_path_c_str = obs_data_get_string(settings, "model_path");
+		if (!filter->model_path_str || strcmp(filter->model_path_str, new_model_path_c_str) != 0 || filter->g_mesh_count == 0) {
 			bfree(filter->model_path_str);
 			filter->model_path_str = bstrdup(new_model_path_c_str);
-
-			if (filter->model_path_str && strlen(filter->model_path_str) > 0) {
-				blog(LOG_INFO, "Cargando nuevo modelo desde: %s",filter->model_path_str);
-				load_model_c(filter->model_path_str, &filter->g_meshes,&filter->g_mesh_count, &filter->model_width,&filter->model_height);
+			if (filter->model_path_str[0]) {
+				blog(LOG_INFO, "[CUBE] Cargando nuevo modelo desde: %s", filter->model_path_str);
+				/* Ajuste: load_model_c acepta 5 parámetros según su firma */
+				load_model_c(filter->model_path_str,
+							 &filter->g_meshes,
+							 &filter->g_mesh_count,
+							 &filter->model_width,
+							 &filter->model_height);
 			}
 		}
-
-		const char *new_texture_path_c_str = obs_data_get_string(settings, "texture_path"); 
-		if (!filter->texture_path_str || strcmp(filter->texture_path_str, new_texture_path_c_str) != 0 &&filter->g_meshes ) {
-
-			// 1. Liberar la ruta de la textura ALMACENADA ANTERIORMENTE
+		/* Gestión de recarga de textura */
+		const char *new_texture_path_c_str = obs_data_get_string(settings, "texture_path");
+		if ((!filter->texture_path_str || strcmp(filter->texture_path_str, new_texture_path_c_str) != 0) && filter->g_meshes) {
 			bfree(filter->texture_path_str);
-			// 2. Duplicar la NUEVA ruta para guardarla en el filtro
 			filter->texture_path_str = bstrdup(new_texture_path_c_str);
-
-			// 3 Destruir la TEXTURA ANTERIOR cargada en 'filter->loaded_texture'
-			// Esto evita la fuga de memoria al cargar una nueva.
-			if (filter->loaded_texture) {
-				obs_enter_graphics(); // Entrar al contexto de gráficos para operar con texturas
-				gs_texture_destroy(filter->loaded_texture);
-				filter->loaded_texture =NULL; // Importante: poner a NULL después de destruir para evitar punteros colgantes
-				obs_leave_graphics(); // Salir del contexto de gráficos
-			}
-
-			// 4. Cargar la NUEVA textura si la ruta no está vacía
-			if (filter->texture_path_str &&strlen(filter->texture_path_str) > 0) {
-				// Asumo que 'load_texture_file' es tu función para cargar gs_texture_t* desde una ruta
-				filter->loaded_texture =load_texture_file(filter->texture_path_str);
+			if (filter->loaded_texture) { obs_enter_graphics(); gs_texture_destroy(filter->loaded_texture); filter->loaded_texture = NULL; obs_leave_graphics(); }
+			if (filter->texture_path_str[0]) {
+				filter->loaded_texture = load_texture_file(filter->texture_path_str);
 				if (filter->loaded_texture) {
-					blog(LOG_INFO, "Nueva textura cargada desde: %s", filter->texture_path_str);
-					apply_texture_to_all_meshes(filter->g_meshes, filter->g_mesh_count,filter->loaded_texture);
-				} else {
-					blog(LOG_WARNING, "No se pudo cargar la nueva textura desde: %s",filter->texture_path_str);
-				}
+					blog(LOG_INFO, "[CUBE] Nueva textura cargada desde: %s", filter->texture_path_str);
+					replace_mesh_textures(filter->g_meshes, filter->g_mesh_count, filter->loaded_texture, NULL);
+				} else blog(LOG_WARNING, "[CUBE] No se pudo cargar la nueva textura desde: %s", filter->texture_path_str);
 			} else {
-				// Si la ruta está vacía, no hay textura para cargar (filter->loaded_texture ya es NULL)
-				blog(LOG_INFO,"Ruta de textura vacía. Se eliminará la textura de las mallas.");
+				blog(LOG_INFO, "[CUBE] Ruta de textura vacía: eliminando textura en mallas");
+				replace_mesh_textures(filter->g_meshes, filter->g_mesh_count, NULL, NULL);
 			}
 		}
 		int marker_dict= obs_data_get_int(settings, "marker_dict");
@@ -490,71 +496,50 @@
 	}
 
 
-
-	static void filter_save(void *data, obs_data_t *settings)
-	{
+	static void filter_save(void *data, obs_data_t *settings) {
 		struct cube_filter_data *filter = data;
-		blog(LOG_INFO, "[CUBE] Guardando valores");
+		blog(LOG_INFO, "[CUBE] guardando valores");
 		obs_data_set_double(settings, "pos_x", filter->pos_x);
 		obs_data_set_double(settings, "pos_y", filter->pos_y);
 		obs_data_set_double(settings, "pos_z", filter->pos_z);
 		obs_data_set_double(settings, "scale", filter->scale);
-		obs_data_set_double(settings, "rotation_x_slider_value",filter->rotation_x);
+		obs_data_set_double(settings, "rotation_x_slider_value", filter->rotation_x);
 		obs_data_set_double(settings, "rotation_y_slider_value", filter->rotation_y);
 		obs_data_set_double(settings, "rotation_z_slider_value", filter->rotation_z);
 		obs_data_set_double(settings, "marker_size", get_marker_size(filter->detector));
 		obs_data_set_int(settings, "marker_id", get_marker_id(filter->detector));
 		obs_data_set_int(settings, "marker_dict", get_marker_dictionary(filter->detector));
-		if (filter->model_path_str != NULL)obs_data_set_string(settings, "model_path",  filter->model_path_str);
-		if (filter->texture_path_str != NULL)obs_data_set_string(settings, "texture_path",  filter->texture_path_str);
-		
+		if (filter->model_path_str)    obs_data_set_string(settings, "model_path",    filter->model_path_str);
+		if (filter->texture_path_str)  obs_data_set_string(settings, "texture_path",  filter->texture_path_str);
 		if (get_calibration_path(filter->detector))
-			obs_data_set_string(settings, "calibration_path",get_calibration_path(filter->detector));
-
+			obs_data_set_string(settings, "calibration_path", get_calibration_path(filter->detector));
 	}
-	void filter_load(void *data, obs_data_t *settings)
-	{
-		struct cube_filter_data *filter = data;
-		blog(LOG_INFO, "[CUBE] Cargando valores");
 
+	static void filter_load(void *data, obs_data_t *settings) {
+		struct cube_filter_data *filter = data;
+		blog(LOG_INFO, "[CUBE] cargando valores");
 		filter->pos_x = (float)obs_data_get_double(settings, "pos_x");
 		filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
 		filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
 		filter->scale = (float)obs_data_get_double(settings, "scale");
-
-		filter->rotation_x =(float)obs_data_get_double(settings, "rotation_x_slider_value");
-		filter->rotation_y =(float)obs_data_get_double(settings, "rotation_y_slider_value");
-		filter->rotation_z =(float)obs_data_get_double(settings, "rotation_z_slider_value");
-
-		int id=(int)obs_data_get_int(settings, "marker_id");
-		if (id != get_marker_id(filter->detector)) {
-		
-			set_marker_id(filter->detector, id);
-	
-		}
-		int marker_dict = obs_data_get_int(settings, "marker_dict");
-		if (marker_dict != get_marker_dictionary(filter->detector)) {
-
-			set_marker_dictionary(filter->detector, marker_dict);
-		}
-		int size=(float)obs_data_get_double(settings, "marker_size");
-		if (size != get_marker_size(filter->detector)) {
-			set_marker_size(filter->detector, size);
-		}
-		const char *model_path = obs_data_get_string(settings, "model_path");
-		if (model_path && *model_path != '\0') {
-			filter->model_path_str = bstrdup(model_path);
-		}
-		const char *texture_path = obs_data_get_string(settings, "texture_path");
-		if (texture_path && *texture_path != '\0') {
-			filter->model_path_str = bstrdup(model_path);
-		}
-		const char *path = obs_data_get_string(settings, "calibration_path");
-
-		set_calibration_path(filter->detector, path);
-
+		filter->rotation_x = (float)obs_data_get_double(settings, "rotation_x_slider_value");
+		filter->rotation_y = (float)obs_data_get_double(settings, "rotation_y_slider_value");
+		filter->rotation_z = (float)obs_data_get_double(settings, "rotation_z_slider_value");
+		int id   = (int)obs_data_get_int(settings, "marker_id");
+		int dict = (int)obs_data_get_int(settings, "marker_dict");
+		float siz = (float)obs_data_get_double(settings, "marker_size");
+		if (id   != get_marker_id(filter->detector))       set_marker_id(filter->detector, id);
+		if (dict != get_marker_dictionary(filter->detector)) set_marker_dictionary(filter->detector, dict);
+		if (siz  != get_marker_size(filter->detector))      set_marker_size(filter->detector, siz);
+		const char *mp = obs_data_get_string(settings, "model_path");
+		if (filter->model_path_str) bfree(filter->model_path_str);
+		filter->model_path_str = (mp && *mp) ? bstrdup(mp) : NULL;
+		const char *tp = obs_data_get_string(settings, "texture_path");
+		if (filter->texture_path_str) bfree(filter->texture_path_str);
+		filter->texture_path_str = (tp && *tp) ? bstrdup(tp) : NULL;
+		const char *cp = obs_data_get_string(settings, "calibration_path");
+		if (cp && *cp) set_calibration_path(filter->detector, cp);
 		filter_update(data, settings);
-
 	}
 	static void filter_defaults(obs_data_t *settings)
 	{

@@ -21,3 +21,4 @@ bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float 
 void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths, float *heights, float scale,float rot_x_deg, float rot_y_deg, float rot_z_deg);
 void cleanup_global_meshes(struct Mesh **g_meshes, size_t *g_mesh_count,float **mesh_widths, float **mesh_heights, gs_texture_t *new_texture);
 void apply_texture_to_all_meshes(Mesh *g_meshes, size_t g_mesh_count, gs_texture_t *new_texture);
+void replace_mesh_textures(struct Mesh *meshes, size_t count, gs_texture_t *new_tex,  gs_texture_t *old_tex);
