@@ -422,8 +422,8 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 	gs_technique_begin_pass(tech, 0);
 
 	// Convertir ángulos a radianes
-	float rx = (float)M_PI * rot_x_deg / 180.0f;
-	float ry = (float)M_PI * rot_y_deg / 180.0f;
+	float rx = (float)(M_PI * rot_x_deg / 180.0f);
+	float ry = (float)(M_PI * rot_y_deg / 180.0f);
 	float rz = (float)M_PI * rot_z_deg / 180.0f;
 
 	for (size_t i = 0; i < g_mesh_count; i++) {

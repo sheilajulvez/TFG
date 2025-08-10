@@ -18,7 +18,7 @@
 
 	#include "yuv2bgra.h"
 	#include "aruco_detector.h"
-
+	
 	OBS_DECLARE_MODULE()
 	OBS_MODULE_USE_DEFAULT_LOCALE("cube", "en-US")
 
@@ -46,6 +46,7 @@
 		float pos_y;
 		float pos_z;
 		float scale;
+		float current_scale;
 		float rotation_x;
 		float rotation_y;
 		float rotation_z;
@@ -58,95 +59,55 @@
 
 
 	static struct obs_source_frame *filter_video(void *data, struct obs_source_frame *frame)
-	{
-		struct cube_filter_data *filter = data;
+{
+	struct cube_filter_data *filter = data;
 
-		if (!frame) {
-			blog(LOG_WARNING,
-			     "cube_filter_filter_video: frame es NULL");
-			return NULL;
-		}
-
-		bool detected = false;
-		uint8_t *bgra_buffer = NULL;
-		int image_size = frame->width * frame->height * 4;
-		get_uv_func get_uv = NULL;
-		blog(LOG_WARNING, "FILTER VIDEO");
-		switch (frame->format) {
-		case VIDEO_FORMAT_BGRA:
-			blog(LOG_INFO,
-			     "Formato BGRA detectado, procesando directamente");
-
-			detected = process_frame_rgba(
-				filter->detector, frame->data[0], frame->width,
-				frame->height, filter->width_screen,
-				filter->height_screen, &filter->last_result);
-			break;
-
-		/* ----- INICIO DE LA MODIFICACIÓN ----- */
-		case VIDEO_FORMAT_YUY2:
-			blog(LOG_INFO,
-			     "Formato YUY2 detectado, convirtiendo a BGRA");
-			bgra_buffer = bmalloc(image_size);
-			convert_yuy2_to_bgra(
-				frame, bgra_buffer); // Usa la función de ayuda
-			detected = process_frame_rgba(
-				filter->detector, bgra_buffer, frame->width,
-				frame->height, filter->width_screen,
-				filter->height_screen, &filter->last_result);
-			bfree(bgra_buffer);
-			break;
-			/* ----- FIN DE LA MODIFICACIÓN ----- */
-
-		case VIDEO_FORMAT_I420:
-			blog(LOG_INFO,
-			     "Formato I420 detectado, convirtiendo a BGRA");
-			get_uv = get_uv_i420;
-			break;
-
-		case VIDEO_FORMAT_NV12:
-			blog(LOG_INFO,
-			     "Formato NV12 detectado, convirtiendo a BGRA");
-			get_uv = get_uv_nv12;
-			break;
-
-		case VIDEO_FORMAT_I422:
-			//blog(LOG_INFO, "Formato I422 detectado, convirtiendo a BGRA");
-			get_uv = get_uv_i422;
-			break;
-
-		default:
-			blog(LOG_WARNING, "Formato no compatible: %d",
-			     frame->format);
-			break;
-		}
-
-		if (get_uv) {
-			bgra_buffer = bmalloc(image_size);
-			convert_yuv_to_bgra_generic(frame, bgra_buffer, get_uv);
-
-			detected = process_frame_rgba(
-				filter->detector, bgra_buffer, frame->width,
-				frame->height, filter->width_screen,
-				filter->height_screen, &filter->last_result);
-
-			bfree(bgra_buffer);
-		}
-
-		if (detected && filter->last_result.detected) {
-			filter->pos_x = filter->last_result.screen_pos_x;
-			filter->pos_y = filter->last_result.screen_pos_y;
-			filter->pos_z = 0;
-
-			filter->rotation_x = filter->last_result.euler_x;
-			filter->rotation_y = filter->last_result.euler_y;
-			filter->rotation_z = filter->last_result.euler_z;
-		} else {
-			filter->last_result.detected = false;
-		}
-
-		return frame;
+	if (!frame) {
+		blog(LOG_WARNING,
+		     "cube_filter_filter_video: frame es NULL");
+		return NULL;
 	}
+
+	bool detected = false;
+
+	blog(LOG_WARNING, "FILTER VIDEO");
+
+	// Llamamos directamente a process_frame_rgba pasándole el frame OBS
+	detected = process_frame_rgba(filter->detector, frame,
+	                              filter->width_screen,
+	                              filter->height_screen,
+	                              &filter->last_result);
+
+	if (detected && filter->last_result.detected) {
+		filter->pos_x = filter->last_result.screen_pos_x;
+		filter->pos_y = filter->last_result.screen_pos_y;
+		filter->pos_z = 0;
+		const float reference_distance = 1.0f; // Puedes ajustar este valor si es necesario
+
+	// Definimos la escala base que queremos que tenga el objeto a esa distancia
+	
+
+	if (filter->last_result.tvec[2] > 0.1f) {
+		// Calculamos el factor de escala: a mayor distancia, menor factor.
+		// Usamos la distancia de referencia para normalizar.
+		filter->current_scale = filter->scale * (reference_distance / filter->last_result.tvec[2]);
+		
+		
+	} else {
+		
+		filter->current_scale = filter->scale; 
+		
+	}
+	blog(1, "filter scale: %f", filter->scale);
+		filter->rotation_x = filter->last_result.euler_x;
+		filter->rotation_y = filter->last_result.euler_y;
+		filter->rotation_z = filter->last_result.euler_z;
+	} else {
+		filter->last_result.detected = false;
+	}
+
+	return frame;
+}
 
 	static uint32_t cube_source_get_width(void *data)
 	{
@@ -234,9 +195,9 @@
 		data->model_width = NULL;  // 
 		data->model_height = NULL; // 
 		data->loaded_texture = NULL;
-	
+		
 		data->detector = initialize_aruco_detector(0.1f, ARUCO_DICT_ORIGINAL, NULL);
-
+	
 
 		struct obs_video_info ovi;
 		if (obs_get_video_info(&ovi)) {
@@ -331,7 +292,7 @@
 		gs_matrix_translate3f(filter->pos_x, filter->pos_y, filter->pos_z);
 
 		// Ahora llamas a render_model_c, que aplicará sus propias rotaciones/centros
-		render_model_c(filter->g_meshes, filter->g_mesh_count, filter->model_width, filter->model_height, filter->scale,filter->rotation_x, filter->rotation_y,  filter->rotation_z);
+		render_model_c(filter->g_meshes, filter->g_mesh_count, filter->model_width, filter->model_height, filter->current_scale,filter->rotation_x, filter->rotation_y,  filter->rotation_z);
 
 		gs_matrix_pop();
 		gs_projection_pop();
@@ -358,56 +319,56 @@
 		gs_blend_state_pop();
 		obs_leave_graphics();
 	}
-static bool render_mode_changed(obs_properties_t *props, obs_property_t *property, obs_data_t *settings) {
-    int mode = (int)obs_data_get_int(settings, "render_mode");
-    bool show_3d = (mode == 0);
-    bool show_ar = (mode == 1);
-    obs_property_set_visible(obs_properties_get(props, "pos_x"), show_3d);
-    obs_property_set_visible(obs_properties_get(props, "pos_y"), show_3d);
-    obs_property_set_visible(obs_properties_get(props, "pos_z"), show_3d);
-    obs_property_set_visible(obs_properties_get(props, "scale"), show_3d);
-    obs_property_set_visible(obs_properties_get(props, "rotation_x_slider_value"), show_3d);
-    obs_property_set_visible(obs_properties_get(props, "rotation_y_slider_value"), show_3d);
-    obs_property_set_visible(obs_properties_get(props, "rotation_z_slider_value"), show_3d);
-    obs_property_set_visible(obs_properties_get(props, "texture_path"), show_3d);
-    obs_property_set_visible(obs_properties_get(props, "model_path"), show_ar);
-    obs_property_set_visible(obs_properties_get(props, "marker_id"), show_ar);
-    obs_property_set_visible(obs_properties_get(props, "marker_size"), show_ar);
-    obs_property_set_visible(obs_properties_get(props, "marker_dict"), show_ar);
-    obs_property_set_visible(obs_properties_get(props, "calibration_path"), show_ar);
-    return true;
-}
+	static bool render_mode_changed(obs_properties_t *props, obs_property_t *property, obs_data_t *settings) {
+		int mode = (int)obs_data_get_int(settings, "render_mode");
+		bool show_3d = (mode == 0);
+		bool show_ar = (mode == 1);
+		obs_property_set_visible(obs_properties_get(props, "pos_x"), show_3d);
+		obs_property_set_visible(obs_properties_get(props, "pos_y"), show_3d);
+		obs_property_set_visible(obs_properties_get(props, "pos_z"), show_3d);
+		obs_property_set_visible(obs_properties_get(props, "scale"), show_3d);
+		obs_property_set_visible(obs_properties_get(props, "rotation_x_slider_value"), show_3d);
+		obs_property_set_visible(obs_properties_get(props, "rotation_y_slider_value"), show_3d);
+		obs_property_set_visible(obs_properties_get(props, "rotation_z_slider_value"), show_3d);
+		obs_property_set_visible(obs_properties_get(props, "texture_path"), show_3d);
+		obs_property_set_visible(obs_properties_get(props, "model_path"), show_ar);
+		obs_property_set_visible(obs_properties_get(props, "marker_id"), show_ar);
+		obs_property_set_visible(obs_properties_get(props, "marker_size"), show_ar);
+		obs_property_set_visible(obs_properties_get(props, "marker_dict"), show_ar);
+		obs_property_set_visible(obs_properties_get(props, "calibration_path"), show_ar);
+		return true;
+	}
 
-static obs_properties_t *filter_properties(void *data) {
-    obs_properties_t *props = obs_properties_create();
-    obs_property_t *combo = obs_properties_add_list(props, "render_mode", "Modo de renderizado", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-    obs_property_list_add_int(combo, "3D", 0);
-    obs_property_list_add_int(combo, "AR", 1);
-    obs_property_set_modified_callback(combo, render_mode_changed);
-    obs_properties_add_float_slider(props, "pos_x", "Posición X", -3000.0f, 3000.0f, 10.0f);
-    obs_properties_add_float_slider(props, "pos_y", "Posición Y", -3000.0f, 3000.0f, 10.0f);
-    obs_properties_add_float_slider(props, "pos_z", "Posición Z", -3000.0f, 3000.0f, 10.0f);
-    obs_properties_add_float_slider(props, "scale", "Escala", 0.1f, 1000.0f, 0.01f);
-    obs_properties_add_float_slider(props, "rotation_x_slider_value", "Rotación X (Grados)", -360.0f, 360.0f, 1.0f);
-    obs_properties_add_float_slider(props, "rotation_y_slider_value", "Rotación Y (Grados)", -360.0f, 360.0f, 1.0f);
-    obs_properties_add_float_slider(props, "rotation_z_slider_value", "Rotación Z (Grados)", -360.0f, 360.0f, 1.0f);
-    obs_properties_add_path(props, "texture_path", "Ruta de la Textura", OBS_PATH_FILE, "Imágenes (*.png *.jpg *.jpeg *.bmp *.tga);;Todos (*.*)", NULL);
-    obs_properties_add_path(props, "model_path", "Ruta del Modelo 3D", OBS_PATH_FILE, "Modelos 3D (*.obj *.fbx *.dae *.gltf);;Todos (*.*)", NULL);
-    obs_properties_add_int(props, "marker_id", "ID del Marker", 0, 100, 1);
-    obs_properties_add_float_slider(props, "marker_size", "Tamaño del Marker", 0.1f, 10.0f, 0.1f);
-    obs_property_t *dict = obs_properties_add_list(props, "marker_dict", "Diccionario de Marker", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-    obs_property_list_add_int(dict, "Original", ARUCO_DICT_ORIGINAL);
-    obs_property_list_add_int(dict, "4×4 (100)", ARUCO_DICT_4X4_100);
-    obs_property_list_add_int(dict, "5×5 (100)", ARUCO_DICT_5X5_100);
-    obs_property_list_add_int(dict, "6×6 (100)", ARUCO_DICT_6X6_100);
-    obs_property_list_add_int(dict, "7×7 (100)", ARUCO_DICT_7X7_100);
-    obs_property_list_add_int(dict, "MIP Original", ARUCO_DICT_MIP_ORIGINAL);
-    obs_properties_add_path(props, "calibration_path", "Archivo de Calibración", OBS_PATH_FILE, "YAML (*.yml *.yaml);;Todos (*.*)", NULL);
-    obs_data_t *temp_settings = obs_data_create();
-    render_mode_changed(props, combo, temp_settings);
-    obs_data_release(temp_settings);
-    return props;
-}
+	static obs_properties_t *filter_properties(void *data) {
+		obs_properties_t *props = obs_properties_create();
+		obs_property_t *combo = obs_properties_add_list(props, "render_mode", "Modo de renderizado", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+		obs_property_list_add_int(combo, "3D", 0);
+		obs_property_list_add_int(combo, "AR", 1);
+		obs_property_set_modified_callback(combo, render_mode_changed);
+		obs_properties_add_float_slider(props, "pos_x", "Posición X", -3000.0f, 3000.0f, 10.0f);
+		obs_properties_add_float_slider(props, "pos_y", "Posición Y", -3000.0f, 3000.0f, 10.0f);
+		obs_properties_add_float_slider(props, "pos_z", "Posición Z", -3000.0f, 3000.0f, 10.0f);
+		obs_properties_add_float_slider(props, "scale", "Escala", 0.1f, 1000.0f, 0.01f);
+		obs_properties_add_float_slider(props, "rotation_x_slider_value", "Rotación X (Grados)", -360.0f, 360.0f, 1.0f);
+		obs_properties_add_float_slider(props, "rotation_y_slider_value", "Rotación Y (Grados)", -360.0f, 360.0f, 1.0f);
+		obs_properties_add_float_slider(props, "rotation_z_slider_value", "Rotación Z (Grados)", -360.0f, 360.0f, 1.0f);
+		obs_properties_add_path(props, "texture_path", "Ruta de la Textura", OBS_PATH_FILE, "Imágenes (*.png *.jpg *.jpeg *.bmp *.tga);;Todos (*.*)", NULL);
+		obs_properties_add_path(props, "model_path", "Ruta del Modelo 3D", OBS_PATH_FILE, "Modelos 3D (*.obj *.fbx *.dae *.gltf);;Todos (*.*)", NULL);
+		obs_properties_add_int(props, "marker_id", "ID del Marker", 0, 100, 1);
+		obs_properties_add_float_slider(props, "marker_size", "Tamaño del Marker", 0.1f, 10.0f, 0.1f);
+		obs_property_t *dict = obs_properties_add_list(props, "marker_dict", "Diccionario de Marker", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+		obs_property_list_add_int(dict, "Original", ARUCO_DICT_ORIGINAL);
+		obs_property_list_add_int(dict, "4×4 (100)", ARUCO_DICT_4X4_100);
+		obs_property_list_add_int(dict, "5×5 (100)", ARUCO_DICT_5X5_100);
+		obs_property_list_add_int(dict, "6×6 (100)", ARUCO_DICT_6X6_100);
+		obs_property_list_add_int(dict, "7×7 (100)", ARUCO_DICT_7X7_100);
+		obs_property_list_add_int(dict, "MIP Original", ARUCO_DICT_MIP_ORIGINAL);
+		obs_properties_add_path(props, "calibration_path", "Archivo de Calibración", OBS_PATH_FILE, "YAML (*.yml *.yaml);;Todos (*.*)", NULL);
+		obs_data_t *temp_settings = obs_data_create();
+		render_mode_changed(props, combo, temp_settings);
+		obs_data_release(temp_settings);
+		return props;
+	}
 
 
 
@@ -539,6 +500,7 @@ static obs_properties_t *filter_properties(void *data) {
 		filter->texture_path_str = (tp && *tp) ? bstrdup(tp) : NULL;
 		const char *cp = obs_data_get_string(settings, "calibration_path");
 		if (cp && *cp) set_calibration_path(filter->detector, cp);
+
 		filter_update(data, settings);
 	}
 	static void filter_defaults(obs_data_t *settings)

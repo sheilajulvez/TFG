@@ -36,6 +36,128 @@ void set_default_camera_params(ArucoDetector *det)
 	blog(LOG_WARNING,
 	     "[CUBE] Usando parámetros de cámara por defecto (fx=fy=2000, cx=1233, cy=718).");
 }
+
+
+cv::Mat obs_frame_to_bgra(struct obs_source_frame *frame)
+{
+	int width = frame->width;
+	int height = frame->height;
+	cv::Mat bgra; // Matriz de destino
+
+	// Opcional: Log para depuración
+	// blog(LOG_INFO, "Formato de video de entrada: %s (%d)",
+	//      get_video_format_name(frame->format), frame->format);
+
+	switch (frame->format) {
+	case VIDEO_FORMAT_I420: {
+		// Correcto: Crear una sola matriz empaquetada para cvtColor
+		cv::Mat yuv_packed(height + height / 2, width, CV_8UC1);
+
+		// Plano Y (Luma)
+		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],frame->linesize[0]);
+		y_plane.copyTo(yuv_packed(cv::Rect(0, 0, width, height)));
+
+		// Plano U (Croma)
+		cv::Mat u_plane(height / 2, width / 2, CV_8UC1, frame->data[1],frame->linesize[1]);
+		u_plane.copyTo(yuv_packed(cv::Rect(0, height, width / 2, height / 2)));
+
+		// Plano V (Croma)
+		cv::Mat v_plane(height / 2, width / 2, CV_8UC1, frame->data[2],frame->linesize[2]);
+		v_plane.copyTo(yuv_packed(cv::Rect(width / 2, height, width / 2, height / 2)));
+
+		cv::cvtColor(yuv_packed, bgra, cv::COLOR_YUV2BGRA_I420);
+		break;
+	}
+	case VIDEO_FORMAT_I422: {
+		
+		// Usamos un método más robusto redimensionando los planos de croma.
+
+		// 1. Crear wrappers para cada plano sin copiar datos
+		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],frame->linesize[0]);
+		cv::Mat u_plane(height, width / 2, CV_8UC1, frame->data[1],frame->linesize[1]);
+		cv::Mat v_plane(height, width / 2, CV_8UC1, frame->data[2],frame->linesize[2]);
+
+		// 2. Redimensionar los planos U y V a la misma resolución que el plano Y
+		cv::Mat u_resized, v_resized;
+		cv::resize(u_plane, u_resized, cv::Size(width, height), 0, 0, cv::INTER_LINEAR);
+		cv::resize(v_plane, v_resized, cv::Size(width, height), 0, 0, cv::INTER_LINEAR);
+
+		// 3. Combinar los 3 planos en una sola imagen YUV de 3 canales
+		cv::Mat yuv_image;
+		std::vector<cv::Mat> yuv_planes = {y_plane, u_resized, v_resized};
+		cv::merge(yuv_planes, yuv_image);
+
+		// 4. Convertir la imagen YUV resultante a BGR y luego a BGRA
+		cv::Mat bgr;
+		cv::cvtColor(yuv_image, bgr, cv::COLOR_YUV2BGR);
+		cv::cvtColor(bgr, bgra, cv::COLOR_BGR2BGRA);
+		break;
+	}
+	case VIDEO_FORMAT_NV12: {
+		// Correcto: Crear una sola matriz empaquetada
+		cv::Mat nv12_packed(height + height / 2, width, CV_8UC1);
+		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],frame->linesize[0]);
+		cv::Mat uv_plane(height / 2, width, CV_8UC1, frame->data[1],frame->linesize[1]); // Nota: el ancho es completo
+
+		y_plane.copyTo(nv12_packed(cv::Rect(0, 0, width, height)));
+		uv_plane.copyTo(nv12_packed(cv::Rect(0, height, width, height / 2)));
+
+		cv::cvtColor(nv12_packed, bgra, cv::COLOR_YUV2BGRA_NV12);
+		break;
+	}
+	case VIDEO_FORMAT_YUY2: {
+		// Correcto: Formato empaquetado, conversión directa
+		cv::Mat yuy2(height, width, CV_8UC2, frame->data[0],frame->linesize[0]);
+		cv::cvtColor(yuy2, bgra, cv::COLOR_YUV2BGRA_YUY2);
+		break;
+	}
+	case VIDEO_FORMAT_UYVY: {
+		// Correcto: Formato empaquetado, conversión directa
+		cv::Mat uyvy(height, width, CV_8UC2, frame->data[0], frame->linesize[0]);
+		cv::cvtColor(uyvy, bgra, cv::COLOR_YUV2BGRA_UYVY);
+		break;
+	}
+	case VIDEO_FORMAT_YVYU: {
+		// OPTIMIZACIÓN: Usar la conversión directa a BGRA
+		cv::Mat yvyu(height, width, CV_8UC2, frame->data[0], frame->linesize[0]);
+		cv::cvtColor(yvyu, bgra, cv::COLOR_YUV2BGRA_YVYU);
+		break;
+	}
+	case VIDEO_FORMAT_BGRA: {
+		// Correcto: Es el formato de destino, solo clonamos para tener nuestra propia copia
+		bgra = cv::Mat(height, width, CV_8UC4, frame->data[0], frame->linesize[0]).clone();
+		break;
+	}
+	case VIDEO_FORMAT_RGBA: {
+		// Correcto: Convertir de RGBA a BGRA
+		cv::Mat rgba(height, width, CV_8UC4, frame->data[0],frame->linesize[0]);
+		cv::cvtColor(rgba, bgra, cv::COLOR_RGBA2BGRA);
+		break;
+	}
+	case VIDEO_FORMAT_BGR3:
+	case VIDEO_FORMAT_BGRX: { // BGRX es funcionalmente igual que BGR3 para la conversión
+		// Correcto: Añadir canal Alfa
+		cv::Mat bgr(height, width, CV_8UC3, frame->data[0],frame->linesize[0]);
+		cv::cvtColor(bgr, bgra, cv::COLOR_BGR2BGRA);
+		break;
+	}
+	case VIDEO_FORMAT_Y800: { // Grayscale
+		// Correcto: Convertir de escala de grises a BGRA
+		cv::Mat gray(height, width, CV_8UC1, frame->data[0],frame->linesize[0]);
+		cv::cvtColor(gray, bgra, cv::COLOR_GRAY2BGRA);
+		break;
+	}
+	default:
+		blog(LOG_WARNING,"[Aruco] Formato de video no soportado para conversión a BGRA: %s (%d)", get_video_format_name(frame->format), frame->format);
+		break;
+	}
+
+	if (bgra.empty()) {
+		blog(LOG_WARNING, "[Aruco] La conversión del frame a BGRA falló para el formato %s.", get_video_format_name(frame->format));
+	}
+
+	return bgra;
+}
 extern "C" {
 // Esta es la función que abre el YAML y rellena las matrices
 bool load_camera_calibration(const std::string &filename,cv::Mat &camera_matrix, cv::Mat &dist_coeffs)
@@ -90,9 +212,9 @@ ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,cons
 	if (!set_camera_calibration(det, calibration_file)) {
 		// Si falla, usar valores por defecto
 		blog(LOG_WARNING,"[CUBE] Usando parámetros de cámara por defecto.");
-		det->camera_matrix = (cv::Mat_<double>(3, 3) << 2000.0, 0.0,
-				      1233.0, 0.0, 2000.0, 718.0, 0.0, 0.0,
-				      1.0);
+		det->camera_matrix = (
+			cv::Mat_<double>(3, 3) << 2000.0, 0.0,
+			1233.0, 0.0, 2000.0, 718.0, 0.0, 0.0,1.0);
 		det->dist_coeffs = cv::Mat::zeros(1, 5, CV_64F);
 	}
 	return det;
@@ -164,21 +286,30 @@ static void get_euler_angles_from_pose(const cv::Vec3d &rvec,const cv::Vec3d &tv
 	yaw = eulerAngles[1];   // Rotación alrededor del eje Y
 	roll = eulerAngles[2];  // Rotación alrededor del eje Z
 }
-bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data, int w,int h, int fw, int fh, ArucoResult *res)
+bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame, int fw, int fh, ArucoResult *res)
 {
-	if (!det || !frame_data || w <= 0 || h <= 0 || !res)return false;
+    if (!det || !frame || !res)
+        return false;
 
-	// 1) Copiar BGRA y convertir a gris
-	det->mat_bgra.create(h, w, CV_8UC4);
-	memcpy(det->mat_bgra.data, frame_data, size_t(w) * h * 4);
-	cv::Mat gray;
-	cv::cvtColor(det->mat_bgra, gray, cv::COLOR_BGRA2GRAY);
+    int w = frame->width;
+    int h = frame->height;
 
-	// 2) Detectar marcadores en la imagen completa
-	std::vector<std::vector<cv::Point2f>> corners;
-	std::vector<int> ids;
-	cv::aruco::detectMarkers(gray, det->dictionary, corners, ids,det->detector_params);
+    // Convertir frame OBS a cv::Mat BGRA (usa la función que ya tienes)
+    cv::Mat bgra = obs_frame_to_bgra(frame);
 
+    if (bgra.empty()) {
+        blog(LOG_WARNING, "process_frame_rgba: conversión a BGRA falló");
+        return false;
+    }
+
+    // Convertir BGRA a escala de grises
+    cv::Mat gray;
+    cv::cvtColor(bgra, gray, cv::COLOR_BGRA2GRAY);
+
+    // Detectar marcadores ArUco
+    std::vector<std::vector<cv::Point2f>> corners;
+    std::vector<int> ids;
+    cv::aruco::detectMarkers(gray, det->dictionary, corners, ids, det->detector_params);
 	// 3) Si no se detecta NINGÚN marcador, salimos.
 	if (ids.empty()) {
 		res->detected = false;
@@ -243,7 +374,7 @@ bool process_frame_rgba(ArucoDetector *det, const uint8_t *frame_data, int w,int
 	get_euler_angles_from_pose(rvecs[marker_index_to_process], tvecs[marker_index_to_process], pitch, yaw,roll);
 	res->euler_x = pitch;
 	res->euler_y = yaw;
-	res->euler_z = roll;
+	res->euler_z = -roll;
 
 	return true;
 }
