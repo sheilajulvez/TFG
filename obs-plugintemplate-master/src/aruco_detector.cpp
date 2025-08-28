@@ -348,26 +348,41 @@ bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame, int 
 		res->rvec[i] = float(rvecs[marker_index_to_process][i]);
 	}
 
-	// 7) Calcular centro y esquinas del marcador seleccionado
-	float cx = 0.0f, cy = 0.0f;
-	for (int i = 0; i < 4; ++i) {
-		float x = corners[marker_index_to_process][i].x;
-		float y = corners[marker_index_to_process][i].y;
-		res->corners[i][0] = x;
-		res->corners[i][1] = y;
-		cx += x;
-		cy += y;
-	}
-	cx /= 4.0f;
-	cy /= 4.0f;
 
-	// Ajuste "Aspect Fit" al tamaño del filtro OBS
-	float scale_w = float(fw) / w, scale_h = float(fh) / h;
-	float scale = std::min(scale_w, scale_h);
-	float sw = w * scale, sh = h * scale;
-	float ox = (fw - sw) * 0.5f, oy = (fh - sh) * 0.5f;
-	res->screen_pos_x = cx * scale + ox;
-	res->screen_pos_y = cy * scale + oy;
+	// --- NUEVO: proyectar tvec en píxeles ---
+	std::vector<cv::Point2f> image_points;
+	std::vector<cv::Point3f> object_points = {
+		cv::Point3f(res->tvec[0], res->tvec[1], res->tvec[2])};
+
+	cv::projectPoints(object_points, cv::Vec3d(0, 0, 0), cv::Vec3d(0, 0, 0),
+			  det->camera_matrix, det->dist_coeffs, image_points);
+
+	float px = image_points[0].x;
+	float py = image_points[0].y;
+
+
+	res->screen_pos_x = px;
+	res->screen_pos_y = py;
+	//// 7) Calcular centro y esquinas del marcador seleccionado
+	//float cx = 0.0f, cy = 0.0f;
+	//for (int i = 0; i < 4; ++i) {
+	//	float x = corners[marker_index_to_process][i].x;
+	//	float y = corners[marker_index_to_process][i].y;
+	//	res->corners[i][0] = x;
+	//	res->corners[i][1] = y;
+	//	cx += x;
+	//	cy += y;
+	//}
+	//cx /= 4.0f;
+	//cy /= 4.0f;
+
+	//// Ajuste "Aspect Fit" al tamaño del filtro OBS
+	//float scale_w = float(fw) / w, scale_h = float(fh) / h;
+	//float scale = std::min(scale_w, scale_h);
+	//float sw = w * scale, sh = h * scale;
+	//float ox = (fw - sw) * 0.5f, oy = (fh - sh) * 0.5f;
+	//res->screen_pos_x = cx * scale + ox;
+	//res->screen_pos_y = cy * scale + oy;
 
 	// 8) Calcular ángulos de Euler con el método robusto
 	float pitch, yaw, roll;

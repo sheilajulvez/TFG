@@ -77,7 +77,6 @@
 
 	bool detected = false;
 
-	blog(LOG_WARNING, "FILTER VIDEO");
 
 	// Llamamos directamente a process_frame_rgba pasándole el frame OBS
 	detected = process_frame_rgba(filter->detector, frame,
@@ -86,30 +85,34 @@
 	                              &filter->last_result);
 
 	if (detected && filter->last_result.detected) {
-		filter->pos_x = filter->last_result.screen_pos_x;
-		filter->pos_y = filter->last_result.screen_pos_y;
-		filter->pos_z = 0;
+		filter->pos_x = (-1)*filter->last_result.screen_pos_x -
+				(frame->width / 2.0f); // centrado en OBS
+		filter->pos_y = (frame->height / 2.0f) - filter->last_result.screen_pos_y; // invertir eje Y
+		filter->pos_z = 0;                            // invertir Z
+		blog(1, "filter POSSSS: x=%f, y=%f, z=%f", filter->pos_x,
+		     filter->pos_y, filter->pos_z);
 		const float reference_distance = 1.0f; // Puedes ajustar este valor si es necesario
 
 	// Definimos la escala base que queremos que tenga el objeto a esa distancia
 	
 
-	if (filter->last_result.tvec[2] > 0.1f) {
-		// Calculamos el factor de escala: a mayor distancia, menor factor.
-		// Usamos la distancia de referencia para normalizar.
-		filter->current_scale = filter->scale * (reference_distance / filter->last_result.tvec[2]);
+			if (filter->last_result.tvec[2] > 0.1f) {
+				// Calculamos el factor de escala: a mayor distancia, menor factor.
+				// Usamos la distancia de referencia para normalizar.
+				filter->current_scale = filter->scale;
+					//* (reference_distance / filter->last_result.tvec[2]);
 		
 		
-	} else {
+			} else {
 		
-		filter->current_scale = filter->scale; 
+				filter->current_scale = filter->scale; 
 		
-	}
-	blog(1, "filter scale: %f", filter->scale);
-		filter->rotation_x = filter->last_result.euler_x;
-		filter->rotation_y = filter->last_result.euler_y;
-		filter->rotation_z = filter->last_result.euler_z;
-	} else {
+			}
+			filter->rotation_x = filter->last_result.euler_x;
+			filter->rotation_y = filter->last_result.euler_y;
+			filter->rotation_z = filter->last_result.euler_z;
+	} 
+	else {
 		filter->last_result.detected = false;
 	}
 
@@ -325,12 +328,15 @@
 
 		gs_blend_state_pop();
 		obs_leave_graphics();
+	
 	}
 	static bool render_mode_changed( obs_properties_t *props, obs_property_t *property, obs_data_t *settings)
 	{
 		int mode = (int)obs_data_get_int(settings, "render_mode");
 		bool show_3d = (mode == 0);
 		bool show_ar = (mode == 1);
+			
+		
 		obs_property_set_visible(obs_properties_get(props, "pos_x"), show_3d);
 		obs_property_set_visible(obs_properties_get(props, "pos_y"), show_3d);
 		obs_property_set_visible(obs_properties_get(props, "pos_z"), show_3d);
