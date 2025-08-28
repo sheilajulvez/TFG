@@ -70,6 +70,10 @@
 		return NULL;
 	}
 
+	if (filter->mode == 0) { // 0 = 3D
+		return frame; // simplemente devolvemos el frame (usa pos_x, pos_y, rotaciones manuales)
+	}
+
 	bool detected = false;
 
 	blog(LOG_WARNING, "FILTER VIDEO");
@@ -382,7 +386,8 @@
 	static void filter_update(void *data, obs_data_t *settings)
 	{
 		struct cube_filter_data *filter = data;
-	
+		
+		filter->mode = (int)obs_data_get_int(settings, "render_mode");
 		filter->pos_x = (float)obs_data_get_double(settings, "pos_x");
 		filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
 		filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
