@@ -71,6 +71,7 @@
 	}
 
 	if (filter->mode == 0) { // 0 = 3D
+		filter->current_scale = filter->scale;
 		return frame; // simplemente devolvemos el frame (usa pos_x, pos_y, rotaciones manuales)
 	}
 
