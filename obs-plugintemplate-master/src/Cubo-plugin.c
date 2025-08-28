@@ -55,6 +55,8 @@
 		// Resultados del ArUco
 		ArucoDetector *detector; // 
 		ArucoResult last_result; //
+
+		int mode;
 	};
 
 
@@ -319,27 +321,31 @@
 		gs_blend_state_pop();
 		obs_leave_graphics();
 	}
-	static bool render_mode_changed(obs_properties_t *props, obs_property_t *property, obs_data_t *settings) {
+	static bool render_mode_changed( obs_properties_t *props, obs_property_t *property, obs_data_t *settings)
+	{
 		int mode = (int)obs_data_get_int(settings, "render_mode");
 		bool show_3d = (mode == 0);
 		bool show_ar = (mode == 1);
 		obs_property_set_visible(obs_properties_get(props, "pos_x"), show_3d);
 		obs_property_set_visible(obs_properties_get(props, "pos_y"), show_3d);
 		obs_property_set_visible(obs_properties_get(props, "pos_z"), show_3d);
-		obs_property_set_visible(obs_properties_get(props, "scale"), show_3d);
 		obs_property_set_visible(obs_properties_get(props, "rotation_x_slider_value"), show_3d);
 		obs_property_set_visible(obs_properties_get(props, "rotation_y_slider_value"), show_3d);
 		obs_property_set_visible(obs_properties_get(props, "rotation_z_slider_value"), show_3d);
-		obs_property_set_visible(obs_properties_get(props, "texture_path"), show_3d);
-		obs_property_set_visible(obs_properties_get(props, "model_path"), show_ar);
 		obs_property_set_visible(obs_properties_get(props, "marker_id"), show_ar);
 		obs_property_set_visible(obs_properties_get(props, "marker_size"), show_ar);
 		obs_property_set_visible(obs_properties_get(props, "marker_dict"), show_ar);
 		obs_property_set_visible(obs_properties_get(props, "calibration_path"), show_ar);
 		return true;
+		
+	
+	
+			
 	}
 
 	static obs_properties_t *filter_properties(void *data) {
+		
+		
 		obs_properties_t *props = obs_properties_create();
 		obs_property_t *combo = obs_properties_add_list(props, "render_mode", "Modo de renderizado", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 		obs_property_list_add_int(combo, "3D", 0);
@@ -365,7 +371,7 @@
 		obs_property_list_add_int(dict, "MIP Original", ARUCO_DICT_MIP_ORIGINAL);
 		obs_properties_add_path(props, "calibration_path", "Archivo de Calibración", OBS_PATH_FILE, "YAML (*.yml *.yaml);;Todos (*.*)", NULL);
 		obs_data_t *temp_settings = obs_data_create();
-		render_mode_changed(props, combo, temp_settings);
+		render_mode_changed( props, combo, temp_settings);
 		obs_data_release(temp_settings);
 		return props;
 	}
@@ -431,6 +437,7 @@
 		
 			set_marker_dictionary(filter->detector, marker_dict);
 		}
+		
 		/*const char *path =obs_data_get_string(settings, "calibration_path");
 		if(path)set_calibration_path(filter->detector, path);*/
 		
