@@ -16,7 +16,7 @@
 	#define _USE_MATH_DEFINES
 	#include <math.h>
 
-	#include "yuv2bgra.h"
+
 	#include "aruco_detector.h"
 	
 	OBS_DECLARE_MODULE()
@@ -79,18 +79,13 @@
 
 
 	// Llamamos directamente a process_frame_rgba pasándole el frame OBS
-	detected = process_frame_rgba(filter->detector, frame,
-	                              filter->width_screen,
-	                              filter->height_screen,
-	                              &filter->last_result);
+	detected = process_frame_rgba(filter->detector, frame,filter->width_screen,filter->height_screen,frame->width,frame->height, &filter->last_result);
 
 	if (detected && filter->last_result.detected) {
-		filter->pos_x = (-1)*filter->last_result.screen_pos_x -
-				(frame->width / 2.0f); // centrado en OBS
-		filter->pos_y = (frame->height / 2.0f) - filter->last_result.screen_pos_y; // invertir eje Y
+		filter->pos_x = filter->last_result.screen_pos_x; // centrado en OBS
+		filter->pos_y = filter->last_result.screen_pos_y; // invertir eje Y
 		filter->pos_z = 0;                            // invertir Z
-		blog(1, "filter POSSSS: x=%f, y=%f, z=%f", filter->pos_x,
-		     filter->pos_y, filter->pos_z);
+		blog(1, "filter POSSSS: x=%f, y=%f, z=%f", filter->pos_x,filter->pos_y, filter->pos_z);
 		const float reference_distance = 1.0f; // Puedes ajustar este valor si es necesario
 
 	// Definimos la escala base que queremos que tenga el objeto a esa distancia
@@ -243,6 +238,12 @@
 		bfree(filter->texture_path_str);
 		bfree(filter);
 	}
+
+
+
+
+
+
 
 	static void filter_render(void *data, gs_effect_t *effect)
 	{

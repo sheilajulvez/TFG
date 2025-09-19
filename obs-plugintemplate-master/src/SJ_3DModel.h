@@ -14,6 +14,8 @@ typedef struct Mesh {
 	uint32_t num_indices;
 	uint32_t num_vertex;
 	gs_texture_t *texture;
+	float center_x;
+	float center_y;
 
 } Mesh;
 	 // Declara tus funciones y tipos públicos:

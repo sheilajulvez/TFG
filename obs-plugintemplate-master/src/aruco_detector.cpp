@@ -286,107 +286,103 @@ static void get_euler_angles_from_pose(const cv::Vec3d &rvec,const cv::Vec3d &tv
 	yaw = eulerAngles[1];   // Rotación alrededor del eje Y
 	roll = eulerAngles[2];  // Rotación alrededor del eje Z
 }
-bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame, int fw, int fh, ArucoResult *res)
+bool process_frame_rgba(ArucoDetector *det,
+			       struct obs_source_frame *frame, int base_w,
+			       int base_h, int fw, int fh, ArucoResult *res)
 {
-    if (!det || !frame || !res)
-        return false;
+	if (!det || !frame || !res)
+		return false;
 
-    int w = frame->width;
-    int h = frame->height;
+	int w = base_w; // ancho base de referencia
+	int h = base_h; // alto base de referencia
 
-    // Convertir frame OBS a cv::Mat BGRA (usa la función que ya tienes)
-    cv::Mat bgra = obs_frame_to_bgra(frame);
+	// Convertir frame a BGRA
+	cv::Mat bgra = obs_frame_to_bgra(frame);
+	if (bgra.empty()) {
+		blog(LOG_WARNING,
+		     "process_frame_rgba_scaled: conversión a BGRA falló");
+		return false;
+	}
 
-    if (bgra.empty()) {
-        blog(LOG_WARNING, "process_frame_rgba: conversión a BGRA falló");
-        return false;
-    }
+	// Convertir a gris
+	cv::Mat gray;
+	cv::cvtColor(bgra, gray, cv::COLOR_BGRA2GRAY);
 
-    // Convertir BGRA a escala de grises
-    cv::Mat gray;
-    cv::cvtColor(bgra, gray, cv::COLOR_BGRA2GRAY);
+	// Detectar marcadores
+	std::vector<std::vector<cv::Point2f>> corners;
+	std::vector<int> ids;
+	cv::aruco::detectMarkers(gray, det->dictionary, corners, ids,
+				 det->detector_params);
 
-    // Detectar marcadores ArUco
-    std::vector<std::vector<cv::Point2f>> corners;
-    std::vector<int> ids;
-    cv::aruco::detectMarkers(gray, det->dictionary, corners, ids, det->detector_params);
-	// 3) Si no se detecta NINGÚN marcador, salimos.
 	if (ids.empty()) {
 		res->detected = false;
 		return false;
 	}
 
-	// 4) Buscar el índice del marcador cuyo ID coincida con det->id
-	int marker_index_to_process = -1;
-	for (int i = 0; i < ids.size(); ++i) {
+	// Buscar marcador de interés
+	int marker_index = -1;
+	for (int i = 0; i < (int)ids.size(); ++i) {
 		if (ids[i] == det->id) {
-			marker_index_to_process = i;
+			marker_index = i;
 			break;
 		}
 	}
-
-	if (marker_index_to_process == -1) {
-		// No se encontró el marcador con el ID deseado
+	if (marker_index == -1) {
 		res->detected = false;
 		return false;
 	}
 
-	// 5) Estimar la pose sólo del marcador seleccionado
+	// Estimar pose
 	std::vector<cv::Vec3d> rvecs, tvecs;
-	cv::aruco::estimatePoseSingleMarkers(corners, det->marker_size,det->camera_matrix, det->dist_coeffs, rvecs, tvecs);
-
+	cv::aruco::estimatePoseSingleMarkers(corners, det->marker_size,
+					     det->camera_matrix,
+					     det->dist_coeffs, rvecs, tvecs);
 	if (rvecs.empty() || tvecs.empty()) {
 		res->detected = false;
 		return false;
 	}
 
-	// 6) Rellenar resultado con el marcador encontrado
 	res->detected = true;
-	res->id = ids[marker_index_to_process];
+	res->id = ids[marker_index];
 	for (int i = 0; i < 3; ++i) {
-		res->tvec[i] = float(tvecs[marker_index_to_process][i]);
-		res->rvec[i] = float(rvecs[marker_index_to_process][i]);
+		res->tvec[i] = float(tvecs[marker_index][i]);
+		res->rvec[i] = float(rvecs[marker_index][i]);
 	}
 
+	// Centro del marcador en coords base
+	float im_cx = 0.0f, im_cy = 0.0f;
+	for (int i = 0; i < 4; ++i) {
+		float vx = corners[marker_index][i].x *
+			   ((float)base_w / frame->width);
+		float vy = corners[marker_index][i].y *
+			   ((float)base_h / frame->height);
 
-	// --- NUEVO: proyectar tvec en píxeles ---
-	std::vector<cv::Point2f> image_points;
-	std::vector<cv::Point3f> object_points = {
-		cv::Point3f(res->tvec[0], res->tvec[1], res->tvec[2])};
+		vx = std::clamp(vx, 0.0f, float(w - 1));
+		vy = std::clamp(vy, 0.0f, float(h - 1));
 
-	cv::projectPoints(object_points, cv::Vec3d(0, 0, 0), cv::Vec3d(0, 0, 0),
-			  det->camera_matrix, det->dist_coeffs, image_points);
+		res->corners[i][0] = vx;
+		res->corners[i][1] = vy;
 
-	float px = image_points[0].x;
-	float py = image_points[0].y;
+		im_cx += vx;
+		im_cy += vy;
+	}
+	im_cx /= 4.0f;
+	im_cy /= 4.0f;
 
+	// Escalar al tamaño de salida OBS
+	double scale_x = double(fw) / double(base_w);
+	double scale_y = double(fh) / double(base_h);
 
-	res->screen_pos_x = px;
-	res->screen_pos_y = py;
-	//// 7) Calcular centro y esquinas del marcador seleccionado
-	//float cx = 0.0f, cy = 0.0f;
-	//for (int i = 0; i < 4; ++i) {
-	//	float x = corners[marker_index_to_process][i].x;
-	//	float y = corners[marker_index_to_process][i].y;
-	//	res->corners[i][0] = x;
-	//	res->corners[i][1] = y;
-	//	cx += x;
-	//	cy += y;
-	//}
-	//cx /= 4.0f;
-	//cy /= 4.0f;
+	res->screen_pos_x = float(im_cx * scale_x);
+	res->screen_pos_y = float(im_cy * scale_y);
 
-	//// Ajuste "Aspect Fit" al tamaño del filtro OBS
-	//float scale_w = float(fw) / w, scale_h = float(fh) / h;
-	//float scale = std::min(scale_w, scale_h);
-	//float sw = w * scale, sh = h * scale;
-	//float ox = (fw - sw) * 0.5f, oy = (fh - sh) * 0.5f;
-	//res->screen_pos_x = cx * scale + ox;
-	//res->screen_pos_y = cy * scale + oy;
+	res->screen_pos_x = std::clamp(res->screen_pos_x, 0.0f, float(fw));
+	res->screen_pos_y = std::clamp(res->screen_pos_y, 0.0f, float(fh));
 
-	// 8) Calcular ángulos de Euler con el método robusto
+	// Euler
 	float pitch, yaw, roll;
-	get_euler_angles_from_pose(rvecs[marker_index_to_process], tvecs[marker_index_to_process], pitch, yaw,roll);
+	get_euler_angles_from_pose(rvecs[marker_index], tvecs[marker_index],
+				   pitch, yaw, roll);
 	res->euler_x = pitch;
 	res->euler_y = yaw;
 	res->euler_z = -roll;
