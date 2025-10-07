@@ -19,6 +19,168 @@
 
 
 	#include <float.h>
+	/*
+ * Requiere que Mesh tenga estos campos (añádelos si no están):
+ *
+ * float rot_offset_x; // en grados
+ * float rot_offset_y; // en grados
+ * float rot_offset_z; // en grados
+ * bool  has_rot_offset;
+ *
+ * (Inicializar a 0/false cuando crees cada Mesh, ver conversaciones previas)
+ */
+
+	/**
+ * Heurística: detecta el "forward" del modelo y rellena rot_offset_* en la Mesh.
+ *
+ * - points[]: array de vec3 con las posiciones (en el mismo sistema que min/max)
+ * - normals[]: si no es NULL se usa para calcular orientación; si es NULL se usa fallback centro->vértice
+ * - vert_count: número de vértices
+ * - min/max: valores min/max que calculaste (para Z y X,Y si deseas)
+ *
+ * top_percent: fracción (0.0..0.5) que determina la "cara frontal" (ej. 0.10 -> top 10% por Z)
+ */
+	// Detectar "forward" a nivel de escena (modelo completo). Rellena rotaciones en grados.
+	// out_x/y/z = offsets en grados para llevar la "frente" a +Z.
+	// devuelve true si se detectó algo razonable.
+	static bool auto_detect_forward_scene(const struct aiScene *scene,
+					      float top_percent,
+					      float *out_x_deg,
+					      float *out_y_deg,
+					      float *out_z_deg)
+	{
+		if (!scene || scene->mNumMeshes == 0 || !out_x_deg ||
+		    !out_y_deg || !out_z_deg)
+			return false;
+
+		if (top_percent <= 0.0f || top_percent >= 0.5f)
+			top_percent = 0.10f;
+
+		// 1) calcular bbox global en Z (y X/Y por si quieres extender)
+		float min_x = FLT_MAX, max_x = -FLT_MAX;
+		float min_y = FLT_MAX, max_y = -FLT_MAX;
+		float min_z = FLT_MAX, max_z = -FLT_MAX;
+
+		for (unsigned m = 0; m < scene->mNumMeshes; ++m) {
+			const struct aiMesh *mesh = scene->mMeshes[m];
+			for (unsigned i = 0; i < mesh->mNumVertices; ++i) {
+				const struct aiVector3D *v =
+					&mesh->mVertices[i];
+				if (v->x < min_x)
+					min_x = v->x;
+				if (v->x > max_x)
+					max_x = v->x;
+				if (v->y < min_y)
+					min_y = v->y;
+				if (v->y > max_y)
+					max_y = v->y;
+				if (v->z < min_z)
+					min_z = v->z;
+				if (v->z > max_z)
+					max_z = v->z;
+			}
+		}
+
+		const float depth_z = max_z - min_z;
+		if (depth_z <= 0.0f)
+			return false;
+
+		const float z_threshold = max_z - depth_z * top_percent;
+		const float center_x = (max_x + min_x) * 0.5f;
+		const float center_y = (max_y + min_y) * 0.5f;
+		const float center_z = (max_z + min_z) * 0.5f;
+
+		// 2) acumular vectores (normales si existen, fallback centro->vértice)
+		double acc_x = 0.0, acc_y = 0.0, acc_z = 0.0;
+		size_t count = 0;
+		bool any_normals = false;
+
+		for (unsigned m = 0; m < scene->mNumMeshes; ++m) {
+			const struct aiMesh *mesh = scene->mMeshes[m];
+			bool mesh_has_normals = (mesh->mNormals != NULL);
+			if (mesh_has_normals)
+				any_normals = true;
+
+			for (unsigned i = 0; i < mesh->mNumVertices; ++i) {
+				const struct aiVector3D *p =
+					&mesh->mVertices[i];
+				if (p->z < z_threshold)
+					continue;
+
+				if (mesh_has_normals) {
+					const struct aiVector3D *n =
+						&mesh->mNormals[i];
+					acc_x += n->x;
+					acc_y += n->y;
+					acc_z += n->z;
+				} else {
+					acc_x += (p->x - center_x);
+					acc_y += (p->y - center_y);
+					acc_z += (p->z - center_z);
+				}
+				++count;
+			}
+		}
+
+		// fallback si no hay suficientes vértices en top_percent -> probar top 25%
+		if (count == 0) {
+			const float z_thr2 = max_z - depth_z * 0.25f;
+			for (unsigned m = 0; m < scene->mNumMeshes; ++m) {
+				const struct aiMesh *mesh = scene->mMeshes[m];
+				bool mesh_has_normals =
+					(mesh->mNormals != NULL);
+
+				for (unsigned i = 0; i < mesh->mNumVertices;
+				     ++i) {
+					const struct aiVector3D *p =
+						&mesh->mVertices[i];
+					if (p->z < z_thr2)
+						continue;
+
+					if (mesh_has_normals) {
+						const struct aiVector3D *n =
+							&mesh->mNormals[i];
+						acc_x += n->x;
+						acc_y += n->y;
+						acc_z += n->z;
+					} else {
+						acc_x += (p->x - center_x);
+						acc_y += (p->y - center_y);
+						acc_z += (p->z - center_z);
+					}
+					++count;
+				}
+			}
+			if (count == 0)
+				return false;
+		}
+
+		// promedio
+		acc_x /= (double)count;
+		acc_y /= (double)count;
+		acc_z /= (double)count;
+
+		double len =
+			sqrt(acc_x * acc_x + acc_y * acc_y + acc_z * acc_z);
+		if (len < 1e-6)
+			return false;
+
+		double vx = acc_x / len, vy = acc_y / len, vz = acc_z / len;
+
+		// calcular yaw/pitch como en tu heurística por malla
+		double yaw = atan2(vx, vz); // rad
+		double pitch = atan2(vy, sqrt(vx * vx + vz * vz));
+
+		double yaw_deg = yaw * 180.0 / M_PI;
+		double pitch_deg = pitch * 180.0 / M_PI;
+
+		// aplicar signos igual que tu heurístico: -pitch, -yaw para llevar v a +Z
+		*out_x_deg = (float)(-pitch_deg);
+		*out_y_deg = (float)(-yaw_deg);
+		*out_z_deg = 0.0f;
+
+		return true;
+	}
 
 	static void free_single_mesh(Mesh *mesh, gs_texture_t *user_texture_to_exclude)
 	{
@@ -43,6 +205,72 @@
 		blog(LOG_INFO, "[CUBE] Todas las mallas y arrays de dimensiones han sido liberados.");
 	}
 
+	
+	static void draw_debug_axes(float size)
+	{
+		struct gs_vb_data vbd;
+		vbd.num = 6;
+		vbd.points =
+			(struct vec3 *)bmalloc(sizeof(struct vec3) * vbd.num);
+		vbd.colors = (uint32_t *)bmalloc(sizeof(uint32_t) * vbd.num);
+		vbd.num_tex = 0;
+		vbd.tvarray = NULL;
+		vbd.normals = NULL;
+		vbd.tangents = NULL;
+
+		// +X
+		vbd.points[0].x = 0;
+		vbd.points[0].y = 0;
+		vbd.points[0].z = 0;
+		vbd.points[1].x = size;
+		vbd.points[1].y = 0;
+		vbd.points[1].z = 0;
+		// +Y
+		vbd.points[2].x = 0;
+		vbd.points[2].y = 0;
+		vbd.points[2].z = 0;
+		vbd.points[3].x = 0;
+		vbd.points[3].y = size;
+		vbd.points[3].z = 0;
+		// +Z
+		vbd.points[4].x = 0;
+		vbd.points[4].y = 0;
+		vbd.points[4].z = 0;
+		vbd.points[5].x = 0;
+		vbd.points[5].y = 0;
+		vbd.points[5].z = size;
+
+		vbd.colors[0] = vbd.colors[1] = 0xFFFF0000;
+		vbd.colors[2] = vbd.colors[3] = 0xFF00FF00;
+		vbd.colors[4] = vbd.colors[5] = 0xFF0000FF;
+
+		obs_enter_graphics();
+		gs_vertbuffer_t *vb =
+			gs_vertexbuffer_create(&vbd, GS_DUP_BUFFER);
+		obs_leave_graphics();
+
+		gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+		gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
+		gs_eparam_t *col = gs_effect_get_param_by_name(solid, "color");
+		struct vec4 white = {1, 1, 1, 1};
+
+		gs_technique_begin(tech);
+		gs_technique_begin_pass(tech, 0);
+		gs_effect_set_vec4(col, &white);
+
+		gs_load_vertexbuffer(vb);
+		gs_draw(GS_LINES, 0, 6);
+
+		gs_technique_end_pass(tech);
+		gs_technique_end(tech);
+
+		obs_enter_graphics();
+		gs_vertexbuffer_destroy(vb);
+		obs_leave_graphics();
+
+		bfree(vbd.points);
+		bfree(vbd.colors);
+	}
 
 	/**
  	 * @brief Carga un modelo 3D desde un archivo utilizando Assimp.
@@ -59,7 +287,7 @@
 		// `aiProcess_Triangulate`: Convierte todas las primitivas a triángulos.
 		// `aiProcess_FlipUVs`: Invierte las coordenadas de textura en el eje Y.
 		// `aiProcess_CalcTangentSpace`: Calcula las tangentes y bitangentes si no existen.
-		const struct aiScene *scene =aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs |aiProcess_CalcTangentSpace);
+		const struct aiScene *scene =aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs |aiProcess_CalcTangentSpace| aiProcess_PreTransformVertices);
 
 		// Verifica si la importación falló.
 		if (!scene) {
@@ -71,7 +299,17 @@
 		if (*g_meshes) {
 			cleanup_global_meshes(g_meshes, g_mesh_count, mesh_widths,mesh_heights, NULL);
 		}
+		float model_rot_x = 0.0f, model_rot_y = 0.0f, model_rot_z = 0.0f;
+		bool model_has_rot = false;
 
+		if (auto_detect_forward_scene(scene, 0.10f, &model_rot_x, &model_rot_y, &model_rot_z)) {
+			model_has_rot = true;
+			blog(LOG_INFO, "[AUTO-FWD-MODEL] model rot offsets: x=%f y=%f z=%f",
+				 model_rot_x, model_rot_y, model_rot_z);
+		} else {
+			model_has_rot = false;
+			blog(LOG_INFO, "[AUTO-FWD-MODEL] no detection");
+		}
 		// Asigna memoria para el nuevo conjunto de mallas del modelo.
 		*g_mesh_count = scene->mNumMeshes;
 		*g_meshes = (Mesh *)bmalloc(sizeof(Mesh) * (*g_mesh_count));
@@ -86,7 +324,14 @@
 		
 			// Estructura para almacenar los datos de los vértices antes de crear el buffer de OBS.
 			struct gs_vb_data *vbd =(struct gs_vb_data *)bmalloc(sizeof(struct gs_vb_data));
-
+			(*g_meshes)[m].center_x = 0.0f;
+			(*g_meshes)[m].center_y = 0.0f;
+			(*g_meshes)[m].center_z = 0.0f;
+			(*g_meshes)[m].depth_z = 0.0f;
+			(*g_meshes)[m].rot_offset_x = 0.0f;
+			(*g_meshes)[m].rot_offset_y = 0.0f;
+			(*g_meshes)[m].rot_offset_z = 0.0f;
+			(*g_meshes)[m].has_rot_offset = false;
 			// Asigna memoria para los datos de los vértices.
 			vbd->num = vert_count;
 			vbd->points = (struct vec3 *)bmalloc(sizeof(struct vec3) *vert_count);
@@ -99,6 +344,8 @@
 			float max_y = -FLT_MAX;
 			float min_x = FLT_MAX;
 			float max_x = -FLT_MAX;
+			float min_z = FLT_MAX; // <-- nuevo
+			float max_z = -FLT_MAX;
 
 			float center_x = 0, center_y = 0;
 			// --- FIN: CÁLCULO DE ANCHO Y ALTO ---
@@ -116,6 +363,10 @@
 					min_x = vbd->points[i].x;
 				if (vbd->points[i].x > max_x)
 					max_x = vbd->points[i].x;
+				if (vbd->points[i].z < min_z)
+					min_z = vbd->points[i].z;
+				if (vbd->points[i].z > max_z)
+					max_z = vbd->points[i].z;
 				// Normales (si existen)
 				if (mesh->mNormals) {
 					vbd->normals[i].x = mesh->mNormals[i].x;
@@ -208,12 +459,17 @@
 			(*mesh_widths)[m] = max_x - min_x;
 			center_x = (max_x + min_x) * 0.5f;
 			center_y = (max_y + min_y) * 0.5f;
+			(*g_meshes)[m].center_z = (max_z + min_z) * 0.5f;
 			// guarda el centro real (usando min/max)
+			(*g_meshes)[m].depth_z = (max_z - min_z);
 			(*g_meshes)[m].center_x = (max_x + min_x) * 0.5f;
 			(*g_meshes)[m].center_y = (max_y + min_y) * 0.5f;
+			(*g_meshes)[m].rot_offset_x = model_rot_x;
+			(*g_meshes)[m].rot_offset_y = model_rot_y;
+			(*g_meshes)[m].rot_offset_z = model_rot_z;
+			(*g_meshes)[m].has_rot_offset = model_has_rot;
 
-			blog(LOG_WARNING, "MESH %zu HEIGHT: %f, WIDTH: %f CENTER: (%f,%f)", m, (*mesh_heights)[m], (*mesh_widths)[m], (*g_meshes)[m].center_x, (*g_meshes)[m].center_y);
-			// Libera la memoria temporal usada para los datos de vértices e índices.
+			//auto_detect_forward(&(*g_meshes)[m], vbd->points,(mesh->mNormals ? vbd->normals : NULL), vert_count,min_x, max_x, min_y, max_y, min_z, max_z, 0.10f);
 			bfree(indices);
 			bfree(vbd->points);
 			bfree(vbd->normals);
@@ -229,8 +485,7 @@
 			// Procesa el material y la textura de la malla.
 			struct aiMaterial *material =scene->mMaterials[mesh->mMaterialIndex];
 			// Comprueba si el material tiene una textura de tipo difuso.
-			if (material && aiGetMaterialTextureCount(
-						material, aiTextureType_DIFFUSE) > 0) {
+			if (material && aiGetMaterialTextureCount(material, aiTextureType_DIFFUSE) > 0) {
 				struct aiString texPath;
 				// Obtiene la ruta de la primera textura difusa.
 				if (aiGetMaterialTexture( material, aiTextureType_DIFFUSE, 0, &texPath, NULL, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
@@ -318,8 +573,7 @@
 			// La gesti�n de la memoria de las texturas (ya sean las de Assimp o la 'new_texture')
 			// debe ser manejada por las funciones de limpieza (free_single_mesh y cleanup_global_meshes)
 			// para evitar "double frees" o fugas de memoria, especialmente si 'new_texture' es compartida.
-			g_meshes[i].texture =
-				new_texture; // Asigna directamente la nueva textura a la malla
+			g_meshes[i].texture =new_texture; // Asigna directamente la nueva textura a la malla
 		}
 
 		if (new_texture) {
@@ -330,7 +584,10 @@
 				 g_mesh_count);
 		}
 	}
-	void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count, float *widths, float *heights, float scale,float pitch_deg, float yaw_deg, float roll_deg)
+	void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,
+				      float *widths, float *heights,
+				      float scale, float pitch_deg,
+				      float yaw_deg, float roll_deg)
 	{
 		// 1) Efecto sólido de OBS
 		gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
@@ -343,10 +600,11 @@
 		if (!tech)
 			return;
 
-		// Convertir ángulos a radianes
-		float pitch = pitch_deg * (float)M_PI / 180.0f; // X
-		float yaw = yaw_deg * (float)M_PI / 180.0f;     // Y
-		float roll = roll_deg * (float)M_PI / 180.0f;   // Z
+		// Convertir ángulos a radianes usando la misma convención que render_model_c
+		float rx =
+			-(pitch_deg * (float)M_PI / 180.0f); // pitch invertido
+		float ry = (yaw_deg * (float)M_PI / 180.0f);
+		float rz = (roll_deg * (float)M_PI / 180.0f);
 
 		// Color sólido (rojo)
 		struct vec4 c = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -360,37 +618,38 @@
 			if (!m->vb || !m->ib)
 				continue;
 
-			// Centro local de la malla
-			float cx = widths[i] * 0.5f;
-			float cy = heights[i] * 0.5f;
+			// Obtener pivote: preferimos center guardado en la malla; si no está, fallback a widths/heights
+			float cx = 0.0f;
+			float cy = 0.0f;
+			float cz = 0.0f;
 
-		
-			// Convertir ángulos a radianes
-			float rx = (float)M_PI * pitch_deg / 180.0f;
-			float ry = (float)M_PI * yaw_deg / 180.0f;
-			float rz = (float)M_PI * roll_deg / 180.0f;
-		
-
+			
 			gs_matrix_push();
-			// **No** hacemos identity() aquí, así respetamos la traslación global
 
-			//// 1) Mover pivote al origen local (coordenadas NEGATIVAS)
-			//	gs_matrix_translate3f(cx, cy, 0.0f);
-			gs_matrix_translate3f(-cx, -cy, 0.0f);
-			// 2) Aplicar rotaciones en el orden que desees
-			//    Por ejemplo: Pitch (X), Yaw (Y), Roll (Z)
-			//gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, d*M_PI/180); // Pitch
-			//gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, d * M_PI / 180); // Yaw
-			//gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, d * M_PI / 180); // Roll
-			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, rx);
-			gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, ry);
-			gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, rz);
+			// mover pivote al origen 3D (negativo)
+			gs_matrix_translate3f(-cx, -cy, -cz);
 
-			//// 3) Volver a mover el pivote de regreso (coordenadas POSITIVAS)
-
-			// 4) Escalado uniforme
+			// escala
 			gs_matrix_scale3f(scale, scale, scale);
-		
+
+			if (m->has_rot_offset) {
+				float ox =
+					m->rot_offset_x * (float)M_PI / 180.0f;
+				float oy =
+					m->rot_offset_y * (float)M_PI / 180.0f;
+				float oz =
+					m->rot_offset_z * (float)M_PI / 180.0f;
+
+				// Aplica offset en el orden Z, Y, X
+				gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, oz);
+				gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, oy);
+				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, ox);
+			}
+				gs_matrix_rotaa4f(1, 0, 0, rx);
+				gs_matrix_rotaa4f(0, 1, 0,- ry);
+				gs_matrix_rotaa4f(0, 0, 1, rz);
+			
+
 			// Dibujar
 			gs_load_vertexbuffer(m->vb);
 			gs_load_indexbuffer(m->ib);
@@ -403,71 +662,94 @@
 		gs_technique_end(tech);
 	}
 
-
 	/**
  	 * @brief Renderiza todas las mallas del modelo cargado.
  	 *
  	 * Esta función debe ser llamada en cada fotograma dentro del ciclo de renderizado de OBS.
  	 */
 	void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
-				float *heights, float scale, float rot_x_deg,
-				float rot_y_deg, float rot_z_deg)
+			    float *heights, float scale, float rot_x_deg,
+			    float rot_y_deg, float rot_z_deg)
 	{
-		gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-		if (!default_effect)
-			return;
+		draw_debug_axes(100);
+		gs_effect_t *default_effect =
+			obs_get_base_effect(OBS_EFFECT_DEFAULT);
+		if (!default_effect)return;
+		gs_eparam_t *image_param =gs_effect_get_param_by_name(default_effect, "image");
+		if (!image_param)return;
 
-		gs_eparam_t *image_param =
-			gs_effect_get_param_by_name(default_effect, "image");
-		if (!image_param)
-			return;
-
-		gs_technique_t *tech = gs_effect_get_technique(default_effect, "Draw");
+		gs_technique_t *tech =
+			gs_effect_get_technique(default_effect, "Draw");
 		if (!tech)
 			return;
 
-		// Convertir ángulos a radianes
-		float rx = (float)(M_PI * rot_x_deg / 180.0f);
-		float ry = (float)(M_PI * rot_y_deg / 180.0f);
-		float rz = (float)(M_PI * rot_z_deg / 180.0f);
+		// Convertir ángulos a radianes; invertimos rot_x (pitch) para corregir la convención.
+		float rx =-(rot_x_deg * (float)M_PI / 180.0f); // pitch invertido
+		float ry = (rot_y_deg * (float)M_PI / 180.0f);
+		float rz = (rot_z_deg * (float)M_PI / 180.0f);
 
 		gs_technique_begin(tech);
 		gs_technique_begin_pass(tech, 0);
 
 		for (size_t i = 0; i < g_mesh_count; i++) {
 			Mesh *m = &g_meshes[i];
-			if (!m->vb || !m->ib)
-				continue;
+			if (!m->vb || !m->ib)continue;
 
 			// Si la malla no tiene textura, delegamos en la versión NoTexture
 			if (!m->texture) {
 				gs_technique_end_pass(tech);
 				gs_technique_end(tech);
-				render_model_c_NoTexture(g_meshes, g_mesh_count, widths,
-							 heights, scale, rot_x_deg,
-							 rot_y_deg, rot_z_deg);
+				render_model_c_NoTexture(g_meshes, g_mesh_count,
+							 widths, heights, scale,
+							 rot_x_deg, rot_y_deg,
+							 rot_z_deg);
 				return;
 			}
 
 			// Usa el centro REAL calculado en load_model_c
 			float cx = m->center_x;
 			float cy = m->center_y;
+			float cz = m->center_z;
 
 			gs_matrix_push();
 
-			// 1) Mover pivote al origen local (centro real) -- NOTA: NEGATIVO
-			gs_matrix_translate3f(-cx, -cy, 0.0f);
+			// mover pivote al origen 3D
+			gs_matrix_translate3f(-cx, -cy, -cz);
 
-			// 2) Escalado alrededor del pivote (ya en el origen local)
+			// escala / rotaciones...
 			gs_matrix_scale3f(scale, scale, scale);
+			//if (m->has_rot_offset) {
+			//	float ox =
+			//		m->rot_offset_x * (float)M_PI / 180.0f;
+			//	float oy =
+			//		m->rot_offset_y * (float)M_PI / 180.0f;
+			//	float oz =
+			//		m->rot_offset_z * (float)M_PI / 180.0f;
 
-			// 3) Aplicar rotaciones alrededor del origen local (que es el pivote)
-			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, rx);
-			gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, ry);
-			gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, rz);
+			//	// Aplica offset en el orden que necesites. Aquí: Z, Y, X
+			//	gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, oz);
+			//	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, oy);
+			//	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, ox);
+			//} 
+			if (m->has_rot_offset) {
+				float ox =
+					m->rot_offset_x * (float)M_PI / 180.0f;
+				float oy =
+					m->rot_offset_y * (float)M_PI / 180.0f;
+				float oz =
+					m->rot_offset_z * (float)M_PI / 180.0f;
 
-			// 4) Volver a mover el pivote de regreso (POSITIVE)
-			gs_matrix_translate3f(cx, cy, 0.0f);
+				// Aplica offset en el orden Z, Y, X
+				gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, oz);
+				gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, oy);
+				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, ox);
+			}
+				gs_matrix_rotaa4f(1, 0, 0, rx);
+				gs_matrix_rotaa4f(0, 1, 0, -ry);
+				gs_matrix_rotaa4f(0, 0, 1,rz);
+			
+			
+		
 
 			// Establecer textura y dibujar
 			gs_effect_set_texture(image_param, m->texture);
@@ -481,6 +763,7 @@
 		gs_technique_end_pass(tech);
 		gs_technique_end(tech);
 	}
+
 	void replace_mesh_textures(struct Mesh *meshes, size_t count, gs_texture_t *new_tex,  gs_texture_t *old_tex)
 	{
 		// Para cada sub-malla, libera textura antigua y asigna la nueva

@@ -16,7 +16,12 @@ typedef struct Mesh {
 	gs_texture_t *texture;
 	float center_x;
 	float center_y;
-
+	float center_z; 
+	float depth_z; 
+	float rot_offset_x;  // offset en pitch (X), en grados
+	float rot_offset_y;  // offset en yaw   (Y), en grados
+	float rot_offset_z;  // offset en roll  (Z), en grados
+	bool has_rot_offset; // true si se calculó auto/manual
 } Mesh;
 	 // Declara tus funciones y tipos públicos:
 bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float **mesh_widths, float **mesh_heights);

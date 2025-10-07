@@ -381,8 +381,7 @@ bool process_frame_rgba(ArucoDetector *det,
 
 	// Euler
 	float pitch, yaw, roll;
-	get_euler_angles_from_pose(rvecs[marker_index], tvecs[marker_index],
-				   pitch, yaw, roll);
+	get_euler_angles_from_pose(rvecs[marker_index], tvecs[marker_index], pitch, yaw, roll);
 	res->euler_x = pitch;
 	res->euler_y = yaw;
 	res->euler_z = -roll;
