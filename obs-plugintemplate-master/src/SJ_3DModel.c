@@ -287,7 +287,7 @@
 		// `aiProcess_Triangulate`: Convierte todas las primitivas a triángulos.
 		// `aiProcess_FlipUVs`: Invierte las coordenadas de textura en el eje Y.
 		// `aiProcess_CalcTangentSpace`: Calcula las tangentes y bitangentes si no existen.
-		const struct aiScene *scene =aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs |aiProcess_CalcTangentSpace| aiProcess_PreTransformVertices);
+		const struct aiScene *scene =aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs |aiProcess_CalcTangentSpace);
 
 		// Verifica si la importación falló.
 		if (!scene) {
@@ -601,8 +601,7 @@
 			return;
 
 		// Convertir ángulos a radianes usando la misma convención que render_model_c
-		float rx =
-			-(pitch_deg * (float)M_PI / 180.0f); // pitch invertido
+		float rx =-(pitch_deg * (float)M_PI / 180.0f); // pitch invertido
 		float ry = (yaw_deg * (float)M_PI / 180.0f);
 		float rz = (roll_deg * (float)M_PI / 180.0f);
 
@@ -619,9 +618,9 @@
 				continue;
 
 			// Obtener pivote: preferimos center guardado en la malla; si no está, fallback a widths/heights
-			float cx = 0.0f;
-			float cy = 0.0f;
-			float cz = 0.0f;
+			float cx = m->center_x;
+			float cy = m->center_y;
+			float cz = m->center_z;
 
 			
 			gs_matrix_push();
@@ -632,22 +631,24 @@
 			// escala
 			gs_matrix_scale3f(scale, scale, scale);
 
-			if (m->has_rot_offset) {
-				float ox =
-					m->rot_offset_x * (float)M_PI / 180.0f;
-				float oy =
-					m->rot_offset_y * (float)M_PI / 180.0f;
-				float oz =
-					m->rot_offset_z * (float)M_PI / 180.0f;
+			//if (m->has_rot_offset) {
+			//	float ox =
+			//		m->rot_offset_x * (float)M_PI / 180.0f;
+			//	float oy =
+			//		m->rot_offset_y * (float)M_PI / 180.0f;
+			//	float oz =
+			//		m->rot_offset_z * (float)M_PI / 180.0f;
 
-				// Aplica offset en el orden Z, Y, X
-				gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, oz);
-				gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, oy);
-				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, ox);
-			}
-				gs_matrix_rotaa4f(1, 0, 0, rx);
-				gs_matrix_rotaa4f(0, 1, 0,- ry);
-				gs_matrix_rotaa4f(0, 0, 1, rz);
+			//	// Aplica offset en el orden Z, Y, X
+			//	gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, oz);
+			//	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, oy);
+			//	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, ox);
+			//}
+			/* aplicar rotación del pose en el mismo orden Z, Y, X */
+			gs_matrix_rotaa4f(1, 0, 0, rx);
+			gs_matrix_rotaa4f(0, 1, 0, -ry);
+			gs_matrix_rotaa4f(0, 0, 1, rz);
+		
 			
 
 			// Dibujar
@@ -671,7 +672,7 @@
 			    float *heights, float scale, float rot_x_deg,
 			    float rot_y_deg, float rot_z_deg)
 	{
-		draw_debug_axes(100);
+		//draw_debug_axes(100);
 		gs_effect_t *default_effect =
 			obs_get_base_effect(OBS_EFFECT_DEFAULT);
 		if (!default_effect)return;
@@ -684,7 +685,7 @@
 			return;
 
 		// Convertir ángulos a radianes; invertimos rot_x (pitch) para corregir la convención.
-		float rx =-(rot_x_deg * (float)M_PI / 180.0f); // pitch invertido
+		float rx =((rot_x_deg-180) * (float)M_PI / 180.0f); // pitch invertido
 		float ry = (rot_y_deg * (float)M_PI / 180.0f);
 		float rz = (rot_z_deg * (float)M_PI / 180.0f);
 
@@ -717,7 +718,7 @@
 			gs_matrix_translate3f(-cx, -cy, -cz);
 
 			// escala / rotaciones...
-			gs_matrix_scale3f(scale, scale, scale);
+			gs_matrix_scale3f(scale, scale, -scale);
 			//if (m->has_rot_offset) {
 			//	float ox =
 			//		m->rot_offset_x * (float)M_PI / 180.0f;
@@ -731,22 +732,22 @@
 			//	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, oy);
 			//	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, ox);
 			//} 
-			if (m->has_rot_offset) {
-				float ox =
-					m->rot_offset_x * (float)M_PI / 180.0f;
-				float oy =
-					m->rot_offset_y * (float)M_PI / 180.0f;
-				float oz =
-					m->rot_offset_z * (float)M_PI / 180.0f;
+			//if (m->has_rot_offset) {
+			//	float ox =
+			//		m->rot_offset_x * (float)M_PI / 180.0f;
+			//	float oy =
+			//		m->rot_offset_y * (float)M_PI / 180.0f;
+			//	float oz =
+			//		m->rot_offset_z * (float)M_PI / 180.0f;
 
-				// Aplica offset en el orden Z, Y, X
-				gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, oz);
-				gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, oy);
-				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, ox);
-			}
+			//	// Aplica offset en el orden Z, Y, X
+			//	gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, oz);
+			//	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, oy);
+			//	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, ox);
+			//}
 				gs_matrix_rotaa4f(1, 0, 0, rx);
-				gs_matrix_rotaa4f(0, 1, 0, -ry);
-				gs_matrix_rotaa4f(0, 0, 1,rz);
+				gs_matrix_rotaa4f(0, 1, 0,ry);
+				gs_matrix_rotaa4f(0, 0, 1,-rz);
 			
 			
 		
