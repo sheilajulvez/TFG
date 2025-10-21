@@ -60,59 +60,61 @@
 	};
 
 
-	static struct obs_source_frame *filter_video(void *data, struct obs_source_frame *frame)
-{
-	struct cube_filter_data *filter = data;
+	static struct obs_source_frame *
+	filter_video(void *data, struct obs_source_frame *frame)
+	{
+		struct cube_filter_data *filter = data;
 
-	if (!frame) {
-		blog(LOG_WARNING,
-		     "cube_filter_filter_video: frame es NULL");
-		return NULL;
-	}
+		if (!frame) {
+			blog(LOG_WARNING,
+			     "cube_filter_filter_video: frame es NULL");
+			return NULL;
+		}
 
-	if (filter->mode == 0) { // 0 = 3D
-		filter->current_scale = filter->scale;
-		return frame; // simplemente devolvemos el frame (usa pos_x, pos_y, rotaciones manuales)
-	}
+		if (filter->mode == 0) { // 0 = 3D
+			filter->current_scale = filter->scale;
+			// Asegurarnos que 'detected' esté en false si no estamos trackeando
+			filter->last_result.detected = false;
+			return frame;
+		}
 
-	bool detected = false;
+		bool detected = false;
 
+		// Llamamos a process_frame_rgba, que rellena filter->last_result (incluyendo rvec)
+		detected = process_frame_rgba(filter->detector, frame,
+					      filter->width_screen,
+					      filter->height_screen,
+					      frame->width, frame->height,
+					      &filter->last_result);
 
-	// Llamamos directamente a process_frame_rgba pasándole el frame OBS
-	detected = process_frame_rgba(filter->detector, frame,filter->width_screen,filter->height_screen,frame->width,frame->height, &filter->last_result);
+		if (detected && filter->last_result.detected) {
+			filter->pos_x = filter->last_result.screen_pos_x;
+			filter->pos_y = filter->last_result.screen_pos_y;
+			filter->pos_z = 0;
 
-	if (detected && filter->last_result.detected) {
-		filter->pos_x = filter->last_result.screen_pos_x; // centrado en OBS
-		filter->pos_y = filter->last_result.screen_pos_y; // invertir eje Y
-		filter->pos_z = 0;                            // invertir Z
-		//blog(1, "filter POSSSS: x=%f, y=%f, z=%f", filter->pos_x,filter->pos_y, filter->pos_z);
-		const float reference_distance = 1.0f; // Puedes ajustar este valor si es necesario
-
-	// Definimos la escala base que queremos que tenga el objeto a esa distancia
-	
+			const float reference_distance = 1.0f;
 
 			if (filter->last_result.tvec[2] > 0.1f) {
-				// Calculamos el factor de escala: a mayor distancia, menor factor.
-				// Usamos la distancia de referencia para normalizar.
 				filter->current_scale = filter->scale;
-					//* (reference_distance / filter->last_result.tvec[2]);
-		
-		
+				// * (reference_distance / filter->last_result.tvec[2]);
 			} else {
-		
-				filter->current_scale = filter->scale; 
-		
+				filter->current_scale = filter->scale;
 			}
-			filter->rotation_x = filter->last_result.euler_x;
-			filter->rotation_y = filter->last_result.euler_y;
-			filter->rotation_z = filter->last_result.euler_z;
-	} 
-	else {
-		filter->last_result.detected = false;
-	}
 
-	return frame;
-}
+			// --- YA NO ES NECESARIO ---
+			// No necesitamos asignar los ángulos Euler, ya que causan Gimbal Lock.
+			// Usaremos filter->last_result.rvec directamente en el renderizado.
+			//
+			// filter->rotation_x = filter->last_result.euler_x;
+			// filter->rotation_y = filter->last_result.euler_y;
+			// filter->rotation_z = filter->last_result.euler_z;
+
+		} else {
+			filter->last_result.detected = false;
+		}
+
+		return frame;
+	}
 
 	static uint32_t cube_source_get_width(void *data)
 	{
@@ -306,7 +308,7 @@
 		gs_matrix_translate3f(filter->pos_x, filter->pos_y, filter->pos_z);
 
 		// Ahora llamas a render_model_c, que aplicará sus propias rotaciones/centros
-		render_model_c(filter->g_meshes, filter->g_mesh_count, filter->model_width, filter->model_height, filter->current_scale,filter->rotation_x, filter->rotation_y,  filter->rotation_z);
+		render_model_c(filter->g_meshes, filter->g_mesh_count, filter->model_width, filter->model_height, filter->current_scale,filter->last_result.rvec,filter->last_result.detected);
 
 		gs_matrix_pop();
 		gs_projection_pop();

@@ -15,6 +15,7 @@
 #define M_PI_2 (M_PI / 2.0f)
 #endif
 
+// Estructura ArucoDetector (sin cambios)
 struct ArucoDetector {
 	cv::Ptr<cv::aruco::Dictionary> dictionary;
 	cv::Ptr<cv::aruco::DetectorParameters> detector_params;
@@ -24,6 +25,8 @@ struct ArucoDetector {
 	int marker_dict;
 	std::string calibration_path;
 };
+
+// set_default_camera_params (sin cambios)
 void set_default_camera_params(ArucoDetector *det)
 {
 	// Intrinsics por defecto: fx = fy = 2000, principal point (cx, cy) = (1233, 718)
@@ -37,136 +40,134 @@ void set_default_camera_params(ArucoDetector *det)
 	     "[CUBE] Usando parámetros de cámara por defecto (fx=fy=2000, cx=1233, cy=718).");
 }
 
-
+// obs_frame_to_bgra (sin cambios)
 cv::Mat obs_frame_to_bgra(struct obs_source_frame *frame)
 {
 	int width = frame->width;
 	int height = frame->height;
 	cv::Mat bgra; // Matriz de destino
 
-	// Opcional: Log para depuración
-	// blog(LOG_INFO, "Formato de video de entrada: %s (%d)",
-	//      get_video_format_name(frame->format), frame->format);
-
 	switch (frame->format) {
 	case VIDEO_FORMAT_I420: {
-		// Correcto: Crear una sola matriz empaquetada para cvtColor
 		cv::Mat yuv_packed(height + height / 2, width, CV_8UC1);
-
-		// Plano Y (Luma)
-		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],frame->linesize[0]);
+		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],
+				frame->linesize[0]);
 		y_plane.copyTo(yuv_packed(cv::Rect(0, 0, width, height)));
-
-		// Plano U (Croma)
-		cv::Mat u_plane(height / 2, width / 2, CV_8UC1, frame->data[1],frame->linesize[1]);
-		u_plane.copyTo(yuv_packed(cv::Rect(0, height, width / 2, height / 2)));
-
-		// Plano V (Croma)
-		cv::Mat v_plane(height / 2, width / 2, CV_8UC1, frame->data[2],frame->linesize[2]);
-		v_plane.copyTo(yuv_packed(cv::Rect(width / 2, height, width / 2, height / 2)));
-
+		cv::Mat u_plane(height / 2, width / 2, CV_8UC1, frame->data[1],
+				frame->linesize[1]);
+		u_plane.copyTo(
+			yuv_packed(cv::Rect(0, height, width / 2, height / 2)));
+		cv::Mat v_plane(height / 2, width / 2, CV_8UC1, frame->data[2],
+				frame->linesize[2]);
+		v_plane.copyTo(yuv_packed(
+			cv::Rect(width / 2, height, width / 2, height / 2)));
 		cv::cvtColor(yuv_packed, bgra, cv::COLOR_YUV2BGRA_I420);
 		break;
 	}
 	case VIDEO_FORMAT_I422: {
-		
-		// Usamos un método más robusto redimensionando los planos de croma.
-
-		// 1. Crear wrappers para cada plano sin copiar datos
-		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],frame->linesize[0]);
-		cv::Mat u_plane(height, width / 2, CV_8UC1, frame->data[1],frame->linesize[1]);
-		cv::Mat v_plane(height, width / 2, CV_8UC1, frame->data[2],frame->linesize[2]);
-
-		// 2. Redimensionar los planos U y V a la misma resolución que el plano Y
+		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],
+				frame->linesize[0]);
+		cv::Mat u_plane(height, width / 2, CV_8UC1, frame->data[1],
+				frame->linesize[1]);
+		cv::Mat v_plane(height, width / 2, CV_8UC1, frame->data[2],
+				frame->linesize[2]);
 		cv::Mat u_resized, v_resized;
-		cv::resize(u_plane, u_resized, cv::Size(width, height), 0, 0, cv::INTER_LINEAR);
-		cv::resize(v_plane, v_resized, cv::Size(width, height), 0, 0, cv::INTER_LINEAR);
-
-		// 3. Combinar los 3 planos en una sola imagen YUV de 3 canales
+		cv::resize(u_plane, u_resized, cv::Size(width, height), 0, 0,
+			   cv::INTER_LINEAR);
+		cv::resize(v_plane, v_resized, cv::Size(width, height), 0, 0,
+			   cv::INTER_LINEAR);
 		cv::Mat yuv_image;
-		std::vector<cv::Mat> yuv_planes = {y_plane, u_resized, v_resized};
+		std::vector<cv::Mat> yuv_planes = {y_plane, u_resized,
+						   v_resized};
 		cv::merge(yuv_planes, yuv_image);
-
-		// 4. Convertir la imagen YUV resultante a BGR y luego a BGRA
 		cv::Mat bgr;
 		cv::cvtColor(yuv_image, bgr, cv::COLOR_YUV2BGR);
 		cv::cvtColor(bgr, bgra, cv::COLOR_BGR2BGRA);
 		break;
 	}
 	case VIDEO_FORMAT_NV12: {
-		// Correcto: Crear una sola matriz empaquetada
 		cv::Mat nv12_packed(height + height / 2, width, CV_8UC1);
-		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],frame->linesize[0]);
-		cv::Mat uv_plane(height / 2, width, CV_8UC1, frame->data[1],frame->linesize[1]); // Nota: el ancho es completo
-
+		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],
+				frame->linesize[0]);
+		cv::Mat uv_plane(height / 2, width, CV_8UC1, frame->data[1],
+				 frame->linesize[1]);
 		y_plane.copyTo(nv12_packed(cv::Rect(0, 0, width, height)));
-		uv_plane.copyTo(nv12_packed(cv::Rect(0, height, width, height / 2)));
-
+		uv_plane.copyTo(
+			nv12_packed(cv::Rect(0, height, width, height / 2)));
 		cv::cvtColor(nv12_packed, bgra, cv::COLOR_YUV2BGRA_NV12);
 		break;
 	}
 	case VIDEO_FORMAT_YUY2: {
-		// Correcto: Formato empaquetado, conversión directa
-		cv::Mat yuy2(height, width, CV_8UC2, frame->data[0],frame->linesize[0]);
+		cv::Mat yuy2(height, width, CV_8UC2, frame->data[0],
+			     frame->linesize[0]);
 		cv::cvtColor(yuy2, bgra, cv::COLOR_YUV2BGRA_YUY2);
 		break;
 	}
 	case VIDEO_FORMAT_UYVY: {
-		// Correcto: Formato empaquetado, conversión directa
-		cv::Mat uyvy(height, width, CV_8UC2, frame->data[0], frame->linesize[0]);
+		cv::Mat uyvy(height, width, CV_8UC2, frame->data[0],
+			     frame->linesize[0]);
 		cv::cvtColor(uyvy, bgra, cv::COLOR_YUV2BGRA_UYVY);
 		break;
 	}
 	case VIDEO_FORMAT_YVYU: {
-		// OPTIMIZACIÓN: Usar la conversión directa a BGRA
-		cv::Mat yvyu(height, width, CV_8UC2, frame->data[0], frame->linesize[0]);
+		cv::Mat yvyu(height, width, CV_8UC2, frame->data[0],
+			     frame->linesize[0]);
 		cv::cvtColor(yvyu, bgra, cv::COLOR_YUV2BGRA_YVYU);
 		break;
 	}
 	case VIDEO_FORMAT_BGRA: {
-		// Correcto: Es el formato de destino, solo clonamos para tener nuestra propia copia
-		bgra = cv::Mat(height, width, CV_8UC4, frame->data[0], frame->linesize[0]).clone();
+		bgra = cv::Mat(height, width, CV_8UC4, frame->data[0],
+			       frame->linesize[0])
+			       .clone();
 		break;
 	}
 	case VIDEO_FORMAT_RGBA: {
-		// Correcto: Convertir de RGBA a BGRA
-		cv::Mat rgba(height, width, CV_8UC4, frame->data[0],frame->linesize[0]);
+		cv::Mat rgba(height, width, CV_8UC4, frame->data[0],
+			     frame->linesize[0]);
 		cv::cvtColor(rgba, bgra, cv::COLOR_RGBA2BGRA);
 		break;
 	}
 	case VIDEO_FORMAT_BGR3:
-	case VIDEO_FORMAT_BGRX: { // BGRX es funcionalmente igual que BGR3 para la conversión
-		// Correcto: Añadir canal Alfa
-		cv::Mat bgr(height, width, CV_8UC3, frame->data[0],frame->linesize[0]);
+	case VIDEO_FORMAT_BGRX: {
+		cv::Mat bgr(height, width, CV_8UC3, frame->data[0],
+			    frame->linesize[0]);
 		cv::cvtColor(bgr, bgra, cv::COLOR_BGR2BGRA);
 		break;
 	}
 	case VIDEO_FORMAT_Y800: { // Grayscale
-		// Correcto: Convertir de escala de grises a BGRA
-		cv::Mat gray(height, width, CV_8UC1, frame->data[0],frame->linesize[0]);
+		cv::Mat gray(height, width, CV_8UC1, frame->data[0],
+			     frame->linesize[0]);
 		cv::cvtColor(gray, bgra, cv::COLOR_GRAY2BGRA);
 		break;
 	}
 	default:
-		blog(LOG_WARNING,"[Aruco] Formato de video no soportado para conversión a BGRA: %s (%d)", get_video_format_name(frame->format), frame->format);
+		blog(LOG_WARNING,
+		     "[Aruco] Formato de video no soportado para conversión a BGRA: %s (%d)",
+		     get_video_format_name(frame->format), frame->format);
 		break;
 	}
 
 	if (bgra.empty()) {
-		blog(LOG_WARNING, "[Aruco] La conversión del frame a BGRA falló para el formato %s.", get_video_format_name(frame->format));
+		blog(LOG_WARNING,
+		     "[Aruco] La conversión del frame a BGRA falló para el formato %s.",
+		     get_video_format_name(frame->format));
 	}
 
 	return bgra;
 }
+
 extern "C" {
-// Esta es la función que abre el YAML y rellena las matrices
-bool load_camera_calibration(const std::string &filename,cv::Mat &camera_matrix, cv::Mat &dist_coeffs)
+// load_camera_calibration (sin cambios)
+bool load_camera_calibration(const std::string &filename,
+			     cv::Mat &camera_matrix, cv::Mat &dist_coeffs)
 {
 	camera_matrix.release();
 	dist_coeffs.release();
 	cv::FileStorage fs(filename, cv::FileStorage::READ);
 	if (!fs.isOpened()) {
-		blog(LOG_ERROR,"[CUBE] No se pudo abrir el archivo de calibración: %s", filename.c_str());
+		blog(LOG_ERROR,
+		     "[CUBE] No se pudo abrir el archivo de calibración: %s",
+		     filename.c_str());
 		return false;
 	}
 
@@ -174,7 +175,8 @@ bool load_camera_calibration(const std::string &filename,cv::Mat &camera_matrix,
 	fs["distortion_coefficients"] >> dist_coeffs;
 
 	if (camera_matrix.empty() || dist_coeffs.empty()) {
-		blog(LOG_ERROR,"[CUBE] Parámetros inválidos en el archivo de calibración.");
+		blog(LOG_ERROR,
+		     "[CUBE] Parámetros inválidos en el archivo de calibración.");
 		return false;
 	}
 
@@ -182,45 +184,49 @@ bool load_camera_calibration(const std::string &filename,cv::Mat &camera_matrix,
 	return true;
 }
 
-// Y esta es la versión C que llama a la anterior y guarda el path
+// set_camera_calibration (sin cambios)
 bool set_camera_calibration(ArucoDetector *det, const char *filename)
 {
 	if (!det || !filename || *filename == '\0')
 		return false;
 
-	// Aquí invocamos la función correcta, no a nosotros mismos
 	if (!load_camera_calibration(filename, det->camera_matrix,
 				     det->dist_coeffs)) {
-		// Si falla, usar valores por defecto
-		blog(LOG_WARNING,"[CUBE] Usando parámetros de cámara por defecto.");
+		blog(LOG_WARNING,
+		     "[CUBE] Usando parámetros de cámara por defecto.");
 		set_default_camera_params(det);
 	} else {
 		det->calibration_path = filename;
-		blog(LOG_INFO,"[CUBE] Calibración cargada y establecida desde %s", filename);
+		blog(LOG_INFO,
+		     "[CUBE] Calibración cargada y establecida desde %s",
+		     filename);
 	}
 
 	return true;
 }
-ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,const char * calibration_file)
+
+// initialize_aruco_detector (sin cambios)
+ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,
+					 const char *calibration_file)
 {
 	auto *det = new ArucoDetector;
 	set_marker_dictionary(det, dict);
 	det->detector_params = cv::aruco::DetectorParameters::create();
 	set_marker_size(det, marker_size_meters);
 	det->id = 0;
-	blog(LOG_WARNING,"[CUBE] catgar cpsitas");
+	blog(LOG_WARNING, "[CUBE] catgar cpsitas");
 	if (!set_camera_calibration(det, calibration_file)) {
-		// Si falla, usar valores por defecto
-		blog(LOG_WARNING,"[CUBE] Usando parámetros de cámara por defecto.");
-		det->camera_matrix = (
-			cv::Mat_<double>(3, 3) << 2000.0, 0.0,
-			1233.0, 0.0, 2000.0, 718.0, 0.0, 0.0,1.0);
+		blog(LOG_WARNING,
+		     "[CUBE] Usando parámetros de cámara por defecto.");
+		det->camera_matrix = (cv::Mat_<double>(3, 3) << 2000.0, 0.0,
+				      1233.0, 0.0, 2000.0, 718.0, 0.0, 0.0,
+				      1.0);
 		det->dist_coeffs = cv::Mat::zeros(1, 5, CV_64F);
 	}
 	return det;
 }
 
-
+// cleanup_aruco_detector (sin cambios)
 void cleanup_aruco_detector(ArucoDetector *det)
 {
 	det->detector_params.release();
@@ -232,63 +238,42 @@ void cleanup_aruco_detector(ArucoDetector *det)
 	delete det;
 }
 
+// --- FUNCIÓN CORREGIDA ---
 // Convierte matriz de rotación 3×3 a ángulos Euler (pitch, yaw, roll)
 static void rotation_to_euler(const cv::Mat &R, float &pitch, float &yaw,
 			      float &roll)
 {
-	// Asumimos R de tipo CV_32F
-	float r20 = R.at<float>(2, 0);
-	if (std::abs(r20) > 0.999f) {
+	// Asumimos R de tipo CV_64F (double), ya que viene de cv::Rodrigues con cv::Vec3d
+	double r20 = R.at<double>(2, 0);
+
+	if (std::abs(r20) > 0.999) {
 		// Gimbal lock
-		pitch = (r20 < 0) ? M_PI_2 : -M_PI_2;
-		yaw = std::atan2(-R.at<float>(0, 1), R.at<float>(0, 2));
-		roll = 0.0f;
+		pitch = (r20 < 0.0) ? M_PI_2 : -M_PI_2;
+		yaw = std::atan2(-R.at<double>(0, 1), R.at<double>(0, 2));
+		roll = 0.0;
 	} else {
 		pitch = std::asin(-r20);
-		yaw = std::atan2(R.at<float>(1, 0), R.at<float>(0, 0));
-		roll = std::atan2(R.at<float>(2, 1), R.at<float>(2, 2));
+		yaw = std::atan2(R.at<double>(1, 0), R.at<double>(0, 0));
+		roll = std::atan2(R.at<double>(2, 1), R.at<double>(2, 2));
 	}
+
 	// rad → deg
-	pitch = pitch * 180.0f / M_PI;
-	yaw = yaw * 180.0f / M_PI;
-	roll = roll * 180.0f / M_PI;
+	pitch = static_cast<float>(pitch * 180.0 / M_PI);
+	yaw = static_cast<float>(yaw * 180.0 / M_PI);
+	roll = static_cast<float>(roll * 180.0 / M_PI);
 }
-/**
- * @brief Calcula los ángulos de Euler (pitch, yaw, roll) a partir de un vector de rotación y traslación.
- *
- * Este método es más robusto que la conversión manual, ya que utiliza la función
- * cv::decomposeProjectionMatrix de OpenCV.
- *
- * @param rvec Vector de rotación de 3x1.
- * @param tvec Vector de traslación de 3x1.
- * @param pitch Referencia para guardar el ángulo de pitch (rotación en X).
- * @param yaw Referencia para guardar el ángulo de yaw (rotación en Y).
- * @param roll Referencia para guardar el ángulo de roll (rotación en Z).
+
+// --- FUNCIÓN ELIMINADA ---
+/*
+ * Esta función (get_euler_angles_from_pose) usaba cv::decomposeProjectionMatrix
+ * y era la causa de la inestabilidad en la rotación. Ha sido eliminada.
  */
-static void get_euler_angles_from_pose(const cv::Vec3d &rvec,const cv::Vec3d &tvec, float &pitch,
-				       float &yaw, float &roll)
-{
-	// 1. Convertir el vector de rotación (rvec) a una matriz de rotación (R)
-	cv::Mat R;
-	cv::Rodrigues(rvec, R);
+// static void get_euler_angles_from_pose(const cv::Vec3d &rvec, ... ) { ... }
 
-	// 2. Construir la matriz de proyección 3x4 [R | t]
-	cv::Mat P;
-	cv::hconcat(R, tvec, P); // P = [R | t]
-
-	// 3. Descomponer la matriz de proyección para obtener los ángulos de Euler
-	cv::Mat cameraMatrix, rotMatrix, transVect;
-	cv::Vec3d eulerAngles;
-	cv::decomposeProjectionMatrix(P, cameraMatrix, rotMatrix, transVect,cv::noArray(), cv::noArray(),cv::noArray(), eulerAngles);
-
-	// 4. Asignar los valores a las variables de salida
-	pitch = eulerAngles[0]; // Rotación alrededor del eje X
-	yaw = eulerAngles[1];   // Rotación alrededor del eje Y
-	roll = eulerAngles[2];  // Rotación alrededor del eje Z
-}
-bool process_frame_rgba(ArucoDetector *det,
-			       struct obs_source_frame *frame, int base_w,
-			       int base_h, int fw, int fh, ArucoResult *res)
+// --- FUNCIÓN MODIFICADA ---
+bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
+			int base_w, int base_h, int fw, int fh,
+			ArucoResult *res)
 {
 	if (!det || !frame || !res)
 		return false;
@@ -379,82 +364,104 @@ bool process_frame_rgba(ArucoDetector *det,
 	res->screen_pos_x = std::clamp(res->screen_pos_x, 0.0f, float(fw));
 	res->screen_pos_y = std::clamp(res->screen_pos_y, 0.0f, float(fh));
 
-	// Euler
+	// --- INICIO DE LA CORRECCIÓN ---
+	// Calcular Euler usando el método estable
+
+	// 1. Convertir rvec (cv::Vec3d) a Matriz de Rotación R (cv::Mat CV_64F)
+	cv::Mat R;
+	cv::Rodrigues(rvecs[marker_index], R);
+
+	// 2. Llamar a nuestra función corregida
 	float pitch, yaw, roll;
-	get_euler_angles_from_pose(rvecs[marker_index], tvecs[marker_index], pitch, yaw, roll);
+	rotation_to_euler(R, pitch, yaw, roll);
+
+	// 3. Asignar resultados
 	res->euler_x = pitch;
 	res->euler_y = yaw;
-	res->euler_z = -roll;
+	res->euler_z =-roll; // Mantenemos el -roll por si es un ajuste de ejes (OpenCV vs OBS)
+	// --- FIN DE LA CORRECCIÓN ---
 
 	return true;
 }
 
- void set_marker_dictionary(ArucoDetector *det, int dict_id) {
-	 cv::aruco::PREDEFINED_DICTIONARY_NAME cv_dict;
-	 det->dictionary.release();
-	 switch (dict_id) {
-	 case ARUCO_DICT_ORIGINAL:
-		 cv_dict = cv::aruco::DICT_ARUCO_ORIGINAL;
-		 break;
-	 case ARUCO_DICT_4X4_100:
-		 cv_dict = cv::aruco::DICT_4X4_100;
-		 break;
-	 case ARUCO_DICT_5X5_100:
-		 cv_dict = cv::aruco::DICT_5X5_100;
-		 break;
-	 case ARUCO_DICT_6X6_100:
-		 cv_dict = cv::aruco::DICT_6X6_100;
-		 break;
-	 case ARUCO_DICT_7X7_100:
-		 cv_dict = cv::aruco::DICT_7X7_100;
-		 break;
-	 case ARUCO_DICT_MIP_ORIGINAL:
-		 cv_dict = cv::aruco::
-			 DICT_ARUCO_ORIGINAL; 
-		 break;
-	 default:
-		 cv_dict = cv::aruco::DICT_4X4_100;
-		 break;
-	 }
+// set_marker_dictionary (sin cambios)
+void set_marker_dictionary(ArucoDetector *det, int dict_id)
+{
+	cv::aruco::PREDEFINED_DICTIONARY_NAME cv_dict;
+	det->dictionary.release();
+	switch (dict_id) {
+	case ARUCO_DICT_ORIGINAL:
+		cv_dict = cv::aruco::DICT_ARUCO_ORIGINAL;
+		break;
+	case ARUCO_DICT_4X4_100:
+		cv_dict = cv::aruco::DICT_4X4_100;
+		break;
+	case ARUCO_DICT_5X5_100:
+		cv_dict = cv::aruco::DICT_5X5_100;
+		break;
+	case ARUCO_DICT_6X6_100:
+		cv_dict = cv::aruco::DICT_6X6_100;
+		break;
+	case ARUCO_DICT_7X7_100:
+		cv_dict = cv::aruco::DICT_7X7_100;
+		break;
+	case ARUCO_DICT_MIP_ORIGINAL:
+		cv_dict = cv::aruco::DICT_ARUCO_ORIGINAL;
+		break;
+	default:
+		cv_dict = cv::aruco::DICT_4X4_100;
+		break;
+	}
 
-	 det->dictionary = cv::aruco::getPredefinedDictionary(cv_dict);
- }
-
-void set_marker_size(ArucoDetector *const det, float size)
- {
-	det->marker_size = size;
-
+	det->dictionary = cv::aruco::getPredefinedDictionary(cv_dict);
 }
 
- void set_marker_id(ArucoDetector *const det, int id)
+// set_marker_size (sin cambios)
+void set_marker_size(ArucoDetector *const det, float size)
+{
+	det->marker_size = size;
+}
+
+// set_marker_id (sin cambios)
+void set_marker_id(ArucoDetector *const det, int id)
 {
 	det->id = id;
 }
- const int get_marker_dictionary(const ArucoDetector *const det)
- {
-	
-	 return det->marker_dict;
- }
- const int get_marker_size(const ArucoDetector *const det)
- {
-	 return det->marker_size;
- }
- const int get_marker_id(const ArucoDetector * const det)
- {
-	 return det->id;
- }
- const char *get_calibration_path(const ArucoDetector * const det)
- {
-	 return det ? det->calibration_path.c_str() : NULL;
- }
 
- void set_calibration_path(ArucoDetector *det, const char *const path)
- {
-	 if (det && path &&  load_camera_calibration(path, det->camera_matrix, det->dist_coeffs)) {
-		 det->calibration_path = path;
-		
-	 } else set_default_camera_params(det);
- }
+// get_marker_dictionary (sin cambios)
+const int get_marker_dictionary(const ArucoDetector *const det)
+{
+	return det->marker_dict;
+}
 
+// get_marker_size (sin cambios)
+const int get_marker_size(const ArucoDetector *const det)
+{
+	return det->marker_size;
+}
 
- } // extern "C"
+// get_marker_id (sin cambios)
+const int get_marker_id(const ArucoDetector *const det)
+{
+	return det->id;
+}
+
+// get_calibration_path (sin cambios)
+const char *get_calibration_path(const ArucoDetector *const det)
+{
+	return det ? det->calibration_path.c_str() : NULL;
+}
+
+// set_calibration_path (sin cambios)
+void set_calibration_path(ArucoDetector *det, const char *const path)
+{
+	if (det && path &&
+	    load_camera_calibration(path, det->camera_matrix,
+				    det->dist_coeffs)) {
+		det->calibration_path = path;
+
+	} else
+		set_default_camera_params(det);
+}
+
+} // extern "C"

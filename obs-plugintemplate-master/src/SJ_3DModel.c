@@ -584,12 +584,16 @@
 				 g_mesh_count);
 		}
 	}
+	/**
+ * @brief Renderiza el modelo SIN textura (versión corregida y unificada)
+ *
+ * Acepta rvec (eje-ángulo) para evitar Gimbal Lock.
+ */
 	void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,
 				      float *widths, float *heights,
-				      float scale, float pitch_deg,
-				      float yaw_deg, float roll_deg)
+				      float scale, const float rvec[3],
+				      bool detected)
 	{
-		// 1) Efecto sólido de OBS
 		gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
 		if (!solid)
 			return;
@@ -600,13 +604,28 @@
 		if (!tech)
 			return;
 
-		// Convertir ángulos a radianes usando la misma convención que render_model_c
-		float rx =-(pitch_deg * (float)M_PI / 180.0f); // pitch invertido
-		float ry = (yaw_deg * (float)M_PI / 180.0f);
-		float rz = (roll_deg * (float)M_PI / 180.0f);
+		// --- INICIO: CÁLCULO DE EJE-ÁNGULO ---
+		float angle_rad = 0.0f;
+		float ax = 0.0f, ay = 0.0f, az = 1.0f; // Eje por defecto
 
-		// Color sólido (rojo)
-		struct vec4 c = {1.0f, 0.0f, 0.0f, 1.0f};
+		if (detected) {
+			// La magnitud (longitud) del rvec es el ángulo en radianes
+			angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] +
+					 rvec[2] * rvec[2]);
+
+			if (angle_rad > 1e-5f) { // Evitar división por cero
+				// El eje es el vector normalizado
+				ax = rvec[0] / angle_rad;
+				ay = rvec[1] / angle_rad;
+				az = rvec[2] / angle_rad;
+			} else {
+				angle_rad =
+					0.0f; // Si no hay rotación, ángulo es 0
+			}
+		}
+		// --- FIN: CÁLCULO DE EJE-ÁNGULO ---
+
+		struct vec4 c = {1.0f, 0.0f, 0.0f, 1.0f}; // Color rojo
 
 		gs_technique_begin(tech);
 		gs_technique_begin_pass(tech, 0);
@@ -617,39 +636,28 @@
 			if (!m->vb || !m->ib)
 				continue;
 
-			// Obtener pivote: preferimos center guardado en la malla; si no está, fallback a widths/heights
 			float cx = m->center_x;
 			float cy = m->center_y;
 			float cz = m->center_z;
 
-			
 			gs_matrix_push();
 
-			// mover pivote al origen 3D (negativo)
+			// Mover pivote al origen
 			gs_matrix_translate3f(-cx, -cy, -cz);
 
-			// escala
-			gs_matrix_scale3f(scale, scale, scale);
+			// Escala (Unificada: -scale en Z para invertir eje)
+			gs_matrix_scale3f(scale, scale, -scale);
 
-			//if (m->has_rot_offset) {
-			//	float ox =
-			//		m->rot_offset_x * (float)M_PI / 180.0f;
-			//	float oy =
-			//		m->rot_offset_y * (float)M_PI / 180.0f;
-			//	float oz =
-			//		m->rot_offset_z * (float)M_PI / 180.0f;
+			// *** CORRECCIÓN DE SISTEMA DE COORDENADAS ***
+			// Rotar 180 grados en X para mapear Y-Abajo (OpenCV) a Y-Arriba (OBS)
+			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
-			//	// Aplica offset en el orden Z, Y, X
-			//	gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, oz);
-			//	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, oy);
-			//	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, ox);
-			//}
-			/* aplicar rotación del pose en el mismo orden Z, Y, X */
-			gs_matrix_rotaa4f(1, 0, 0, rx);
-			gs_matrix_rotaa4f(0, 1, 0, -ry);
-			gs_matrix_rotaa4f(0, 0, 1, rz);
-		
-			
+			// Aplicar la rotación del tracker (rvec) si fue detectado
+			if (detected) {
+				gs_matrix_rotaa4f(ax, ay, az, angle_rad);
+			}
+
+			// (El offset de rotación del modelo (m->has_rot_offset) sigue comentado)
 
 			// Dibujar
 			gs_load_vertexbuffer(m->vb);
@@ -664,37 +672,55 @@
 	}
 
 	/**
- 	 * @brief Renderiza todas las mallas del modelo cargado.
- 	 *
- 	 * Esta función debe ser llamada en cada fotograma dentro del ciclo de renderizado de OBS.
- 	 */
+ * @brief Renderiza el modelo CON textura (versión corregida y unificada)
+ *
+ * Acepta rvec (eje-ángulo) para evitar Gimbal Lock.
+ */
 	void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
-			    float *heights, float scale, float rot_x_deg,
-			    float rot_y_deg, float rot_z_deg)
+			    float *heights, float scale, const float rvec[3],
+			    bool detected)
 	{
-		//draw_debug_axes(100);
 		gs_effect_t *default_effect =
 			obs_get_base_effect(OBS_EFFECT_DEFAULT);
-		if (!default_effect)return;
-		gs_eparam_t *image_param =gs_effect_get_param_by_name(default_effect, "image");
-		if (!image_param)return;
-
+		if (!default_effect)
+			return;
+		gs_eparam_t *image_param =
+			gs_effect_get_param_by_name(default_effect, "image");
+		if (!image_param)
+			return;
 		gs_technique_t *tech =
 			gs_effect_get_technique(default_effect, "Draw");
 		if (!tech)
 			return;
 
-		// Convertir ángulos a radianes; invertimos rot_x (pitch) para corregir la convención.
-		float rx =((rot_x_deg-180) * (float)M_PI / 180.0f); // pitch invertido
-		float ry = (rot_y_deg * (float)M_PI / 180.0f);
-		float rz = (rot_z_deg * (float)M_PI / 180.0f);
+		// --- INICIO: CÁLCULO DE EJE-ÁNGULO ---
+		float angle_rad = 0.0f;
+		float ax = 0.0f, ay = 0.0f, az = 1.0f; // Eje por defecto
+
+		if (detected) {
+			// La magnitud (longitud) del rvec es el ángulo en radianes
+			angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] +
+					 rvec[2] * rvec[2]);
+
+			if (angle_rad > 1e-5f) { // Evitar división por cero
+				// El eje es el vector normalizado
+				ax = rvec[0] / angle_rad;
+				ay = rvec[1] / angle_rad;
+				az = rvec[2] / angle_rad;
+			} else {
+				angle_rad =
+					0.0f; // Si no hay rotación, ángulo es 0
+			}
+		}
+		// --- FIN: CÁLCULO DE EJE-ÁNGULO ---
 
 		gs_technique_begin(tech);
 		gs_technique_begin_pass(tech, 0);
 
 		for (size_t i = 0; i < g_mesh_count; i++) {
 			Mesh *m = &g_meshes[i];
-			if (!m->vb || !m->ib)continue;
+			if (!m->vb || !m->ib)
+				continue;
 
 			// Si la malla no tiene textura, delegamos en la versión NoTexture
 			if (!m->texture) {
@@ -702,9 +728,8 @@
 				gs_technique_end(tech);
 				render_model_c_NoTexture(g_meshes, g_mesh_count,
 							 widths, heights, scale,
-							 rot_x_deg, rot_y_deg,
-							 rot_z_deg);
-				return;
+							 rvec, detected);
+				return; // Salir para no renderizar doble
 			}
 
 			// Usa el centro REAL calculado en load_model_c
@@ -717,40 +742,19 @@
 			// mover pivote al origen 3D
 			gs_matrix_translate3f(-cx, -cy, -cz);
 
-			// escala / rotaciones...
+			// escala (Unificada: -scale en Z para invertir eje)
 			gs_matrix_scale3f(scale, scale, -scale);
-			//if (m->has_rot_offset) {
-			//	float ox =
-			//		m->rot_offset_x * (float)M_PI / 180.0f;
-			//	float oy =
-			//		m->rot_offset_y * (float)M_PI / 180.0f;
-			//	float oz =
-			//		m->rot_offset_z * (float)M_PI / 180.0f;
 
-			//	// Aplica offset en el orden que necesites. Aquí: Z, Y, X
-			//	gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, oz);
-			//	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, oy);
-			//	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, ox);
-			//} 
-			//if (m->has_rot_offset) {
-			//	float ox =
-			//		m->rot_offset_x * (float)M_PI / 180.0f;
-			//	float oy =
-			//		m->rot_offset_y * (float)M_PI / 180.0f;
-			//	float oz =
-			//		m->rot_offset_z * (float)M_PI / 180.0f;
+			// *** CORRECCIÓN DE SISTEMA DE COORDENADAS ***
+			// Rotar 180 grados en X para mapear Y-Abajo (OpenCV) a Y-Arriba (OBS)
+			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
-			//	// Aplica offset en el orden Z, Y, X
-			//	gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, oz);
-			//	gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, oy);
-			//	gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, ox);
-			//}
-				gs_matrix_rotaa4f(1, 0, 0, rx);
-				gs_matrix_rotaa4f(0, 1, 0,ry);
-				gs_matrix_rotaa4f(0, 0, 1,-rz);
-			
-			
-		
+			// Aplicar la rotación del tracker (rvec) si fue detectado
+			if (detected) {
+				gs_matrix_rotaa4f(ax, -ay, -az, angle_rad);
+			}
+
+			// (El offset de rotación del modelo (m->has_rot_offset) sigue comentado)
 
 			// Establecer textura y dibujar
 			gs_effect_set_texture(image_param, m->texture);
@@ -764,7 +768,6 @@
 		gs_technique_end_pass(tech);
 		gs_technique_end(tech);
 	}
-
 	void replace_mesh_textures(struct Mesh *meshes, size_t count, gs_texture_t *new_tex,  gs_texture_t *old_tex)
 	{
 		// Para cada sub-malla, libera textura antigua y asigna la nueva
