@@ -36,8 +36,7 @@ void set_default_camera_params(ArucoDetector *det)
 	// Distorsión por defecto: cero en todos los coeficientes
 	det->dist_coeffs = cv::Mat::zeros(1, 5, CV_64F);
 
-	blog(LOG_WARNING,
-	     "[CUBE] Usando parámetros de cámara por defecto (fx=fy=2000, cx=1233, cy=718).");
+	blog(LOG_WARNING, "[CUBE] Usando parámetros de cámara por defecto (fx=fy=2000, cx=1233, cy=718).");
 }
 
 // obs_frame_to_bgra (sin cambios)
@@ -50,35 +49,24 @@ cv::Mat obs_frame_to_bgra(struct obs_source_frame *frame)
 	switch (frame->format) {
 	case VIDEO_FORMAT_I420: {
 		cv::Mat yuv_packed(height + height / 2, width, CV_8UC1);
-		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],
-				frame->linesize[0]);
+		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],frame->linesize[0]);
 		y_plane.copyTo(yuv_packed(cv::Rect(0, 0, width, height)));
-		cv::Mat u_plane(height / 2, width / 2, CV_8UC1, frame->data[1],
-				frame->linesize[1]);
-		u_plane.copyTo(
-			yuv_packed(cv::Rect(0, height, width / 2, height / 2)));
-		cv::Mat v_plane(height / 2, width / 2, CV_8UC1, frame->data[2],
-				frame->linesize[2]);
-		v_plane.copyTo(yuv_packed(
-			cv::Rect(width / 2, height, width / 2, height / 2)));
+		cv::Mat u_plane(height / 2, width / 2, CV_8UC1, frame->data[1],frame->linesize[1]);
+		u_plane.copyTo(yuv_packed(cv::Rect(0, height, width / 2, height / 2)));
+		cv::Mat v_plane(height / 2, width / 2, CV_8UC1, frame->data[2],frame->linesize[2]);
+		v_plane.copyTo(yuv_packed(cv::Rect(width / 2, height, width / 2, height / 2)));
 		cv::cvtColor(yuv_packed, bgra, cv::COLOR_YUV2BGRA_I420);
 		break;
 	}
 	case VIDEO_FORMAT_I422: {
-		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],
-				frame->linesize[0]);
-		cv::Mat u_plane(height, width / 2, CV_8UC1, frame->data[1],
-				frame->linesize[1]);
-		cv::Mat v_plane(height, width / 2, CV_8UC1, frame->data[2],
-				frame->linesize[2]);
+		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],frame->linesize[0]);
+		cv::Mat u_plane(height, width / 2, CV_8UC1, frame->data[1],	frame->linesize[1]);
+		cv::Mat v_plane(height, width / 2, CV_8UC1, frame->data[2],frame->linesize[2]);
 		cv::Mat u_resized, v_resized;
-		cv::resize(u_plane, u_resized, cv::Size(width, height), 0, 0,
-			   cv::INTER_LINEAR);
-		cv::resize(v_plane, v_resized, cv::Size(width, height), 0, 0,
-			   cv::INTER_LINEAR);
+		cv::resize(u_plane, u_resized, cv::Size(width, height), 0, 0, cv::INTER_LINEAR);
+		cv::resize(v_plane, v_resized, cv::Size(width, height), 0, 0,cv::INTER_LINEAR);
 		cv::Mat yuv_image;
-		std::vector<cv::Mat> yuv_planes = {y_plane, u_resized,
-						   v_resized};
+		std::vector<cv::Mat> yuv_planes = {y_plane, u_resized, v_resized};
 		cv::merge(yuv_planes, yuv_image);
 		cv::Mat bgr;
 		cv::cvtColor(yuv_image, bgr, cv::COLOR_YUV2BGR);
@@ -238,16 +226,15 @@ void cleanup_aruco_detector(ArucoDetector *det)
 	delete det;
 }
 
-// --- FUNCIÓN CORREGIDA ---
-// Convierte matriz de rotación 3×3 a ángulos Euler (pitch, yaw, roll)
+
 static void rotation_to_euler(const cv::Mat &R, float &pitch, float &yaw,
 			      float &roll)
 {
-	// Asumimos R de tipo CV_64F (double), ya que viene de cv::Rodrigues con cv::Vec3d
+	
 	double r20 = R.at<double>(2, 0);
 
 	if (std::abs(r20) > 0.999) {
-		// Gimbal lock
+		
 		pitch = (r20 < 0.0) ? M_PI_2 : -M_PI_2;
 		yaw = std::atan2(-R.at<double>(0, 1), R.at<double>(0, 2));
 		roll = 0.0;
@@ -257,20 +244,13 @@ static void rotation_to_euler(const cv::Mat &R, float &pitch, float &yaw,
 		roll = std::atan2(R.at<double>(2, 1), R.at<double>(2, 2));
 	}
 
-	// rad → deg
+	
 	pitch = static_cast<float>(pitch * 180.0 / M_PI);
 	yaw = static_cast<float>(yaw * 180.0 / M_PI);
 	roll = static_cast<float>(roll * 180.0 / M_PI);
 }
 
-// --- FUNCIÓN ELIMINADA ---
-/*
- * Esta función (get_euler_angles_from_pose) usaba cv::decomposeProjectionMatrix
- * y era la causa de la inestabilidad en la rotación. Ha sido eliminada.
- */
-// static void get_euler_angles_from_pose(const cv::Vec3d &rvec, ... ) { ... }
 
-// --- FUNCIÓN MODIFICADA ---
 bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 			int base_w, int base_h, int fw, int fh,
 			ArucoResult *res)
@@ -337,10 +317,8 @@ bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 	// Centro del marcador en coords base
 	float im_cx = 0.0f, im_cy = 0.0f;
 	for (int i = 0; i < 4; ++i) {
-		float vx = corners[marker_index][i].x *
-			   ((float)base_w / frame->width);
-		float vy = corners[marker_index][i].y *
-			   ((float)base_h / frame->height);
+		float vx = corners[marker_index][i].x * ((float)base_w / frame->width);
+		float vy = corners[marker_index][i].y * ((float)base_h / frame->height);
 
 		vx = std::clamp(vx, 0.0f, float(w - 1));
 		vy = std::clamp(vy, 0.0f, float(h - 1));
@@ -364,22 +342,15 @@ bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 	res->screen_pos_x = std::clamp(res->screen_pos_x, 0.0f, float(fw));
 	res->screen_pos_y = std::clamp(res->screen_pos_y, 0.0f, float(fh));
 
-	// --- INICIO DE LA CORRECCIÓN ---
-	// Calcular Euler usando el método estable
-
-	// 1. Convertir rvec (cv::Vec3d) a Matriz de Rotación R (cv::Mat CV_64F)
 	cv::Mat R;
 	cv::Rodrigues(rvecs[marker_index], R);
-
-	// 2. Llamar a nuestra función corregida
 	float pitch, yaw, roll;
 	rotation_to_euler(R, pitch, yaw, roll);
-
-	// 3. Asignar resultados
+	
 	res->euler_x = pitch;
 	res->euler_y = yaw;
 	res->euler_z =-roll; // Mantenemos el -roll por si es un ajuste de ejes (OpenCV vs OBS)
-	// --- FIN DE LA CORRECCIÓN ---
+	
 
 	return true;
 }
@@ -419,58 +390,56 @@ void set_marker_dictionary(ArucoDetector *det, int dict_id)
 		     dict_id);
 		cv_dict = cv::aruco::DICT_4X4_100;
 		dict_id =
-			ARUCO_DICT_4X4_100; // Asegura que el estado también sea el de fallback
+			ARUCO_DICT_4X4_100; 
 		break;
 	}
 
-	// Asigna el nuevo diccionario directamente.
-	// El switch anterior garantiza que cv_dict es un valor válido.
+	
 	det->dictionary = cv::aruco::getPredefinedDictionary(cv_dict);
 
-	// Guarda el estado actual en el detector
+
 	det->marker_dict = dict_id;
 
-	blog(LOG_INFO, "[Aruco] Diccionario de marcadores cambiado a: %d",
-	     dict_id);
+	blog(LOG_INFO, "[Aruco] Diccionario de marcadores cambiado a: %d",  dict_id);
 }
 
-// set_marker_size (sin cambios)
+
 void set_marker_size(ArucoDetector *const det, float size)
 {
 	det->marker_size = size;
 }
 
-// set_marker_id (sin cambios)
+
 void set_marker_id(ArucoDetector *const det, int id)
 {
 	det->id = id;
 }
 
-// get_marker_dictionary (sin cambios)
+
 const int get_marker_dictionary(const ArucoDetector *const det)
 {
 	return det->marker_dict;
 }
 
-// get_marker_size (sin cambios)
+
 const int get_marker_size(const ArucoDetector *const det)
 {
 	return det->marker_size;
 }
 
-// get_marker_id (sin cambios)
+
 const int get_marker_id(const ArucoDetector *const det)
 {
 	return det->id;
 }
 
-// get_calibration_path (sin cambios)
+
 const char *get_calibration_path(const ArucoDetector *const det)
 {
 	return det ? det->calibration_path.c_str() : NULL;
 }
 
-// set_calibration_path (sin cambios)
+
 void set_calibration_path(ArucoDetector *det, const char *const path)
 {
 	if (det && path &&
