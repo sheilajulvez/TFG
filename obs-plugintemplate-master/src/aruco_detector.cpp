@@ -387,33 +387,51 @@ bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 // set_marker_dictionary (sin cambios)
 void set_marker_dictionary(ArucoDetector *det, int dict_id)
 {
+	if (!det)
+		return;
+
 	cv::aruco::PREDEFINED_DICTIONARY_NAME cv_dict;
-	det->dictionary.release();
+
+	// Mapea el ID entero de OBS al enum de OpenCV
 	switch (dict_id) {
-	case ARUCO_DICT_ORIGINAL:
+	case ARUCO_DICT_ORIGINAL: // 9
 		cv_dict = cv::aruco::DICT_ARUCO_ORIGINAL;
 		break;
-	case ARUCO_DICT_4X4_100:
+	case ARUCO_DICT_4X4_100: // 1
 		cv_dict = cv::aruco::DICT_4X4_100;
 		break;
-	case ARUCO_DICT_5X5_100:
+	case ARUCO_DICT_5X5_100: // 5
 		cv_dict = cv::aruco::DICT_5X5_100;
 		break;
-	case ARUCO_DICT_6X6_100:
+	case ARUCO_DICT_6X6_100: // 10
 		cv_dict = cv::aruco::DICT_6X6_100;
 		break;
-	case ARUCO_DICT_7X7_100:
+	case ARUCO_DICT_7X7_100: // 14
 		cv_dict = cv::aruco::DICT_7X7_100;
 		break;
-	case ARUCO_DICT_MIP_ORIGINAL:
+	case ARUCO_DICT_MIP_ORIGINAL: // 32
 		cv_dict = cv::aruco::DICT_ARUCO_ORIGINAL;
 		break;
 	default:
+		// Fallback seguro si el ID no es válido
+		blog(LOG_WARNING,
+		     "[Aruco] ID de diccionario desconocido: %d. Usando 4X4_100.",
+		     dict_id);
 		cv_dict = cv::aruco::DICT_4X4_100;
+		dict_id =
+			ARUCO_DICT_4X4_100; // Asegura que el estado también sea el de fallback
 		break;
 	}
 
+	// Asigna el nuevo diccionario directamente.
+	// El switch anterior garantiza que cv_dict es un valor válido.
 	det->dictionary = cv::aruco::getPredefinedDictionary(cv_dict);
+
+	// Guarda el estado actual en el detector
+	det->marker_dict = dict_id;
+
+	blog(LOG_INFO, "[Aruco] Diccionario de marcadores cambiado a: %d",
+	     dict_id);
 }
 
 // set_marker_size (sin cambios)
