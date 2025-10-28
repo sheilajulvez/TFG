@@ -27,7 +27,8 @@ typedef struct Mesh {
 bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float **mesh_widths, float **mesh_heights);
 void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		    float *heights, float scale, const float rvec[3],
-		    bool detected);
+		    bool detected, float offset_rot_x_deg,
+		    float offset_rot_y_deg, float offset_rot_z_deg);
 
 void cleanup_global_meshes(struct Mesh **g_meshes, size_t *g_mesh_count,
 			   float **mesh_widths, float **mesh_heights,
