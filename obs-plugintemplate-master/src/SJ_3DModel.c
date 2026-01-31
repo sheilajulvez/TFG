@@ -1,4 +1,4 @@
-﻿	// Inclusión de la biblioteca Assimp (Open Asset Import Library) para la carga de modelos 3D.
+	// Inclusión de la biblioteca Assimp (Open Asset Import Library) para la carga de modelos 3D.
 	#include <assimp/cimport.h>
 	#include <assimp/scene.h>
 	#include <assimp/postprocess.h>
@@ -722,6 +722,97 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 			gs_matrix_rotaa4f(ax, -ay, -az, angle_rad); 
 		}
 	
+
+		gs_effect_set_texture(image_param, m->texture);
+		gs_load_vertexbuffer(m->vb);
+		gs_load_indexbuffer(m->ib);
+		gs_draw(GS_TRIS, 0, m->num_indices);
+
+		gs_matrix_pop();
+	}
+
+	gs_technique_end_pass(tech);
+	gs_technique_end(tech);
+}
+
+void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
+			  float *heights, float scale, const float rvec[3],
+			  bool detected, float offset_rot_x_deg,
+			  float offset_rot_y_deg, float offset_rot_z_deg,
+			  const float *clock_hour_deg,
+			  const float *clock_minute_deg,
+			  const float *clock_second_deg)
+{
+	gs_effect_t *default_effect =
+		obs_get_base_effect(OBS_EFFECT_DEFAULT);
+	if (!default_effect)
+		return;
+	gs_eparam_t *image_param =
+		gs_effect_get_param_by_name(default_effect, "image");
+	if (!image_param)
+		return;
+	gs_technique_t *tech =
+		gs_effect_get_technique(default_effect, "Draw");
+	if (!tech)
+		return;
+
+	float angle_rad = 0.0f;
+	float ax = 0.0f, ay = 0.0f, az = 1.0f;
+	if (detected) {
+		angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] + rvec[2] * rvec[2]);
+		if (angle_rad > 1e-5f) {
+			ax = rvec[0] / angle_rad;
+			ay = rvec[1] / angle_rad;
+			az = rvec[2] / angle_rad;
+		} else {
+			angle_rad = 0.0f;
+		}
+	}
+
+	gs_technique_begin(tech);
+	gs_technique_begin_pass(tech, 0);
+
+	for (size_t i = 0; i < g_mesh_count; i++) {
+		Mesh *m = &g_meshes[i];
+		if (!m->vb || !m->ib)
+			continue;
+
+		if (!m->texture)
+			continue;
+
+		float cx = m->center_x;
+		float cy = m->center_y;
+		float cz = m->center_z;
+
+		gs_matrix_push();
+		gs_matrix_translate3f(-cx, -cy, -cz);
+		gs_matrix_scale3f(scale, scale, -scale);
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
+
+		// Rotaciones globales opcionales que afectan todo el modelo (no la manecilla)
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,
+				  degrees_to_radians(offset_rot_x_deg));
+		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,
+				  degrees_to_radians(offset_rot_y_deg));
+		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,
+				  degrees_to_radians(offset_rot_z_deg));
+
+		// AHORA la rotación específica de la manecilla
+		if (i == 0 && clock_hour_deg)
+			gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,
+					  degrees_to_radians(*clock_hour_deg));
+		else if (i == 1 && clock_minute_deg)
+			gs_matrix_rotaa4f(
+				0.0f, 1.0f, 0.0f,
+				degrees_to_radians(*clock_minute_deg));
+		else if (i == 2 && clock_second_deg)
+			gs_matrix_rotaa4f(
+				0.0f, 1.0f, 0.0f,
+				degrees_to_radians(*clock_second_deg));
+
+		if (detected)
+			gs_matrix_rotaa4f(ax, -ay, -az, angle_rad);
+
 
 		gs_effect_set_texture(image_param, m->texture);
 		gs_load_vertexbuffer(m->vb);

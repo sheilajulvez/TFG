@@ -1,4 +1,4 @@
-﻿// Inclusión de las cabeceras del API de OBS Studio.
+// Inclusión de las cabeceras del API de OBS Studio.
 #include <obs-module.h>
 #include <graphics/graphics.h>
 #include <graphics/matrix4.h>
@@ -8,7 +8,10 @@
 
 // Inclusión de bibliotecas estándar de C.
 #include <string.h>
+#include <stdint.h>
 #include "SJ_3DModel.h"
+#include "countdown_clock.h"
+#include "web_sync.h"
 
 // For M_PI on Windows
 #define _USE_MATH_DEFINES
@@ -67,6 +70,18 @@ struct cube_filter_data {
 	ArucoResult last_result; //
 
 	int mode;
+
+	/* --- Modo Countdown (reloj de cuenta atrás) --- */
+	countdown_clock_t *countdown_clock;
+	web_sync_t *web_sync;
+	bool countdown_running;
+	bool countdown_reset_requested;
+	uint32_t countdown_duration_h;
+	uint32_t countdown_duration_m;
+	uint32_t countdown_duration_s;
+	bool sync_enabled;
+	char *sync_url;
+	float sync_interval_sec;
 };
 
 static struct obs_source_frame *filter_video(void *data,
@@ -79,11 +94,9 @@ static struct obs_source_frame *filter_video(void *data,
 		return NULL;
 	}
 
-	if (filter->mode == 0) { // 0 = 3D
+	if (filter->mode == 0 || filter->mode == 2) { // 0 = 3D, 2 = Countdown
 		filter->current_scale = filter->scale;
-		// Asegurarnos que 'detected' esté en false si no estamos trackeando
 		filter->last_result.detected = false;
-		// En modo 3D, pos_x/y/z se leen directamente de los sliders (ya cargados en filter_update)
 		return frame;
 	}
 
@@ -216,6 +229,17 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->detector =
 		initialize_aruco_detector(0.1f, ARUCO_DICT_ORIGINAL, NULL);
 
+	data->countdown_clock = countdown_clock_create();
+	data->web_sync = NULL;
+	data->countdown_running = false;
+	data->countdown_reset_requested = false;
+	data->countdown_duration_h = 0;
+	data->countdown_duration_m = 0;
+	data->countdown_duration_s = 0;
+	data->sync_enabled = false;
+	data->sync_url = NULL;
+	data->sync_interval_sec = 10.0f;
+
 	struct obs_video_info ovi;
 	if (obs_get_video_info(&ovi)) {
 		data->width_screen = ovi.base_width;
@@ -247,6 +271,11 @@ static void filter_destroy(void *data)
 	}
 
 	obs_leave_graphics();
+	if (filter->countdown_clock)
+		countdown_clock_destroy(filter->countdown_clock);
+	if (filter->web_sync)
+		web_sync_destroy(filter->web_sync);
+	bfree(filter->sync_url);
 	bfree(filter->model_path_str);
 	bfree(filter->texture_path_str);
 	bfree(filter);
@@ -268,7 +297,11 @@ static void filter_render(void *data, gs_effect_t *effect)
 		obs_source_skip_video_filter(filter->source);
 		return;
 	}
-	if (filter->mode == 1 && !filter->last_result.detected) { // 0 = 3D
+	if (filter->mode == 1 && !filter->last_result.detected) {
+		obs_source_skip_video_filter(filter->source);
+		return;
+	}
+	if (filter->mode == 2 && (!filter->g_meshes || filter->g_mesh_count == 0)) {
 		obs_source_skip_video_filter(filter->source);
 		return;
 	}
@@ -305,22 +338,38 @@ static void filter_render(void *data, gs_effect_t *effect)
 	// **Traslación global** (ya incluye el offset si es modo AR, o la pos 3D si es modo 3D)
 	gs_matrix_translate3f(filter->pos_x, filter->pos_y, filter->pos_z);
 
-	// --- INICIO: APLICAR ROTACIONES (3D o AR Offset) ---
+	// --- INICIO: APLICAR ROTACIONES (3D, AR o Countdown) ---
 	float rot_x, rot_y, rot_z;
-	if (filter->mode == 0) { // Modo 3D
-		// Usamos los sliders de rotación 3D
+	if (filter->mode == 0) {
 		rot_x = filter->rotation_x;
 		rot_y = filter->rotation_y;
 		rot_z = filter->rotation_z;
-	} else { // Modo AR
-		// Usamos los sliders de offset AR
+	} else if (filter->mode == 1) {
 		rot_x = filter->ar_offset_rot_x;
 		rot_y = filter->ar_offset_rot_y;
 		rot_z = filter->ar_offset_rot_z;
+	} else {
+		rot_x = filter->rotation_x;
+		rot_y = filter->rotation_y;
+		rot_z = filter->rotation_z;
 	}
 
-
-	render_model_c(filter->g_meshes, filter->g_mesh_count,filter->model_width, filter->model_height,filter->current_scale,filter->last_result.rvec,filter->last_result.detected, rot_x, rot_y, rot_z);
+	if (filter->mode == 2 && filter->countdown_clock) {
+		float hour_deg, min_deg, sec_deg;
+		countdown_clock_get_hand_angles(filter->countdown_clock,
+						&hour_deg, &min_deg, &sec_deg);
+		render_model_clock_c(filter->g_meshes, filter->g_mesh_count,
+				     filter->model_width, filter->model_height,
+				     filter->current_scale, filter->last_result.rvec,
+				     filter->last_result.detected,
+				     rot_x, rot_y, rot_z,
+				     &hour_deg, &min_deg, &sec_deg);
+	} else {
+		render_model_c(filter->g_meshes, filter->g_mesh_count,
+			      filter->model_width, filter->model_height,
+			      filter->current_scale, filter->last_result.rvec,
+			      filter->last_result.detected, rot_x, rot_y, rot_z);
+	}
 	gs_matrix_pop();
 	gs_projection_pop();
 	gs_enable_depth_test(false);
@@ -353,28 +402,35 @@ static bool render_mode_changed(obs_properties_t *props,
 	int mode = (int)obs_data_get_int(settings, "render_mode");
 	bool show_3d = (mode == 0);
 	bool show_ar = (mode == 1);
+	bool show_countdown = (mode == 2);
 
-	obs_property_set_visible(obs_properties_get(props, "pos_x"), show_3d);
-	obs_property_set_visible(obs_properties_get(props, "pos_y"), show_3d);
-	obs_property_set_visible(obs_properties_get(props, "pos_z"), show_3d);
-	obs_property_set_visible(obs_properties_get(props, "rotation_x_slider_value"), show_3d);
-	obs_property_set_visible(obs_properties_get(props, "rotation_y_slider_value"), show_3d);
-	obs_property_set_visible(obs_properties_get(props, "rotation_z_slider_value"), show_3d);
+	obs_property_set_visible(obs_properties_get(props, "pos_x"), show_3d || show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "pos_y"), show_3d || show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "pos_z"), show_3d || show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "rotation_x_slider_value"), show_3d || show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "rotation_y_slider_value"), show_3d || show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "rotation_z_slider_value"), show_3d || show_countdown);
 
-	// Propiedades AR
-	obs_property_set_visible(obs_properties_get(props, "marker_id"),show_ar);
-	obs_property_set_visible(obs_properties_get(props, "marker_size"),show_ar);
+	obs_property_set_visible(obs_properties_get(props, "marker_id"), show_ar);
+	obs_property_set_visible(obs_properties_get(props, "marker_size"), show_ar);
 	obs_property_set_visible(obs_properties_get(props, "marker_dict"), show_ar);
-	obs_property_set_visible(obs_properties_get(props, "calibration_path"),show_ar);
-
-
-	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_x"),show_ar);
+	obs_property_set_visible(obs_properties_get(props, "calibration_path"), show_ar);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_x"), show_ar);
 	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_y"), show_ar);
-	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_z"),show_ar);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_z"), show_ar);
 	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_x"), show_ar);
-	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_y"),show_ar);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_y"), show_ar);
 	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_z"), show_ar);
-	
+
+	/* Countdown: duración, ejecución, sincronización web */
+	obs_property_set_visible(obs_properties_get(props, "countdown_duration_h"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "countdown_duration_m"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "countdown_duration_s"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "countdown_running"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "countdown_reset"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "sync_enabled"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "sync_url"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "sync_interval_sec"), show_countdown);
 
 	return true;
 }
@@ -389,6 +445,7 @@ static obs_properties_t *filter_properties(void *data)
 							OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(combo, "3D", 0);
 	obs_property_list_add_int(combo, "AR", 1);
+	obs_property_list_add_int(combo, "Countdown (reloj)", 2);
 	obs_property_set_modified_callback(combo, render_mode_changed);
 
 	// Propiedades 3D
@@ -423,6 +480,16 @@ obs_properties_add_path(props, "calibration_file", "Archivo de Calibración",
 	obs_properties_add_float_slider(props, "ar_offset_rot_y","AR Offset Rotación Y", -360.0f, 360.0f,1.0f);
 	obs_properties_add_float_slider(props, "ar_offset_rot_z","AR Offset Rotación Z", -360.0f, 360.0f,1.0f);
 
+	/* Countdown: duración y sincronización web */
+	obs_properties_add_int(props, "countdown_duration_h", "Countdown Horas", 0, 99, 1);
+	obs_properties_add_int(props, "countdown_duration_m", "Countdown Minutos", 0, 59, 1);
+	obs_properties_add_int(props, "countdown_duration_s", "Countdown Segundos", 0, 59, 1);
+	obs_properties_add_bool(props, "countdown_running", "Countdown en marcha");
+	obs_properties_add_bool(props, "countdown_reset", "Reiniciar countdown (marcar y desmarcar)");
+	obs_properties_add_bool(props, "sync_enabled", "Sincronización web activa");
+	obs_properties_add_text(props, "sync_url", "URL API (JSON: hours, minutes, seconds)", OBS_TEXT_DEFAULT);
+	obs_properties_add_float(props, "sync_interval_sec", "Intervalo sincronización (seg)", 1.0f, 300.0f, 1.0f);
+
 	obs_data_t *temp_settings = obs_data_create();
 	render_mode_changed(props, combo, temp_settings);
 	obs_data_release(temp_settings);
@@ -437,6 +504,49 @@ static void filter_update(void *data, obs_data_t *settings)
 	
 	filter->mode = (int)obs_data_get_int(settings, "render_mode");
 	filter->pos_x = (float)obs_data_get_double(settings, "pos_x");
+	filter->countdown_running = obs_data_get_bool(settings, "countdown_running");
+	filter->countdown_reset_requested = obs_data_get_bool(settings, "countdown_reset");
+	filter->countdown_duration_h = (uint32_t)obs_data_get_int(settings, "countdown_duration_h");
+	filter->countdown_duration_m = (uint32_t)obs_data_get_int(settings, "countdown_duration_m");
+	filter->countdown_duration_s = (uint32_t)obs_data_get_int(settings, "countdown_duration_s");
+	filter->sync_enabled = obs_data_get_bool(settings, "sync_enabled");
+	filter->sync_interval_sec = (float)obs_data_get_double(settings, "sync_interval_sec");
+	const char *new_sync_url = obs_data_get_string(settings, "sync_url");
+	if (!new_sync_url) new_sync_url = "";
+	if (filter->countdown_clock) {
+		blog(LOG_INFO, "SET DURATION");
+		countdown_clock_set_duration_hms(filter->countdown_clock,
+			filter->countdown_duration_h, filter->countdown_duration_m, filter->countdown_duration_s);
+		countdown_state_t state = countdown_clock_get_state(filter->countdown_clock);
+		
+		if (filter->countdown_running) {
+			if (state == COUNTDOWN_STATE_STOPPED)
+				countdown_clock_start(filter->countdown_clock);
+			else if (state == COUNTDOWN_STATE_PAUSED)
+				countdown_clock_resume(filter->countdown_clock);
+		} else {
+			if (state == COUNTDOWN_STATE_RUNNING)
+				countdown_clock_pause(filter->countdown_clock);
+		}
+	}
+	/* Web sync: crear o actualizar si está habilitado y hay URL (nunca bloquea el render) */
+	if (filter->sync_enabled && new_sync_url && new_sync_url[0]) {
+		blog(LOG_INFO, "WEB INFO SI");
+		if (filter->web_sync) {
+			web_sync_set_url(filter->web_sync, new_sync_url);
+			web_sync_set_interval(filter->web_sync, filter->sync_interval_sec);
+			web_sync_set_enabled(filter->web_sync, true);
+		} else {
+			filter->web_sync = web_sync_create(new_sync_url, filter->sync_interval_sec);
+		}
+		bfree(filter->sync_url);
+		filter->sync_url = bstrdup(new_sync_url);
+	} else {
+		if (filter->web_sync)
+			web_sync_set_enabled(filter->web_sync, false);
+		bfree(filter->sync_url);
+		filter->sync_url = (new_sync_url && new_sync_url[0]) ? bstrdup(new_sync_url) : NULL;
+	}
 	filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
 	filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
 	filter->scale = (float)obs_data_get_double(settings, "scale");
@@ -571,7 +681,6 @@ static void filter_update(void *data, obs_data_t *settings)
 
 static void filter_tick(void *data, float seconds)
 {
-
 	struct cube_filter_data *filter = data;
 	struct obs_video_info video_info;
 
@@ -581,6 +690,21 @@ static void filter_tick(void *data, float seconds)
 			filter->width_screen = video_info.base_width;
 			filter->height_screen = video_info.base_height;
 			create_texture(filter);
+		}
+	}
+
+	/* Modo Countdown: actualizar reloj y sincronización web (nunca bloquea el render) */
+	if (filter->mode == 2 && filter->countdown_clock) {
+		if (filter->countdown_reset_requested) {
+			countdown_clock_reset(filter->countdown_clock);
+			filter->countdown_reset_requested = false;
+		}
+		countdown_clock_tick(filter->countdown_clock, seconds);
+		if (filter->web_sync) {
+			web_sync_result_t sync_result;
+			if (web_sync_poll(filter->web_sync, &sync_result) && sync_result.valid)
+				countdown_clock_sync_remaining(filter->countdown_clock,
+					sync_result.hours, sync_result.minutes, sync_result.seconds);
 		}
 	}
 }
@@ -606,6 +730,14 @@ static void filter_save(void *data, obs_data_t *settings)
 	obs_data_set_double(settings, "ar_offset_rot_x", filter->ar_offset_rot_x);
 	obs_data_set_double(settings, "ar_offset_rot_y", filter->ar_offset_rot_y);
 	obs_data_set_double(settings, "ar_offset_rot_z", filter->ar_offset_rot_z);
+
+	obs_data_set_int(settings, "countdown_duration_h", (int)filter->countdown_duration_h);
+	obs_data_set_int(settings, "countdown_duration_m", (int)filter->countdown_duration_m);
+	obs_data_set_int(settings, "countdown_duration_s", (int)filter->countdown_duration_s);
+	obs_data_set_bool(settings, "countdown_running", filter->countdown_running);
+	obs_data_set_bool(settings, "sync_enabled", filter->sync_enabled);
+	obs_data_set_double(settings, "sync_interval_sec", (double)filter->sync_interval_sec);
+	if (filter->sync_url) obs_data_set_string(settings, "sync_url", filter->sync_url);
 
 	if (filter->model_path_str) obs_data_set_string(settings, "model_path", filter->model_path_str);
 	if (filter->texture_path_str) obs_data_set_string(settings, "texture_path", filter->texture_path_str);
@@ -643,7 +775,17 @@ static void filter_load(void *data, obs_data_t *settings)
 	filter->texture_path_str = (tp && *tp) ? bstrdup(tp) : NULL;
 	const char *cp = obs_data_get_string(settings, "calibration_path");
 	if (cp && *cp) set_calibration_path(filter->detector, cp);
-	blog(LOG_WARNING,"[CUBE] filter_load: fallo al aplicar calibración desde %s", cp);
+
+	filter->countdown_duration_h = (uint32_t)obs_data_get_int(settings, "countdown_duration_h");
+	filter->countdown_duration_m = (uint32_t)obs_data_get_int(settings, "countdown_duration_m");
+	filter->countdown_duration_s = (uint32_t)obs_data_get_int(settings, "countdown_duration_s");
+	filter->countdown_running = obs_data_get_bool(settings, "countdown_running");
+	filter->sync_enabled = obs_data_get_bool(settings, "sync_enabled");
+	filter->sync_interval_sec = (float)obs_data_get_double(settings, "sync_interval_sec");
+	bfree(filter->sync_url);
+	const char *su = obs_data_get_string(settings, "sync_url");
+	filter->sync_url = (su && su[0]) ? bstrdup(su) : NULL;
+
 	filter_update(data, settings);
 }
 static void filter_defaults(obs_data_t *settings)
@@ -669,7 +811,15 @@ static void filter_defaults(obs_data_t *settings)
 	obs_data_set_default_double(settings, "ar_offset_rot_x", 0.0);
 	obs_data_set_default_double(settings, "ar_offset_rot_y", 0.0);
 	obs_data_set_default_double(settings, "ar_offset_rot_z", 0.0);
-	
+
+	obs_data_set_default_int(settings, "countdown_duration_h", 0);
+	obs_data_set_default_int(settings, "countdown_duration_m", 5);
+	obs_data_set_default_int(settings, "countdown_duration_s", 0);
+	obs_data_set_default_bool(settings, "countdown_running", false);
+	obs_data_set_default_bool(settings, "countdown_reset", false);
+	obs_data_set_default_bool(settings, "sync_enabled", false);
+	obs_data_set_default_string(settings, "sync_url", "");
+	obs_data_set_default_double(settings, "sync_interval_sec", 10.0);
 }
 static struct obs_source_info cube_filter = {
 	.id = "cube_filter",

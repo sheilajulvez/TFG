@@ -14,7 +14,6 @@ option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" ON)
 option(ENABLE_QT            "Use Qt functionality"          ON)
 
 include(compilerconfig)
-
 include(defaults)
 include(helpers)
 
@@ -24,7 +23,7 @@ set(obs-frontend-api_DIR "${CMAKE_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/
 set(w32-pthreads_DIR     "${CMAKE_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/deps/w32-pthreads")
 
 include_directories("${CMAKE_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/libobs-opengl/include")
-link_directories    ("${CMAKE_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/libobs-opengl/lib")
+link_directories("${CMAKE_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/libobs-opengl/lib")
 
 find_package(libobs REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -66,7 +65,7 @@ set(OPENCV_LIBS_RELEASE
     "${OpenCV_ROOT_DIR}/lib/opencv_highgui460.lib"
     "${OpenCV_ROOT_DIR}/lib/opencv_videoio460.lib"
     "${OpenCV_ROOT_DIR}/lib/opencv_imgcodecs460.lib"
-    "${OpenCV_ROOT_DIR}/lib/opencv_calib3d460.lib"  # <-- Añadido
+    "${OpenCV_ROOT_DIR}/lib/opencv_calib3d460.lib"
 )
 
 set(OPENCV_LIBS_DEBUG
@@ -76,11 +75,20 @@ set(OPENCV_LIBS_DEBUG
     "${OpenCV_ROOT_DIR}/lib/opencv_highgui460d.lib"
     "${OpenCV_ROOT_DIR}/lib/opencv_videoio460d.lib"
     "${OpenCV_ROOT_DIR}/lib/opencv_imgcodecs460d.lib"
-    "${OpenCV_ROOT_DIR}/lib/opencv_calib3d460d.lib"  # <-- Añadido
+    "${OpenCV_ROOT_DIR}/lib/opencv_calib3d460d.lib"
 )
 
+# ==== CURL ====
+set(CURL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/Dependencies/curl-8.18.0_1-win64-mingw")
 
+target_include_directories(${_name} PRIVATE
+    "${CURL_ROOT}/include"
+)
 
+set(CURL_LIB_DEBUG   "${CURL_ROOT}/lib/Debug/libcurl-d_imp.lib")
+set(CURL_LIB_RELEASE "${CURL_ROOT}/lib/Release/libcurl_imp.lib")
+
+# ==== Target link libraries ====
 target_link_libraries(${_name} PRIVATE
     OBS::libobs
     opengl32
@@ -94,10 +102,12 @@ target_link_libraries(${_name} PRIVATE
 
     $<$<CONFIG:Debug>:${OPENCV_LIBS_DEBUG}>
     $<$<CONFIG:Release>:${OPENCV_LIBS_RELEASE}>
+
+    $<$<CONFIG:Debug>:${CURL_LIB_DEBUG}>
+    $<$<CONFIG:Release>:${CURL_LIB_RELEASE}>
 )
 
 target_include_directories(${_name} PRIVATE
-
     "${CMAKE_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/libobs/include"
 )
 
@@ -106,7 +116,8 @@ target_sources(${_name} PRIVATE
     src/SJ_3DModel.c
     src/aruco_detector.cpp
     src/yuv2bgra.cpp
-
+    src/web_sync.c
+    src/countdown_clock.c
 )
 
 set_target_properties_plugin(${_name} PROPERTIES OUTPUT_NAME ${_name})

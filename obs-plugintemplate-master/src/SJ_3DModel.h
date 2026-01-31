@@ -5,8 +5,8 @@
 /**	
  * @brief Estructura para representar una malla (mesh) de un modelo 3D.
  *
- * Contiene los buffers de vértices e índices necesarios para el renderizado,
- * así como la información de la textura asociada.
+ * Contiene los buffers de vï¿½rtices e ï¿½ndices necesarios para el renderizado,
+ * asï¿½ como la informaciï¿½n de la textura asociada.
  */
 typedef struct Mesh {
 	gs_vertbuffer_t *vb;
@@ -21,14 +21,36 @@ typedef struct Mesh {
 	float rot_offset_x;  // offset en pitch (X), en grados
 	float rot_offset_y;  // offset en yaw   (Y), en grados
 	float rot_offset_z;  // offset en roll  (Z), en grados
-	bool has_rot_offset; // true si se calculó auto/manual
+	bool has_rot_offset; // true si se calculï¿½ auto/manual
+
+
+
+	float pivot_x;
+	float pivot_y;
+	float pivot_z;
+
 } Mesh;
-	 // Declara tus funciones y tipos públicos:
+	 // Declara tus funciones y tipos pï¿½blicos:
 bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float **mesh_widths, float **mesh_heights);
 void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		    float *heights, float scale, const float rvec[3],
 		    bool detected, float offset_rot_x_deg,
 		    float offset_rot_y_deg, float offset_rot_z_deg);
+
+/**
+ * Renderiza un modelo 3D en modo reloj: aplica rotaciones extra por malla
+ * para las manecillas (countdown). Convenciï¿½n: mesh 0 = esfera/dial,
+ * mesh 1 = manecilla horas, mesh 2 = minutos, mesh 3 = segundos.
+ * Si clock_hour_deg, clock_minute_deg o clock_second_deg son NULL, no se
+ * aplica rotaciï¿½n extra a esas manecillas.
+ */
+void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
+			 float *heights, float scale, const float rvec[3],
+			 bool detected, float offset_rot_x_deg,
+			 float offset_rot_y_deg, float offset_rot_z_deg,
+			 const float *clock_hour_deg,
+			 const float *clock_minute_deg,
+			 const float *clock_second_deg);
 
 void cleanup_global_meshes(struct Mesh **g_meshes, size_t *g_mesh_count,
 			   float **mesh_widths, float **mesh_heights,
