@@ -144,64 +144,44 @@ void countdown_clock_get_hand_angles(const countdown_clock_t *clock,
 				     float *second_deg)
 {
 	if (!clock) {
-		if (hour_deg)
-			*hour_deg = 0.f;
-		if (minute_deg)
-			*minute_deg = 0.f;
-		if (second_deg)
-			*second_deg = 0.f;
+		if (hour_deg) *hour_deg = 0.f;
+		if (minute_deg) *minute_deg = 0.f;
+		if (second_deg) *second_deg = 0.f;
 		return;
 	}
 
 	double rem = clock->remaining_seconds;
-	if (rem < 0.0)
-		rem = 0.0;
+	if (rem < 0.0) rem = 0.0;
 
 	uint32_t max_h = clock->dial_max_hours ? clock->dial_max_hours : 12u;
 
-	// descomponer en h/m/s
+	// Descomponer en h/m/s
 	uint32_t hours = (uint32_t)(rem / 3600.0);
 	uint32_t minutes = (uint32_t)((rem - hours * 3600u) / 60u);
-	uint32_t seconds = (uint32_t)(rem - hours * 3600u - minutes * 60u);
-
-	double seconds_frac =
-		(rem - (double)((uint32_t)(rem / 60.0) *
-				60u)); // fracción de segundo (0..59.x)
-	// mejor: usar rem mod 60 con la fracción:
+	// Segundos con fracción para movimiento suave
 	double sec_in_min = fmod(rem, 60.0);
 
-	// Hour angle: incluir minutos+segundos como fracción de hora
-	double hour_val = (double)(hours % max_h) +
-			  ((double)minutes + sec_in_min / 60.0) / 60.0;
-	double hour_angle = 360.0 * (1.0 - (hour_val / (double)max_h));
+	// --- Lógica Discreta para Horas y Minutos (Rotación Clockwise: 360 * val) ---
+	
+	// Horas: Solo dependen de la hora actual (salto discreto)
+	double hour_val = (double)(hours % max_h);
+	double hour_angle = 360.0 * (hour_val / (double)max_h);
 
-	// Minute angle: minutos dentro de la hora + fracción por segundos
-	double minute_val = (double)minutes + sec_in_min / 60.0; // 0..60
-	double minute_angle = 360.0 * (1.0 - (minute_val / 60.0));
+	// Minutos: Solo dependen del minuto actual (salto discreto cuando completa 60s)
+	double minute_val = (double)minutes;
+	double minute_angle = 360.0 * (minute_val / 60.0);
 
-	// Second angle: segundos con fracción
-	double second_angle = 360.0 * (1.0 - (sec_in_min / 60.0));
+	// Segundos: Continuo (suave)
+	double second_angle = 360.0 * (sec_in_min / 60.0);
 
-	// normalizar
-	while (hour_angle < 0.0)
-		hour_angle += 360.0;
-	while (hour_angle >= 360.0)
-		hour_angle -= 360.0;
-	while (minute_angle < 0.0)
-		minute_angle += 360.0;
-	while (minute_angle >= 360.0)
-		minute_angle -= 360.0;
-	while (second_angle < 0.0)
-		second_angle += 360.0;
-	while (second_angle >= 360.0)
-		second_angle -= 360.0;
+	// Normalizar ángulos (0..360)
+	while (hour_angle >= 360.0) hour_angle -= 360.0;
+	while (minute_angle >= 360.0) minute_angle -= 360.0;
+	while (second_angle >= 360.0) second_angle -= 360.0;
 
-	if (hour_deg)
-		*hour_deg = (float)hour_angle;
-	if (minute_deg)
-		*minute_deg = (float)minute_angle;
-	if (second_deg)
-		*second_deg = (float)second_angle;
+	if (hour_deg) *hour_deg = (float)hour_angle;
+	if (minute_deg) *minute_deg = (float)minute_angle;
+	if (second_deg) *second_deg = (float)second_angle;
 }
 
 void countdown_clock_set_dial_hours(countdown_clock_t *clock, uint32_t max_hours)
@@ -215,33 +195,25 @@ void countdown_clock_get_single_hand_angle(const countdown_clock_t *clock,
                                            float *single_hand_deg)
 {
 	if (!clock || !single_hand_deg) {
-		if (single_hand_deg)
-			*single_hand_deg = 0.0f;
+		if (single_hand_deg) *single_hand_deg = 0.0f;
 		return;
 	}
 
-	// Si no hay duración configurada, devolver 0
 	if (clock->duration_seconds == 0) {
 		*single_hand_deg = 0.0f;
 		return;
 	}
 
 	double rem = clock->remaining_seconds;
-	if (rem < 0.0)
-		rem = 0.0;
+	if (rem < 0.0) rem = 0.0;
 
-	// Calcular el porcentaje de tiempo restante
+	// Porcentaje restante (1.0 -> 0.0)
 	double percentage = rem / (double)clock->duration_seconds;
 	
-	// Convertir a ángulo (360° = tiempo completo, 0° = tiempo agotado)
-	// Invertimos para que la manecilla vaya en sentido antihorario (countdown)
-	double angle = 360.0 * (1.0 - percentage);
+	// Rotación Clockwise (360 -> 0)
+	double angle = 360.0 * percentage;
 
-	// Normalizar el ángulo
-	while (angle < 0.0)
-		angle += 360.0;
-	while (angle >= 360.0)
-		angle -= 360.0;
+	while (angle >= 360.0) angle -= 360.0;
 
 	*single_hand_deg = (float)angle;
 }

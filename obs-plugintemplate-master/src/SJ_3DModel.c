@@ -789,8 +789,25 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		float cy = m->center_y;
 		float cz = m->center_z;
 
+
+		// Detectar tipo de malla
+		bool is_hand = false;
+		if (clock_mode == 0) {
+			if ((int)i == mesh_id_hour || (int)i == mesh_id_minute || (int)i == mesh_id_second)
+				is_hand = true;
+		} else if (clock_mode == 1) {
+			if ((int)i == mesh_id_single)
+				is_hand = true;
+		}
+
+		float pivot_y = cy;
+		if (is_hand && heights) {
+			// USAR max_y en lugar de min_y según feedback del usuario (invertir pivote)
+			pivot_y = cy + (0.5f * heights[i]);
+		}
+
 		gs_matrix_push();
-		gs_matrix_translate3f(-cx, -cy, -cz);
+		gs_matrix_translate3f(-cx, -pivot_y, -cz);
 		gs_matrix_scale3f(scale, scale, -scale);
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
