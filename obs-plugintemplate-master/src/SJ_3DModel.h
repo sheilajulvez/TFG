@@ -38,19 +38,31 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		    float offset_rot_y_deg, float offset_rot_z_deg);
 
 /**
- * Renderiza un modelo 3D en modo reloj: aplica rotaciones extra por malla
- * para las manecillas (countdown). Convenci�n: mesh 0 = esfera/dial,
- * mesh 1 = manecilla horas, mesh 2 = minutos, mesh 3 = segundos.
- * Si clock_hour_deg, clock_minute_deg o clock_second_deg son NULL, no se
- * aplica rotaci�n extra a esas manecillas.
+ * Renderiza un modelo 3D en modo reloj con IDs de malla configurables.
+ * @param clock_mode 0 = tres manecillas, 1 = una manecilla
+ * @param mesh_id_dial ID de la malla del dial (no se rota, -1 para ignorar)
+ * @param mesh_id_hour ID de la malla de la manecilla de horas
+ * @param mesh_id_minute ID de la malla de la manecilla de minutos
+ * @param mesh_id_second ID de la malla de la manecilla de segundos
+ * @param mesh_id_single ID de la malla para modo de una manecilla
+ * @param clock_hour_deg Ángulo de la manecilla de horas (puede ser NULL)
+ * @param clock_minute_deg Ángulo de la manecilla de minutos (puede ser NULL)
+ * @param clock_second_deg Ángulo de la manecilla de segundos (puede ser NULL)
+ * @param clock_single_deg Ángulo de la manecilla única (puede ser NULL)
  */
 void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 			 float *heights, float scale, const float rvec[3],
 			 bool detected, float offset_rot_x_deg,
 			 float offset_rot_y_deg, float offset_rot_z_deg,
+			 int clock_mode,
+			 int mesh_id_dial, int mesh_id_hour,
+			 int mesh_id_minute, int mesh_id_second,
+			 int mesh_id_single,
 			 const float *clock_hour_deg,
 			 const float *clock_minute_deg,
-			 const float *clock_second_deg);
+			 const float *clock_second_deg,
+			 const float *clock_single_deg);
+
 
 void cleanup_global_meshes(struct Mesh **g_meshes, size_t *g_mesh_count,
 			   float **mesh_widths, float **mesh_heights,

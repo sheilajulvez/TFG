@@ -210,3 +210,38 @@ void countdown_clock_set_dial_hours(countdown_clock_t *clock, uint32_t max_hours
 		return;
 	clock->dial_max_hours = (max_hours == 0) ? 12 : max_hours;
 }
+
+void countdown_clock_get_single_hand_angle(const countdown_clock_t *clock,
+                                           float *single_hand_deg)
+{
+	if (!clock || !single_hand_deg) {
+		if (single_hand_deg)
+			*single_hand_deg = 0.0f;
+		return;
+	}
+
+	// Si no hay duración configurada, devolver 0
+	if (clock->duration_seconds == 0) {
+		*single_hand_deg = 0.0f;
+		return;
+	}
+
+	double rem = clock->remaining_seconds;
+	if (rem < 0.0)
+		rem = 0.0;
+
+	// Calcular el porcentaje de tiempo restante
+	double percentage = rem / (double)clock->duration_seconds;
+	
+	// Convertir a ángulo (360° = tiempo completo, 0° = tiempo agotado)
+	// Invertimos para que la manecilla vaya en sentido antihorario (countdown)
+	double angle = 360.0 * (1.0 - percentage);
+
+	// Normalizar el ángulo
+	while (angle < 0.0)
+		angle += 360.0;
+	while (angle >= 360.0)
+		angle -= 360.0;
+
+	*single_hand_deg = (float)angle;
+}

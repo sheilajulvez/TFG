@@ -82,6 +82,15 @@ struct cube_filter_data {
 	bool sync_enabled;
 	char *sync_url;
 	float sync_interval_sec;
+
+	/* --- NUEVO: Configuración de modo y mallas del reloj --- */
+	int clock_mode;              // 0 = tres manecillas, 1 = una manecilla
+	int mesh_id_dial;            // ID de la malla del dial/esfera (-1 = no usar)
+	int mesh_id_hour_hand;       // ID de la malla de la manecilla de horas
+	int mesh_id_minute_hand;     // ID de la malla de la manecilla de minutos
+	int mesh_id_second_hand;     // ID de la malla de la manecilla de segundos
+	int mesh_id_single_hand;     // ID de la malla para modo de una manecilla
+	bool countdown_use_ar;       // true = usar AR para posicionar reloj, false = posición manual
 };
 
 static struct obs_source_frame *filter_video(void *data,
@@ -240,6 +249,15 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->sync_url = NULL;
 	data->sync_interval_sec = 10.0f;
 
+	// Inicializar configuración de reloj
+	data->clock_mode = 0;              // Tres manecillas por defecto
+	data->mesh_id_dial = 0;
+	data->mesh_id_hour_hand = 1;
+	data->mesh_id_minute_hand = 2;
+	data->mesh_id_second_hand = 3;
+	data->mesh_id_single_hand = 1;
+	data->countdown_use_ar = false;    // Posición manual por defecto
+
 	struct obs_video_info ovi;
 	if (obs_get_video_info(&ovi)) {
 		data->width_screen = ovi.base_width;
@@ -349,21 +367,34 @@ static void filter_render(void *data, gs_effect_t *effect)
 		rot_y = filter->ar_offset_rot_y;
 		rot_z = filter->ar_offset_rot_z;
 	} else {
-		rot_x = filter->rotation_x;
-		rot_y = filter->rotation_y;
-		rot_z = filter->rotation_z;
+		// Modo Countdown: usar AR si está activado, sino rotación manual
+		if (filter->countdown_use_ar) {
+			rot_x = filter->ar_offset_rot_x;
+			rot_y = filter->ar_offset_rot_y;
+			rot_z = filter->ar_offset_rot_z;
+		} else {
+			rot_x = filter->rotation_x;
+			rot_y = filter->rotation_y;
+			rot_z = filter->rotation_z;
+		}
 	}
 
 	if (filter->mode == 2 && filter->countdown_clock) {
-		float hour_deg, min_deg, sec_deg;
+		float hour_deg, min_deg, sec_deg, single_deg;
 		countdown_clock_get_hand_angles(filter->countdown_clock,
 						&hour_deg, &min_deg, &sec_deg);
+		countdown_clock_get_single_hand_angle(filter->countdown_clock, &single_deg);
+		
 		render_model_clock_c(filter->g_meshes, filter->g_mesh_count,
 				     filter->model_width, filter->model_height,
 				     filter->current_scale, filter->last_result.rvec,
 				     filter->last_result.detected,
 				     rot_x, rot_y, rot_z,
-				     &hour_deg, &min_deg, &sec_deg);
+				     filter->clock_mode,
+				     filter->mesh_id_dial, filter->mesh_id_hour_hand,
+				     filter->mesh_id_minute_hand, filter->mesh_id_second_hand,
+				     filter->mesh_id_single_hand,
+				     &hour_deg, &min_deg, &sec_deg, &single_deg);
 	} else {
 		render_model_c(filter->g_meshes, filter->g_mesh_count,
 			      filter->model_width, filter->model_height,
@@ -404,23 +435,31 @@ static bool render_mode_changed(obs_properties_t *props,
 	bool show_ar = (mode == 1);
 	bool show_countdown = (mode == 2);
 
-	obs_property_set_visible(obs_properties_get(props, "pos_x"), show_3d || show_countdown);
-	obs_property_set_visible(obs_properties_get(props, "pos_y"), show_3d || show_countdown);
-	obs_property_set_visible(obs_properties_get(props, "pos_z"), show_3d || show_countdown);
-	obs_property_set_visible(obs_properties_get(props, "rotation_x_slider_value"), show_3d || show_countdown);
-	obs_property_set_visible(obs_properties_get(props, "rotation_y_slider_value"), show_3d || show_countdown);
-	obs_property_set_visible(obs_properties_get(props, "rotation_z_slider_value"), show_3d || show_countdown);
+	// Leer configuración de countdown
+	bool countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
+	int clock_mode = (int)obs_data_get_int(settings, "clock_mode");
+	
+	// Mostrar controles de posición/rotación para 3D y Countdown (si no usa AR)
+	bool show_manual_pos = show_3d || (show_countdown && !countdown_use_ar);
+	obs_property_set_visible(obs_properties_get(props, "pos_x"), show_manual_pos);
+	obs_property_set_visible(obs_properties_get(props, "pos_y"), show_manual_pos);
+	obs_property_set_visible(obs_properties_get(props, "pos_z"), show_manual_pos);
+	obs_property_set_visible(obs_properties_get(props, "rotation_x_slider_value"), show_manual_pos);
+	obs_property_set_visible(obs_properties_get(props, "rotation_y_slider_value"), show_manual_pos);
+	obs_property_set_visible(obs_properties_get(props, "rotation_z_slider_value"), show_manual_pos);
 
-	obs_property_set_visible(obs_properties_get(props, "marker_id"), show_ar);
-	obs_property_set_visible(obs_properties_get(props, "marker_size"), show_ar);
-	obs_property_set_visible(obs_properties_get(props, "marker_dict"), show_ar);
-	obs_property_set_visible(obs_properties_get(props, "calibration_path"), show_ar);
-	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_x"), show_ar);
-	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_y"), show_ar);
-	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_z"), show_ar);
-	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_x"), show_ar);
-	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_y"), show_ar);
-	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_z"), show_ar);
+	// Mostrar controles AR para modo AR o Countdown con AR activado
+	bool show_ar_controls = show_ar || (show_countdown && countdown_use_ar);
+	obs_property_set_visible(obs_properties_get(props, "marker_id"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "marker_size"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "marker_dict"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "calibration_path"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_x"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_y"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_z"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_x"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_y"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_z"), show_ar_controls);
 
 	/* Countdown: duración, ejecución, sincronización web */
 	obs_property_set_visible(obs_properties_get(props, "countdown_duration_h"), show_countdown);
@@ -431,6 +470,19 @@ static bool render_mode_changed(obs_properties_t *props,
 	obs_property_set_visible(obs_properties_get(props, "sync_enabled"), show_countdown);
 	obs_property_set_visible(obs_properties_get(props, "sync_url"), show_countdown);
 	obs_property_set_visible(obs_properties_get(props, "sync_interval_sec"), show_countdown);
+
+	/* Countdown: configuración de reloj */
+	obs_property_set_visible(obs_properties_get(props, "clock_mode"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "countdown_use_ar"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "mesh_id_dial"), show_countdown);
+	
+	// Mostrar IDs de manecillas según el modo de reloj
+	bool show_three_hands = show_countdown && (clock_mode == 0);
+	bool show_single_hand = show_countdown && (clock_mode == 1);
+	obs_property_set_visible(obs_properties_get(props, "mesh_id_hour_hand"), show_three_hands);
+	obs_property_set_visible(obs_properties_get(props, "mesh_id_minute_hand"), show_three_hands);
+	obs_property_set_visible(obs_properties_get(props, "mesh_id_second_hand"), show_three_hands);
+	obs_property_set_visible(obs_properties_get(props, "mesh_id_single_hand"), show_single_hand);
 
 	return true;
 }
@@ -490,6 +542,23 @@ obs_properties_add_path(props, "calibration_file", "Archivo de Calibración",
 	obs_properties_add_text(props, "sync_url", "URL API (JSON: hours, minutes, seconds)", OBS_TEXT_DEFAULT);
 	obs_properties_add_float(props, "sync_interval_sec", "Intervalo sincronización (seg)", 1.0f, 300.0f, 1.0f);
 
+	/* Countdown: configuración de reloj */
+	obs_property_t *clock_mode_combo = obs_properties_add_list(
+		props, "clock_mode", "Modo de reloj",
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(clock_mode_combo, "Tres manecillas (H/M/S)", 0);
+	obs_property_list_add_int(clock_mode_combo, "Una manecilla (tiempo total)", 1);
+	obs_property_set_modified_callback(clock_mode_combo, render_mode_changed);
+
+	obs_property_t *use_ar_prop = obs_properties_add_bool(props, "countdown_use_ar", "Usar AR para posicionar reloj");
+	obs_property_set_modified_callback(use_ar_prop, render_mode_changed);
+	
+	obs_properties_add_int(props, "mesh_id_dial", "ID Malla Dial/Esfera", -1, 100, 1);
+	obs_properties_add_int(props, "mesh_id_hour_hand", "ID Malla Manecilla Horas", -1, 100, 1);
+	obs_properties_add_int(props, "mesh_id_minute_hand", "ID Malla Manecilla Minutos", -1, 100, 1);
+	obs_properties_add_int(props, "mesh_id_second_hand", "ID Malla Manecilla Segundos", -1, 100, 1);
+	obs_properties_add_int(props, "mesh_id_single_hand", "ID Malla Manecilla Única", -1, 100, 1);
+
 	obs_data_t *temp_settings = obs_data_create();
 	render_mode_changed(props, combo, temp_settings);
 	obs_data_release(temp_settings);
@@ -513,6 +582,16 @@ static void filter_update(void *data, obs_data_t *settings)
 	filter->sync_interval_sec = (float)obs_data_get_double(settings, "sync_interval_sec");
 	const char *new_sync_url = obs_data_get_string(settings, "sync_url");
 	if (!new_sync_url) new_sync_url = "";
+	
+	// Leer configuración de reloj
+	filter->clock_mode = (int)obs_data_get_int(settings, "clock_mode");
+	filter->mesh_id_dial = (int)obs_data_get_int(settings, "mesh_id_dial");
+	filter->mesh_id_hour_hand = (int)obs_data_get_int(settings, "mesh_id_hour_hand");
+	filter->mesh_id_minute_hand = (int)obs_data_get_int(settings, "mesh_id_minute_hand");
+	filter->mesh_id_second_hand = (int)obs_data_get_int(settings, "mesh_id_second_hand");
+	filter->mesh_id_single_hand = (int)obs_data_get_int(settings, "mesh_id_single_hand");
+	filter->countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
+	
 	if (filter->countdown_clock) {
 		blog(LOG_INFO, "SET DURATION");
 		countdown_clock_set_duration_hms(filter->countdown_clock,
@@ -739,6 +818,15 @@ static void filter_save(void *data, obs_data_t *settings)
 	obs_data_set_double(settings, "sync_interval_sec", (double)filter->sync_interval_sec);
 	if (filter->sync_url) obs_data_set_string(settings, "sync_url", filter->sync_url);
 
+	// Guardar configuración de reloj
+	obs_data_set_int(settings, "clock_mode", filter->clock_mode);
+	obs_data_set_int(settings, "mesh_id_dial", filter->mesh_id_dial);
+	obs_data_set_int(settings, "mesh_id_hour_hand", filter->mesh_id_hour_hand);
+	obs_data_set_int(settings, "mesh_id_minute_hand", filter->mesh_id_minute_hand);
+	obs_data_set_int(settings, "mesh_id_second_hand", filter->mesh_id_second_hand);
+	obs_data_set_int(settings, "mesh_id_single_hand", filter->mesh_id_single_hand);
+	obs_data_set_bool(settings, "countdown_use_ar", filter->countdown_use_ar);
+
 	if (filter->model_path_str) obs_data_set_string(settings, "model_path", filter->model_path_str);
 	if (filter->texture_path_str) obs_data_set_string(settings, "texture_path", filter->texture_path_str);
 	if (get_calibration_path(filter->detector)) obs_data_set_string(settings, "calibration_path", get_calibration_path(filter->detector));
@@ -786,6 +874,15 @@ static void filter_load(void *data, obs_data_t *settings)
 	const char *su = obs_data_get_string(settings, "sync_url");
 	filter->sync_url = (su && su[0]) ? bstrdup(su) : NULL;
 
+	// Cargar configuración de reloj
+	filter->clock_mode = (int)obs_data_get_int(settings, "clock_mode");
+	filter->mesh_id_dial = (int)obs_data_get_int(settings, "mesh_id_dial");
+	filter->mesh_id_hour_hand = (int)obs_data_get_int(settings, "mesh_id_hour_hand");
+	filter->mesh_id_minute_hand = (int)obs_data_get_int(settings, "mesh_id_minute_hand");
+	filter->mesh_id_second_hand = (int)obs_data_get_int(settings, "mesh_id_second_hand");
+	filter->mesh_id_single_hand = (int)obs_data_get_int(settings, "mesh_id_single_hand");
+	filter->countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
+
 	filter_update(data, settings);
 }
 static void filter_defaults(obs_data_t *settings)
@@ -820,6 +917,15 @@ static void filter_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "sync_enabled", false);
 	obs_data_set_default_string(settings, "sync_url", "");
 	obs_data_set_default_double(settings, "sync_interval_sec", 10.0);
+
+	// Valores por defecto de configuración de reloj
+	obs_data_set_default_int(settings, "clock_mode", 0);  // Tres manecillas por defecto
+	obs_data_set_default_int(settings, "mesh_id_dial", 0);
+	obs_data_set_default_int(settings, "mesh_id_hour_hand", 1);
+	obs_data_set_default_int(settings, "mesh_id_minute_hand", 2);
+	obs_data_set_default_int(settings, "mesh_id_second_hand", 3);
+	obs_data_set_default_int(settings, "mesh_id_single_hand", 1);
+	obs_data_set_default_bool(settings, "countdown_use_ar", false);
 }
 static struct obs_source_info cube_filter = {
 	.id = "cube_filter",

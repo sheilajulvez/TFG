@@ -119,6 +119,17 @@ void countdown_clock_get_hand_angles(const countdown_clock_t *clock,
  */
 void countdown_clock_set_dial_hours(countdown_clock_t *clock, uint32_t max_hours);
 
+/**
+ * Obtiene el ángulo para una manecilla única que representa el tiempo restante total.
+ * El ángulo se calcula como: (tiempo_restante / duración_total) * 360 grados.
+ * Si la duración es 0, devuelve 0 grados.
+ * @param clock Instancia del reloj
+ * @param single_hand_deg Puntero donde se almacenará el ángulo en grados (0-360)
+ */
+void countdown_clock_get_single_hand_angle(const countdown_clock_t *clock,
+                                           float *single_hand_deg);
+
+
 #ifdef __cplusplus
 }
 #endif

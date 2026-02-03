@@ -739,9 +739,14 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 			  float *heights, float scale, const float rvec[3],
 			  bool detected, float offset_rot_x_deg,
 			  float offset_rot_y_deg, float offset_rot_z_deg,
+			  int clock_mode,
+			  int mesh_id_dial, int mesh_id_hour,
+			  int mesh_id_minute, int mesh_id_second,
+			  int mesh_id_single,
 			  const float *clock_hour_deg,
 			  const float *clock_minute_deg,
-			  const float *clock_second_deg)
+			  const float *clock_second_deg,
+			  const float *clock_single_deg)
 {
 	gs_effect_t *default_effect =
 		obs_get_base_effect(OBS_EFFECT_DEFAULT);
@@ -789,7 +794,7 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		gs_matrix_scale3f(scale, scale, -scale);
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
-		// Rotaciones globales opcionales que afectan todo el modelo (no la manecilla)
+		// Rotaciones globales opcionales que afectan todo el modelo
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,
 				  degrees_to_radians(offset_rot_x_deg));
 		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,
@@ -797,18 +802,33 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,
 				  degrees_to_radians(offset_rot_z_deg));
 
-		// AHORA la rotación específica de la manecilla
-		if (i == 0 && clock_hour_deg)
+		// Determinar si esta malla necesita rotación extra
+		float extra_rotation = 0.0f;
+		bool apply_rotation = false;
+
+		if (clock_mode == 0) {  // Modo tres manecillas
+			if ((int)i == mesh_id_hour && clock_hour_deg) {
+				extra_rotation = *clock_hour_deg;
+				apply_rotation = true;
+			} else if ((int)i == mesh_id_minute && clock_minute_deg) {
+				extra_rotation = *clock_minute_deg;
+				apply_rotation = true;
+			} else if ((int)i == mesh_id_second && clock_second_deg) {
+				extra_rotation = *clock_second_deg;
+				apply_rotation = true;
+			}
+		} else if (clock_mode == 1) {  // Modo una manecilla
+			if ((int)i == mesh_id_single && clock_single_deg) {
+				extra_rotation = *clock_single_deg;
+				apply_rotation = true;
+			}
+		}
+
+		// Aplicar rotación de la manecilla si corresponde
+		if (apply_rotation) {
 			gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,
-					  degrees_to_radians(*clock_hour_deg));
-		else if (i == 1 && clock_minute_deg)
-			gs_matrix_rotaa4f(
-				0.0f, 1.0f, 0.0f,
-				degrees_to_radians(*clock_minute_deg));
-		else if (i == 2 && clock_second_deg)
-			gs_matrix_rotaa4f(
-				0.0f, 1.0f, 0.0f,
-				degrees_to_radians(*clock_second_deg));
+					  degrees_to_radians(extra_rotation));
+		}
 
 		if (detected)
 			gs_matrix_rotaa4f(ax, -ay, -az, angle_rad);
@@ -825,6 +845,7 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 	gs_technique_end_pass(tech);
 	gs_technique_end(tech);
 }
+
 
 void replace_mesh_textures(struct Mesh *meshes, size_t count,
 			   gs_texture_t *new_tex, gs_texture_t *old_tex)
