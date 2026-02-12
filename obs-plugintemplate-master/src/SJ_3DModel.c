@@ -632,8 +632,7 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 			if (detected) {
 				gs_matrix_rotaa4f(ax, ay, az, angle_rad);
 			}
-			// --- FIN DE CORRECCIÓN ---
-
+			
 			// 6. Dibujar
 			gs_load_vertexbuffer(m->vb);
 			gs_load_indexbuffer(m->ib);
@@ -801,17 +800,21 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		}
 
 		float pivot_y = cy;
-		if (is_hand && heights) {
-			// USAR max_y en lugar de min_y según feedback del usuario (invertir pivote)
-			pivot_y = cy + (0.5f * heights[i]);
-		}
+		//if (is_hand && heights) {
+		//	// USAR max_y en lugar de min_y según feedback del usuario (invertir pivote)
+		//	pivot_y = cy + (0.5f * heights[i]);
+		//}
 
 		gs_matrix_push();
 		gs_matrix_translate3f(-cx, -pivot_y, -cz);
 		gs_matrix_scale3f(scale, scale, -scale);
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
-		// Rotaciones globales opcionales que afectan todo el modelo
+		// Rotación ArUco (orientación global - escrito antes = aplicado después al vértice)
+		if (detected)
+			gs_matrix_rotaa4f(ax, -ay, -az, angle_rad);
+
+		// Rotaciones globales opcionales (offset del usuario)
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,
 				  degrees_to_radians(offset_rot_x_deg));
 		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,
@@ -819,11 +822,11 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,
 				  degrees_to_radians(offset_rot_z_deg));
 
-		// Determinar si esta malla necesita rotación extra
+		// Determinar si esta malla necesita rotación de manecilla
 		float extra_rotation = 0.0f;
 		bool apply_rotation = false;
 
-		if (clock_mode == 0) {  // Modo tres manecillas
+		if (clock_mode == 0) {
 			if ((int)i == mesh_id_hour && clock_hour_deg) {
 				extra_rotation = *clock_hour_deg;
 				apply_rotation = true;
@@ -834,21 +837,18 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 				extra_rotation = *clock_second_deg;
 				apply_rotation = true;
 			}
-		} else if (clock_mode == 1) {  // Modo una manecilla
+		} else if (clock_mode == 1) {
 			if ((int)i == mesh_id_single && clock_single_deg) {
 				extra_rotation = *clock_single_deg;
 				apply_rotation = true;
 			}
 		}
 
-		// Aplicar rotación de la manecilla si corresponde
+		// Rotación de la manecilla (en espacio del modelo, escrito último = aplicado primero al vértice)
 		if (apply_rotation) {
 			gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,
 					  degrees_to_radians(extra_rotation));
 		}
-
-		if (detected)
-			gs_matrix_rotaa4f(ax, -ay, -az, angle_rad);
 
 
 		gs_effect_set_texture(image_param, m->texture);
@@ -876,7 +876,7 @@ void replace_mesh_textures(struct Mesh *meshes, size_t count,
 		}
 		if (new_tex) {
 			m->texture = new_tex;
-			// Si quieres hacer un gs_texture_addref(new_tex) según tu gestión de referencias
+		
 		}
 	}
 }

@@ -103,7 +103,7 @@ static struct obs_source_frame *filter_video(void *data,
 		return NULL;
 	}
 
-	if (filter->mode == 0 || filter->mode == 2) { // 0 = 3D, 2 = Countdown
+	if (filter->mode == 0 || (filter->mode == 2 && !filter->countdown_use_ar)) {
 		filter->current_scale = filter->scale;
 		filter->last_result.detected = false;
 		return frame;
@@ -315,7 +315,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 		obs_source_skip_video_filter(filter->source);
 		return;
 	}
-	if (filter->mode == 1 && !filter->last_result.detected) {
+	if ((filter->mode == 1 || (filter->mode == 2 && filter->countdown_use_ar)) && !filter->last_result.detected) {
 		obs_source_skip_video_filter(filter->source);
 		return;
 	}
