@@ -568,7 +568,8 @@
 	}
 
 
-void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths, float *heights, float scale, const float rvec[3], bool detected, float offset_rot_x_deg, float offset_rot_y_deg, float offset_rot_z_deg)
+void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths, float *heights, float scale,
+	const float rvec[3], bool detected, float offset_rot_x_deg, float offset_rot_y_deg, float offset_rot_z_deg)
 	{
 		gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
 		if (!solid)
@@ -594,10 +595,9 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 				angle_rad = 0.0f;
 			}
 		}
-		// --- FIN CÁLCULO EJE-ÁNGULO ---
-
+	
 		struct vec4 c = {1.0f, 0.0f, 0.0f,
-				 1.0f}; // Color rojo (para debug)
+				 1.0f}; 
 		gs_technique_begin(tech);
 		gs_technique_begin_pass(tech, 0);
 		gs_effect_set_vec4(col, &c);
@@ -617,7 +617,7 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 			// 1. Mover pivote al origen
 			gs_matrix_translate3f(-cx, -cy, -cz);
 			// 2. Escala
-			gs_matrix_scale3f(scale, scale, -scale);
+			gs_matrix_scale3f(-scale, scale, -scale);
 			// 3. Corrección de coordenadas (Y-Abajo de OpenCV a Y-Arriba de OBS)
 			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
@@ -704,9 +704,9 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 		gs_matrix_push();
 
 		// 1. mover pivote al origen 3D
-		gs_matrix_translate3f(-cx, -cy, -cz);
+		gs_matrix_translate3f(cx, cy, cz);
 		// 2. escala
-		gs_matrix_scale3f(scale, scale, -scale);
+		gs_matrix_scale3f(-scale, scale, -scale);
 		// 3. Corrección de coordenadas (Y-Abajo a Y-Arriba)
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
@@ -807,12 +807,12 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 
 		gs_matrix_push();
 		gs_matrix_translate3f(-cx, -pivot_y, -cz);
-		gs_matrix_scale3f(scale, scale, -scale);
+		gs_matrix_scale3f(-scale, scale, -scale);
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
 		// Rotación ArUco (orientación global - escrito antes = aplicado después al vértice)
 		if (detected)
-			gs_matrix_rotaa4f(ax, -ay, -az, angle_rad);
+			gs_matrix_rotaa4f(ax, ay, -az, angle_rad);
 
 		// Rotaciones globales opcionales (offset del usuario)
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,
@@ -847,7 +847,7 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		// Rotación de la manecilla (en espacio del modelo, escrito último = aplicado primero al vértice)
 		if (apply_rotation) {
 			gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,
-					  degrees_to_radians(extra_rotation));
+					  degrees_to_radians(360.0f - extra_rotation));
 		}
 
 
