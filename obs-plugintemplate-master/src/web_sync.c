@@ -10,8 +10,6 @@
 #include <obs-module.h>
 #ifdef _WIN32
 #include <windows.h>
-#else
-#error "Solo soportado en Windows en esta versión"
 #endif
 
 #include <curl/curl.h>
@@ -19,30 +17,29 @@
 #define WEB_SYNC_BUFFER_SIZE 4096
 #define WEB_SYNC_MIN_INTERVAL 1.0f
 
+//EJEMPLO CURL https://curl.se/libcurl/c/getinmemory.html
 struct web_sync {
 	char *api_url;
-	float interval_seconds;
-	volatile bool enabled;
+	float interval_seconds; //cad cuanto se sincroniza, en segundos (mínimo 1s)
+	volatile bool enabled; //volatile como en consolas
 	volatile bool thread_stop;
 
 	HANDLE thread;
 	CRITICAL_SECTION mutex;
 
-	/** Resultado de la última petición (protegido por mutex) */
 	bool has_new_result;
 	uint32_t result_hours;
 	uint32_t result_minutes;
 	uint32_t result_seconds;
 };
 
-/** Buffer de respuesta para CURL */
+
 typedef struct {
 	char *data;
 	size_t size;
 } memory_buffer_t;
 
-static size_t write_callback(char *ptr, size_t size, size_t nmemb,
-			     void *userdata)
+static size_t write_callback(char *ptr, size_t size, size_t nmemb,void *userdata)
 {
 	memory_buffer_t *buf = (memory_buffer_t *)userdata;
 	size_t total = size * nmemb;
@@ -91,6 +88,8 @@ static bool parse_json_int(const char *json, const char *key,
 	return true;
 }
 
+//https://en.cppreference.com/w/c/string/byte/strstr 
+// /** Parsea un entero dentro de un objeto hijo en el JSON: "parent_key": { ... "child_key": value ... } */
 
 static bool parse_json_int_nested(const char *json, const char *parent_key,
 				  const char *child_key, uint32_t *out_value)
@@ -101,7 +100,7 @@ static bool parse_json_int_nested(const char *json, const char *parent_key,
 	if (!p)
 		return false;
 
-	const char *start = strchr(p, '{'); // abre brace de record
+	const char *start = strchr(p, '{'); 
 	if (!start)
 		return false;
 

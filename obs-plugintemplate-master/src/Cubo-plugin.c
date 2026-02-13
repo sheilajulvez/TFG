@@ -594,8 +594,7 @@ static void filter_update(void *data, obs_data_t *settings)
 	
 	if (filter->countdown_clock) {
 		blog(LOG_INFO, "SET DURATION");
-		countdown_clock_set_duration_hms(filter->countdown_clock,
-			filter->countdown_duration_h, filter->countdown_duration_m, filter->countdown_duration_s);
+		countdown_clock_set_duration_hms(filter->countdown_clock,filter->countdown_duration_h, filter->countdown_duration_m, filter->countdown_duration_s);
 		countdown_state_t state = countdown_clock_get_state(filter->countdown_clock);
 		
 		if (filter->countdown_running) {

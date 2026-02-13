@@ -35,7 +35,7 @@ typedef struct countdown_clock countdown_clock_t;
  * Crea un reloj de cuenta atrás.
  * @return Instancia nueva o NULL si falla.
  */
-countdown_clock_t *countdown_clock_create(void);
+countdown_clock_t *countdown_clock_create();
 
 /**
  * Destruye el reloj y libera recursos.

@@ -747,18 +747,12 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 			  const float *clock_second_deg,
 			  const float *clock_single_deg)
 {
-	gs_effect_t *default_effect =
-		obs_get_base_effect(OBS_EFFECT_DEFAULT);
-	if (!default_effect)
-		return;
-	gs_eparam_t *image_param =
-		gs_effect_get_param_by_name(default_effect, "image");
-	if (!image_param)
-		return;
-	gs_technique_t *tech =
-		gs_effect_get_technique(default_effect, "Draw");
-	if (!tech)
-		return;
+	gs_effect_t *default_effect =obs_get_base_effect(OBS_EFFECT_DEFAULT);
+	if (!default_effect)return;
+	gs_eparam_t *image_param =gs_effect_get_param_by_name(default_effect, "image");
+	if (!image_param)return;
+	gs_technique_t *tech =gs_effect_get_technique(default_effect, "Draw");
+	if (!tech)return;
 
 	float angle_rad = 0.0f;
 	float ax = 0.0f, ay = 0.0f, az = 1.0f;
@@ -811,16 +805,12 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
 		// Rotación ArUco (orientación global - escrito antes = aplicado después al vértice)
-		if (detected)
-			gs_matrix_rotaa4f(ax, ay, -az, angle_rad);
+		if (detected)gs_matrix_rotaa4f(ax, ay, az, angle_rad);
 
 		// Rotaciones globales opcionales (offset del usuario)
-		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,
-				  degrees_to_radians(offset_rot_x_deg));
-		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,
-				  degrees_to_radians(offset_rot_y_deg));
-		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,
-				  degrees_to_radians(offset_rot_z_deg));
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,degrees_to_radians(offset_rot_x_deg));
+		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,degrees_to_radians(offset_rot_y_deg));
+		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,degrees_to_radians(offset_rot_z_deg));
 
 		// Determinar si esta malla necesita rotación de manecilla
 		float extra_rotation = 0.0f;
@@ -846,8 +836,7 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 
 		// Rotación de la manecilla (en espacio del modelo, escrito último = aplicado primero al vértice)
 		if (apply_rotation) {
-			gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,
-					  degrees_to_radians(360.0f - extra_rotation));
+			gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, degrees_to_radians(360.0f - extra_rotation));
 		}
 
 
