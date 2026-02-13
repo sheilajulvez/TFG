@@ -738,26 +738,30 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 			  float *heights, float scale, const float rvec[3],
 			  bool detected, float offset_rot_x_deg,
 			  float offset_rot_y_deg, float offset_rot_z_deg,
-			  int clock_mode,
-			  int mesh_id_dial, int mesh_id_hour,
+			  int clock_mode, int mesh_id_dial, int mesh_id_hour,
 			  int mesh_id_minute, int mesh_id_second,
-			  int mesh_id_single,
-			  const float *clock_hour_deg,
+			  int mesh_id_single, const float *clock_hour_deg,
 			  const float *clock_minute_deg,
 			  const float *clock_second_deg,
 			  const float *clock_single_deg)
 {
-	gs_effect_t *default_effect =obs_get_base_effect(OBS_EFFECT_DEFAULT);
-	if (!default_effect)return;
-	gs_eparam_t *image_param =gs_effect_get_param_by_name(default_effect, "image");
-	if (!image_param)return;
-	gs_technique_t *tech =gs_effect_get_technique(default_effect, "Draw");
-	if (!tech)return;
+	gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+	if (!default_effect)
+		return;
+	gs_eparam_t *image_param =
+		gs_effect_get_param_by_name(default_effect, "image");
+	if (!image_param)
+		return;
+	gs_technique_t *tech = gs_effect_get_technique(default_effect, "Draw");
+	if (!tech)
+		return;
 
+	// Cálculo del ángulo del vector de rotación (ArUco)
 	float angle_rad = 0.0f;
 	float ax = 0.0f, ay = 0.0f, az = 1.0f;
 	if (detected) {
-		angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] + rvec[2] * rvec[2]);
+		angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] +
+				 rvec[2] * rvec[2]);
 		if (angle_rad > 1e-5f) {
 			ax = rvec[0] / angle_rad;
 			ay = rvec[1] / angle_rad;
@@ -772,47 +776,28 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 
 	for (size_t i = 0; i < g_mesh_count; i++) {
 		Mesh *m = &g_meshes[i];
-		if (!m->vb || !m->ib)
-			continue;
-
-		if (!m->texture)
+		if (!m->vb || !m->ib || !m->texture)
 			continue;
 
 		float cx = m->center_x;
 		float cy = m->center_y;
 		float cz = m->center_z;
 
-
-		// Detectar tipo de malla
+		// Detectar si es una manecilla
 		bool is_hand = false;
 		if (clock_mode == 0) {
-			if ((int)i == mesh_id_hour || (int)i == mesh_id_minute || (int)i == mesh_id_second)
+			if ((int)i == mesh_id_hour ||
+			    (int)i == mesh_id_minute ||
+			    (int)i == mesh_id_second)
 				is_hand = true;
 		} else if (clock_mode == 1) {
 			if ((int)i == mesh_id_single)
 				is_hand = true;
 		}
 
+		
 		float pivot_y = cy;
-		//if (is_hand && heights) {
-		//	// USAR max_y en lugar de min_y según feedback del usuario (invertir pivote)
-		//	pivot_y = cy + (0.5f * heights[i]);
-		//}
-
-		gs_matrix_push();
-		gs_matrix_translate3f(-cx, -pivot_y, -cz);
-		gs_matrix_scale3f(-scale, scale, -scale);
-		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
-
-		// Rotación ArUco (orientación global - escrito antes = aplicado después al vértice)
-		if (detected)gs_matrix_rotaa4f(ax, ay, az, angle_rad);
-
-		// Rotaciones globales opcionales (offset del usuario)
-		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,degrees_to_radians(offset_rot_x_deg));
-		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,degrees_to_radians(offset_rot_y_deg));
-		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,degrees_to_radians(offset_rot_z_deg));
-
-		// Determinar si esta malla necesita rotación de manecilla
+		
 		float extra_rotation = 0.0f;
 		bool apply_rotation = false;
 
@@ -820,10 +805,12 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 			if ((int)i == mesh_id_hour && clock_hour_deg) {
 				extra_rotation = *clock_hour_deg;
 				apply_rotation = true;
-			} else if ((int)i == mesh_id_minute && clock_minute_deg) {
+			} else if ((int)i == mesh_id_minute &&
+				   clock_minute_deg) {
 				extra_rotation = *clock_minute_deg;
 				apply_rotation = true;
-			} else if ((int)i == mesh_id_second && clock_second_deg) {
+			} else if ((int)i == mesh_id_second &&
+				   clock_second_deg) {
 				extra_rotation = *clock_second_deg;
 				apply_rotation = true;
 			}
@@ -834,11 +821,58 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 			}
 		}
 
-		// Rotación de la manecilla (en espacio del modelo, escrito último = aplicado primero al vértice)
-		if (apply_rotation) {
-			gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, degrees_to_radians(360.0f - extra_rotation));
+		gs_matrix_push();
+
+	
+		gs_matrix_scale3f(-scale, scale, -scale);
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
+
+		// Rotación del Tracker (ArUco)
+		if (detected) {
+			gs_matrix_rotaa4f(ax, ay, az, angle_rad);
 		}
 
+		
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,degrees_to_radians(offset_rot_x_deg));
+		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, degrees_to_radians(offset_rot_y_deg));
+		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, degrees_to_radians(offset_rot_z_deg));
+
+		
+		
+		gs_matrix_translate3f(cx, pivot_y, cz);
+
+		
+	if (apply_rotation) {
+		
+		if (clock_mode == 0) { //DUDA SOBRE COMO ORIENTAR ESTAR ROTACIONES
+			// IR HACIA ATRAS? O IR HACIA ADELTANTE?
+			// AHORA SEGUNDOS VA HACIA SENTIDO HORARIO Y MINUROS Y SEGUNDOS AL REVES ES SOLO CAMBIAR EL SIGNO DE LA ROTACION, PERO NO SE SI ES ASI O AL REVES
+			if ((int)i == mesh_id_hour && clock_hour_deg) {
+				gs_matrix_rotaa4f(
+					0.0f, 1.0f, 0.0f,
+					degrees_to_radians(extra_rotation));
+			} else if ((int)i == mesh_id_minute &&
+				   clock_minute_deg) {
+				gs_matrix_rotaa4f(
+					0.0f, 1.0f, 0.0f,
+					degrees_to_radians(extra_rotation));
+			} else if ((int)i == mesh_id_second &&
+				   clock_second_deg) {
+				gs_matrix_rotaa4f(
+					0.0f, 1.0f, 0.0f,
+					degrees_to_radians(-extra_rotation));
+			}
+		} else if (clock_mode == 1) {
+			if ((int)i == mesh_id_single && clock_single_deg) {
+				gs_matrix_rotaa4f(
+					0.0f, 1.0f, 0.0f,
+					degrees_to_radians(-extra_rotation));
+			}
+		}
+		}
+
+
+		gs_matrix_translate3f(-cx, -pivot_y, -cz);
 
 		gs_effect_set_texture(image_param, m->texture);
 		gs_load_vertexbuffer(m->vb);

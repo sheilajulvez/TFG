@@ -17,7 +17,7 @@
 #define WEB_SYNC_BUFFER_SIZE 4096
 #define WEB_SYNC_MIN_INTERVAL 1.0f
 
-//EJEMPLO CURL https://curl.se/libcurl/c/getinmemory.html
+//EJEMPLO CURL https://curl.se/libcurl/c/getinmemory.html PARA LA MEMORIA
 struct web_sync {
 	char *api_url;
 	float interval_seconds; //cad cuanto se sincroniza, en segundos (mínimo 1s)
@@ -52,7 +52,7 @@ static size_t write_callback(char *ptr, size_t size, size_t nmemb,void *userdata
 	}
 	return size * nmemb;
 }
-
+// https://medium.com/@priyanshugrv/building-a-simple-json-parser-in-c-9ecd1c6b1b9e parseador de json en C
 /** Parsea un entero no negativo después de "key": en el JSON. */
 static bool parse_json_int(const char *json, const char *key,
 			   uint32_t *out_value)
@@ -91,6 +91,7 @@ static bool parse_json_int(const char *json, const char *key,
 //https://en.cppreference.com/w/c/string/byte/strstr 
 // /** Parsea un entero dentro de un objeto hijo en el JSON: "parent_key": { ... "child_key": value ... } */
 
+// 
 static bool parse_json_int_nested(const char *json, const char *parent_key,
 				  const char *child_key, uint32_t *out_value)
 {

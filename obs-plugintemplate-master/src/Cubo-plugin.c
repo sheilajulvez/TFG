@@ -56,14 +56,14 @@ struct cube_filter_data {
 	float rotation_z;
 	gs_texture_t *loaded_texture;
 
-	// --- INICIO: NUEVOS OFFSETS PARA AR ---
+
 	float ar_offset_pos_x;
 	float ar_offset_pos_y;
 	float ar_offset_pos_z;
 	float ar_offset_rot_x;
 	float ar_offset_rot_y;
 	float ar_offset_rot_z;
-	// --- FIN: NUEVOS OFFSETS PARA AR ---
+	
 
 	// Resultados del ArUco
 	ArucoDetector *detector; //
@@ -71,7 +71,7 @@ struct cube_filter_data {
 
 	int mode;
 
-	/* --- Modo Countdown (reloj de cuenta atrás) --- */
+
 	countdown_clock_t *countdown_clock;
 	web_sync_t *web_sync;
 	bool countdown_running;
@@ -83,13 +83,13 @@ struct cube_filter_data {
 	char *sync_url;
 	float sync_interval_sec;
 
-	/* --- NUEVO: Configuración de modo y mallas del reloj --- */
+
 	int clock_mode;              // 0 = tres manecillas, 1 = una manecilla
-	int mesh_id_dial;            // ID de la malla del dial/esfera (-1 = no usar)
+	int mesh_id_dial;            //
 	int mesh_id_hour_hand;       // ID de la malla de la manecilla de horas
-	int mesh_id_minute_hand;     // ID de la malla de la manecilla de minutos
-	int mesh_id_second_hand;     // ID de la malla de la manecilla de segundos
-	int mesh_id_single_hand;     // ID de la malla para modo de una manecilla
+	int mesh_id_minute_hand;     // ID 
+	int mesh_id_second_hand;     // I
+	int mesh_id_single_hand;     // ID
 	bool countdown_use_ar;       // true = usar AR para posicionar reloj, false = posición manual
 };
 
@@ -111,18 +111,18 @@ static struct obs_source_frame *filter_video(void *data,
 
 	bool detected = false;
 
-	// Llamamos a process_frame_rgba, que rellena filter->last_result (incluyendo rvec)
+
 	detected = process_frame_rgba(filter->detector, frame,
 				      filter->width_screen,
 				      filter->height_screen, frame->width,
 				      frame->height, &filter->last_result);
 
 	if (detected && filter->last_result.detected) {
-		// --- INICIO: APLICAR OFFSETS DE POSICIÓN AR ---
+	
 		filter->pos_x = filter->last_result.screen_pos_x +filter->ar_offset_pos_x;
 		filter->pos_y = filter->last_result.screen_pos_y +filter->ar_offset_pos_y;
-		filter->pos_z =0 +filter->ar_offset_pos_z; // Usamos 0 como base Z del marker + offset
-		// --- FIN: APLICAR OFFSETS DE POSICIÓN AR ---
+		filter->pos_z =0 +filter->ar_offset_pos_z; 
+
 
 		const float reference_distance = 1.0f;
 
@@ -249,7 +249,7 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->sync_url = NULL;
 	data->sync_interval_sec = 10.0f;
 
-	// Inicializar configuración de reloj
+	
 	data->clock_mode = 0;              // Tres manecillas por defecto
 	data->mesh_id_dial = 0;
 	data->mesh_id_hour_hand = 1;
@@ -289,10 +289,8 @@ static void filter_destroy(void *data)
 	}
 
 	obs_leave_graphics();
-	if (filter->countdown_clock)
-		countdown_clock_destroy(filter->countdown_clock);
-	if (filter->web_sync)
-		web_sync_destroy(filter->web_sync);
+	if (filter->countdown_clock)countdown_clock_destroy(filter->countdown_clock);
+	if (filter->web_sync)web_sync_destroy(filter->web_sync);
 	bfree(filter->sync_url);
 	bfree(filter->model_path_str);
 	bfree(filter->texture_path_str);
@@ -310,7 +308,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 	uint32_t width = obs_source_get_width(filter->source);
 	uint32_t height = obs_source_get_height(filter->source);
 
-	// If there's no model or valid dimensions, just draw the original source
+	
 	if (!filter->g_meshes || width == 0 || height == 0) {
 		obs_source_skip_video_filter(filter->source);
 		return;
@@ -337,26 +335,25 @@ static void filter_render(void *data, gs_effect_t *effect)
 		filter->zstencil = gs_zstencil_create(width, height, GS_Z16);
 	}
 
-	// --- Render the 3D model to our texture ---
+
 	gs_texture_t *prev_render_target = gs_get_render_target();
 	gs_zstencil_t *prev_zstencil_target = gs_get_zstencil_target();
 
 	gs_set_render_target(filter->texture, filter->zstencil);
-	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH,
-		 (struct vec4[]){{0.0f, 0.0f, 0.0f, 0.0f}}, 1.0f, 0);
+	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH, (struct vec4[]){{0.0f, 0.0f, 0.0f, 0.0f}}, 1.0f, 0);
 
 	gs_projection_push();
-	gs_set_3d_mode(60.0f, 0.1f, 5000.0f); // Use a reasonable near/far plane
+	gs_set_3d_mode(60.0f, 0.1f, 5000.0f); 
 	gs_enable_depth_test(true);
 	gs_depth_function(GS_LESS);
 
 	gs_matrix_push();
 	gs_matrix_identity();
 
-	// **Traslación global** (ya incluye el offset si es modo AR, o la pos 3D si es modo 3D)
+	// Traslación global (ya incluye el offset si es modo AR, o la pos 3D si es modo 3D)
 	gs_matrix_translate3f(filter->pos_x, filter->pos_y, filter->pos_z);
 
-	// --- INICIO: APLICAR ROTACIONES (3D, AR o Countdown) ---
+
 	float rot_x, rot_y, rot_z;
 	if (filter->mode == 0) {
 		rot_x = filter->rotation_x;
@@ -367,7 +364,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 		rot_y = filter->ar_offset_rot_y;
 		rot_z = filter->ar_offset_rot_z;
 	} else {
-		// Modo Countdown: usar AR si está activado, sino rotación manual
+		// usar AR si está activado, sino rotación manual
 		if (filter->countdown_use_ar) {
 			rot_x = filter->ar_offset_rot_x;
 			rot_y = filter->ar_offset_rot_y;
@@ -381,8 +378,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 
 	if (filter->mode == 2 && filter->countdown_clock) {
 		float hour_deg, min_deg, sec_deg, single_deg;
-		countdown_clock_get_hand_angles(filter->countdown_clock,
-						&hour_deg, &min_deg, &sec_deg);
+		countdown_clock_get_hand_angles(filter->countdown_clock,&hour_deg, &min_deg, &sec_deg);
 		countdown_clock_get_single_hand_angle(filter->countdown_clock, &single_deg);
 		
 		render_model_clock_c(filter->g_meshes, filter->g_mesh_count,
@@ -408,16 +404,16 @@ static void filter_render(void *data, gs_effect_t *effect)
 	gs_set_render_target(prev_render_target, prev_zstencil_target);
 	obs_leave_graphics();
 
-	// --- Blend the original source and our 3D model texture ---
+	
 	obs_enter_graphics();
-	// 1. Draw the original video frame
+
 	obs_source_video_render(target);
 
-	// 2. Blend our 3D model on top
+
 	gs_blend_state_push();
 	gs_enable_blending(true);
 	gs_blend_function(GS_BLEND_SRCALPHA,
- GS_BLEND_INVSRCALPHA); // Standard alpha blending
+ GS_BLEND_INVSRCALPHA);
 
 	gs_effect_t *base_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 	while (gs_effect_loop(base_effect, "Draw")) {
@@ -439,7 +435,7 @@ static bool render_mode_changed(obs_properties_t *props,
 	bool countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
 	int clock_mode = (int)obs_data_get_int(settings, "clock_mode");
 	
-	// Mostrar controles de posición/rotación para 3D y Countdown (si no usa AR)
+
 	bool show_manual_pos = show_3d || (show_countdown && !countdown_use_ar);
 	obs_property_set_visible(obs_properties_get(props, "pos_x"), show_manual_pos);
 	obs_property_set_visible(obs_properties_get(props, "pos_y"), show_manual_pos);
@@ -448,7 +444,7 @@ static bool render_mode_changed(obs_properties_t *props,
 	obs_property_set_visible(obs_properties_get(props, "rotation_y_slider_value"), show_manual_pos);
 	obs_property_set_visible(obs_properties_get(props, "rotation_z_slider_value"), show_manual_pos);
 
-	// Mostrar controles AR para modo AR o Countdown con AR activado
+	
 	bool show_ar_controls = show_ar || (show_countdown && countdown_use_ar);
 	obs_property_set_visible(obs_properties_get(props, "marker_id"), show_ar_controls);
 	obs_property_set_visible(obs_properties_get(props, "marker_size"), show_ar_controls);
@@ -736,8 +732,7 @@ static void filter_update(void *data, obs_data_t *settings)
 					      filter->g_mesh_count, NULL, NULL);
 		}
 	} else {
-		/* Si no toca recargar pero la ruta es vacía y hay textura aplicada, mantenemos comportamiento previo:
-           si la ruta está vacía y hay loaded_texture, eliminarla y desasignar de mallas. */
+	
 		if (model_present && new_texture_path_c_str[0] == '\0' &&
 		    filter->loaded_texture) {
 			obs_enter_graphics();
