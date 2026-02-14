@@ -470,7 +470,7 @@ static bool render_mode_changed(obs_properties_t *props,
 	/* Countdown: configuración de reloj */
 	obs_property_set_visible(obs_properties_get(props, "clock_mode"), show_countdown);
 	obs_property_set_visible(obs_properties_get(props, "countdown_use_ar"), show_countdown);
-	obs_property_set_visible(obs_properties_get(props, "mesh_id_dial"), show_countdown);
+	//obs_property_set_visible(obs_properties_get(props, "mesh_id_dial"), show_countdown);
 	
 	// Mostrar IDs de manecillas según el modo de reloj
 	bool show_three_hands = show_countdown && (clock_mode == 0);
@@ -549,7 +549,7 @@ obs_properties_add_path(props, "calibration_file", "Archivo de Calibración",
 	obs_property_t *use_ar_prop = obs_properties_add_bool(props, "countdown_use_ar", "Usar AR para posicionar reloj");
 	obs_property_set_modified_callback(use_ar_prop, render_mode_changed);
 	
-	obs_properties_add_int(props, "mesh_id_dial", "ID Malla Dial/Esfera", -1, 100, 1);
+	//obs_properties_add_int(props, "mesh_id_dial", "ID Malla Dial/Esfera", -1, 100, 1);
 	obs_properties_add_int(props, "mesh_id_hour_hand", "ID Malla Manecilla Horas", -1, 100, 1);
 	obs_properties_add_int(props, "mesh_id_minute_hand", "ID Malla Manecilla Minutos", -1, 100, 1);
 	obs_properties_add_int(props, "mesh_id_second_hand", "ID Malla Manecilla Segundos", -1, 100, 1);
@@ -814,7 +814,7 @@ static void filter_save(void *data, obs_data_t *settings)
 
 	// Guardar configuración de reloj
 	obs_data_set_int(settings, "clock_mode", filter->clock_mode);
-	obs_data_set_int(settings, "mesh_id_dial", filter->mesh_id_dial);
+	//obs_data_set_int(settings, "mesh_id_dial", filter->mesh_id_dial);
 	obs_data_set_int(settings, "mesh_id_hour_hand", filter->mesh_id_hour_hand);
 	obs_data_set_int(settings, "mesh_id_minute_hand", filter->mesh_id_minute_hand);
 	obs_data_set_int(settings, "mesh_id_second_hand", filter->mesh_id_second_hand);
@@ -870,7 +870,7 @@ static void filter_load(void *data, obs_data_t *settings)
 
 	// Cargar configuración de reloj
 	filter->clock_mode = (int)obs_data_get_int(settings, "clock_mode");
-	filter->mesh_id_dial = (int)obs_data_get_int(settings, "mesh_id_dial");
+	//filter->mesh_id_dial = (int)obs_data_get_int(settings, "mesh_id_dial");
 	filter->mesh_id_hour_hand = (int)obs_data_get_int(settings, "mesh_id_hour_hand");
 	filter->mesh_id_minute_hand = (int)obs_data_get_int(settings, "mesh_id_minute_hand");
 	filter->mesh_id_second_hand = (int)obs_data_get_int(settings, "mesh_id_second_hand");
@@ -914,7 +914,7 @@ static void filter_defaults(obs_data_t *settings)
 
 	// Valores por defecto de configuración de reloj
 	obs_data_set_default_int(settings, "clock_mode", 0);  // Tres manecillas por defecto
-	obs_data_set_default_int(settings, "mesh_id_dial", 0);
+	//obs_data_set_default_int(settings, "mesh_id_dial", 0);
 	obs_data_set_default_int(settings, "mesh_id_hour_hand", 1);
 	obs_data_set_default_int(settings, "mesh_id_minute_hand", 2);
 	obs_data_set_default_int(settings, "mesh_id_second_hand", 3);
