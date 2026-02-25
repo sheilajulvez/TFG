@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBS Clock Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>OBS Clock Controller</h1>
+            <p>Sync your 3D countdown in real-time</p>
+        </header>
+
+        <main>
+            <div class="clock-container">
+                <div class="analog-clock">
+                    <div class="hand hour-hand" id="hourHand"></div>
+                    <div class="hand minute-hand" id="minuteHand"></div>
+                    <div class="hand second-hand" id="secondHand"></div>
+                    <div class="center-dot"></div>
+
+                    <!-- Clock markers -->
+                    <div class="marker marker-12"></div>
+                    <div class="marker marker-3"></div>
+                    <div class="marker marker-6"></div>
+                    <div class="marker marker-9"></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="input-group">
+                    <label for="hours">Hours (1-12)</label>
+                    <input type="number" id="hours" min="1" max="12" value="12">
+                </div>
+
+                <div class="input-group">
+                    <label for="minutes">Minutes (0-59)</label>
+                    <input type="number" id="minutes" min="0" max="59" value="0">
+                </div>
+
+                <div class="input-group">
+                    <label for="seconds">Seconds (0-59)</label>
+                    <input type="number" id="seconds" min="0" max="59" value="0">
+                </div>
+            </div>
+
+            <button id="updateBtn" class="btn-primary">Update Time</button>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
