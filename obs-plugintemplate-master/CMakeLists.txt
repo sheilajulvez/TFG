@@ -13,6 +13,10 @@ add_library(${_name} MODULE)
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" ON)
 option(ENABLE_QT            "Use Qt functionality"          ON)
 
+# DISABLE auto-copy to Program Files to avoid LNK1104 while OBS is running
+set(OBS_BUILD_DIR "" CACHE PATH "Disable auto-install" FORCE)
+unset(OBS_BUILD_DIR CACHE)
+
 include(compilerconfig)
 include(defaults)
 include(helpers)
@@ -120,4 +124,13 @@ target_sources(${_name} PRIVATE
     src/countdown_clock.c
 )
 
+# Fix for LNK1107: CMake on Windows thinks .obj files in data/ are precompiled C/C++ objects and passes them to the linker.
+set_source_files_properties(data/reloj.obj PROPERTIES HEADER_FILE_ONLY TRUE)
+
 set_target_properties_plugin(${_name} PROPERTIES OUTPUT_NAME ${_name})
+
+# Forced local copy to avoid the Program Files LNK1104 error
+add_custom_command(TARGET ${_name} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${_name}> "${CMAKE_CURRENT_BINARY_DIR}/Release/$<TARGET_FILE_NAME:${_name}>"
+    COMMENT "Copying plugin to local build directory..."
+)

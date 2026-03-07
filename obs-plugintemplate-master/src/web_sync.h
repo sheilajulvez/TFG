@@ -1,11 +1,16 @@
 /**
  * @file web_sync.h
- * @brief Sincronización opcional del countdown desde una API REST.
+ * @brief Sincronización del plugin con la API REST de DOMjudge.
  *
- * Consulta periódicamente una URL que devuelve JSON con { "hours", "minutes", "seconds" }
- * (tiempo restante). Las peticiones HTTP se ejecutan en un hilo secundario;
- * nunca se bloquea el hilo de render. El resultado se aplica como corrección
- * del reloj local (countdown_clock_sync_remaining).
+ * Consulta periódicamente la API de un servidor DOMjudge para obtener:
+ * 1. Datos del torneo (start_time, end_time) y la hora del servidor (cabecera Date:)
+ * 2. El scoreboard con los equipos y problemas resueltos
+ *
+ * Las peticiones HTTP se ejecutan en un hilo secundario con libcurl;
+ * nunca se bloquea el hilo de render de OBS.
+ *
+ * Modo legacy: si no se configura api_base_url, sigue funcionando
+ * con la URL directa que devuelve { "hours", "minutes", "seconds" }.
  */
 
 #ifndef WEB_SYNC_H
@@ -18,26 +23,65 @@
 extern "C" {
 #endif
 
+/** Máximo de equipos que almacenamos del scoreboard */
+#define MAX_SCOREBOARD_TEAMS 16
+
+/** Datos de un equipo del scoreboard de DOMjudge */
+typedef struct scoreboard_team {
+	char team_id[64];       /**< ID del equipo (string en DOMjudge API) */
+	char team_name[128];    /**< Nombre del equipo (se rellena desde /teams si es necesario) */
+	int  num_solved;        /**< Problemas resueltos */
+	int  total_time;        /**< Tiempo total de penalización */
+	int  rank;              /**< Posición en el ranking */
+} scoreboard_team_t;
+
 /** Estructura opaca del sincronizador web */
 typedef struct web_sync web_sync_t;
 
 /**
  * Resultado de la última sincronización (para uso en el hilo principal).
+ * Combina los datos de tiempo del concurso y del scoreboard.
  */
 typedef struct web_sync_result {
-	bool valid;           /**< true si hay datos nuevos y parseados correctamente */
+	bool valid;              /**< true si hay datos nuevos y parseados correctamente */
+
+	/* Modo legacy (JSON con hours/minutes/seconds) */
 	uint32_t hours;
 	uint32_t minutes;
 	uint32_t seconds;
+
+	/* Modo DOMjudge: datos del torneo */
+	bool     contest_valid;      /**< true si se parseó contest correctamente */
+	double   elapsed_seconds;    /**< Tiempo transcurrido desde start_time */
+	double   remaining_seconds;  /**< Tiempo restante hasta end_time */
+
+	/* Modo DOMjudge: datos del scoreboard */
+	bool     scoreboard_valid;   /**< true si se parseó scoreboard */
+	scoreboard_team_t teams[MAX_SCOREBOARD_TEAMS];
+	int      team_count;         /**< Equipos válidos en el array */
 } web_sync_result_t;
 
 /**
- * Crea un sincronizador web.
+ * Crea un sincronizador web (modo legacy).
  * @param api_url URL de la API REST (GET) que devuelve JSON con hours, minutes, seconds.
  * @param interval_seconds Intervalo entre peticiones en segundos (mínimo 1).
  * @return Instancia nueva o NULL si falla.
  */
 web_sync_t *web_sync_create(const char *api_url, float interval_seconds);
+
+/**
+ * Crea un sincronizador web en modo DOMjudge.
+ * Construye automáticamente las URLs:
+ *   {base_url}/contests/{contest_id}
+ *   {base_url}/contests/{contest_id}/scoreboard
+ * @param base_url URL base de la API (ej. "https://servidor.com/api/v4")
+ * @param contest_id ID del torneo (ej. "2" o "demo")
+ * @param interval_seconds Intervalo entre peticiones (mínimo 1s)
+ * @return Instancia nueva o NULL si falla.
+ */
+web_sync_t *web_sync_create_domjudge(const char *base_url,
+				     const char *contest_id,
+				     float interval_seconds);
 
 /**
  * Destruye el sincronizador y detiene el hilo de peticiones.
@@ -46,8 +90,15 @@ void web_sync_destroy(web_sync_t *sync);
 
 /**
  * Actualiza la URL de la API (toma efecto en la siguiente petición).
+ * Solo para modo legacy.
  */
 void web_sync_set_url(web_sync_t *sync, const char *api_url);
+
+/**
+ * Actualiza base_url y contest_id para modo DOMjudge.
+ */
+void web_sync_set_contest(web_sync_t *sync, const char *base_url,
+			  const char *contest_id);
 
 /**
  * Actualiza el intervalo de peticiones (segundos).
@@ -66,6 +117,14 @@ void web_sync_set_enabled(web_sync_t *sync, bool enabled);
  * @return true si @a result contiene datos nuevos.
  */
 bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result);
+
+/**
+ * Hace una petición síncrona rápida para probar la conexión.
+ * @param base_url URL base de la API
+ * @param contest_id ID del torneo
+ * @return true si la conexión fue exitosa
+ */
+bool web_sync_test_connection(const char *base_url, const char *contest_id);
 
 #ifdef __cplusplus
 }

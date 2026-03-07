@@ -83,6 +83,19 @@ struct cube_filter_data {
 	char *sync_url;
 	float sync_interval_sec;
 
+	/* DOMjudge API */
+	char *api_base_url;          // URL base API DOMjudge (ej. https://servidor.com/api/v4)
+	char *contest_id;            // ID del torneo (ej. "2" o "demo")
+
+	/* Scoreboard data (protegido: solo se escribe en filter_tick) */
+	scoreboard_team_t scoreboard_teams[MAX_SCOREBOARD_TEAMS];
+	int scoreboard_team_count;
+	obs_source_t *scoreboard_text_source;  // fuente GDI+ para texto overlay
+	float scoreboard_offset_x;
+	float scoreboard_offset_y;
+	bool scoreboard_centered;
+	int scoreboard_font_size;
+	char *scoreboard_font_face;
 
 	int clock_mode;              // 0 = tres manecillas, 1 = una manecilla
 	int mesh_id_dial;            //
@@ -249,7 +262,14 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->sync_url = NULL;
 	data->sync_interval_sec = 10.0f;
 
-	
+	data->api_base_url = NULL;
+	data->contest_id = NULL;
+	data->scoreboard_team_count = 0;
+	data->scoreboard_text_source = NULL;
+	data->scoreboard_offset_x = 10.0f;
+	data->scoreboard_offset_y = 10.0f;
+	data->scoreboard_centered = false;
+
 	data->clock_mode = 0;              // Tres manecillas por defecto
 	data->mesh_id_dial = 0;
 	data->mesh_id_hour_hand = 1;
@@ -291,9 +311,16 @@ static void filter_destroy(void *data)
 	obs_leave_graphics();
 	if (filter->countdown_clock)countdown_clock_destroy(filter->countdown_clock);
 	if (filter->web_sync)web_sync_destroy(filter->web_sync);
+	if (filter->scoreboard_text_source) {
+		obs_source_release(filter->scoreboard_text_source);
+		filter->scoreboard_text_source = NULL;
+	}
 	bfree(filter->sync_url);
+	bfree(filter->api_base_url);
+	bfree(filter->contest_id);
 	bfree(filter->model_path_str);
 	bfree(filter->texture_path_str);
+	bfree(filter->scoreboard_font_face);
 	bfree(filter);
 }
 
@@ -421,6 +448,57 @@ static void filter_render(void *data, gs_effect_t *effect)
 	}
 
 	gs_blend_state_pop();
+
+	/* Renderizar overlay de scoreboard si hay datos */
+	if (filter->mode == 2 && filter->scoreboard_text_source) {
+		uint32_t tw = obs_source_get_width(filter->scoreboard_text_source);
+		uint32_t th = obs_source_get_height(filter->scoreboard_text_source);
+		
+		float x = filter->scoreboard_offset_x;
+		float y = filter->scoreboard_offset_y;
+		float final_x, final_y;
+
+		if (filter->scoreboard_centered && tw > 0) {
+			final_x = (filter->width_screen - (float)tw) / 2.0f;
+			final_y = (filter->height_screen - (float)th) / 2.0f;
+		} else {
+			final_x = x;
+			/* Invertir Y manualmente: user Y=0 -> final_y = h - th (parte superior en proyección estándar) */
+			final_y = filter->height_screen - y - (float)th;
+		}
+
+		/* Configurar estado 2D */
+		gs_enable_depth_test(false);
+		gs_blend_state_push();
+		gs_enable_blending(true);
+		gs_blend_function(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
+
+		gs_projection_push();
+		/* Proyección estándar (0 es abajo) para evitar texto invertido */
+		gs_ortho(0.0f, filter->width_screen, 0.0f, filter->height_screen, -100.0f, 100.0f);
+
+		gs_matrix_push();
+		gs_matrix_identity();
+
+		/* Dibujar el texto */
+		gs_matrix_push();
+		gs_matrix_translate3f(final_x, final_y, 0.0f);
+		obs_source_video_render(filter->scoreboard_text_source);
+		gs_matrix_pop();
+
+		gs_matrix_pop();
+		gs_projection_pop();
+		gs_blend_state_pop();
+		gs_enable_depth_test(true);
+
+		if (tw == 0 || th == 0) {
+			static int log_throttle = 0;
+			if (log_throttle++ % 120 == 0) {
+				blog(LOG_DEBUG, "[CUBE] Text source size is 0x0 (not ready)");
+			}
+		}
+	}
+
 	obs_leave_graphics();
 }
 static bool render_mode_changed(obs_properties_t *props,
@@ -467,7 +545,17 @@ static bool render_mode_changed(obs_properties_t *props,
 	obs_property_set_visible(obs_properties_get(props, "sync_url"), show_countdown);
 	obs_property_set_visible(obs_properties_get(props, "sync_interval_sec"), show_countdown);
 
-	/* Countdown: configuración de reloj */
+	/* DOMjudge API */
+	obs_property_set_visible(obs_properties_get(props, "api_base_url"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "contest_id"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "test_connection"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_offset_x"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_offset_y"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_centered"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_font_size"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_font_face"), show_countdown);
+
+	
 	obs_property_set_visible(obs_properties_get(props, "clock_mode"), show_countdown);
 	obs_property_set_visible(obs_properties_get(props, "countdown_use_ar"), show_countdown);
 	//obs_property_set_visible(obs_properties_get(props, "mesh_id_dial"), show_countdown);
@@ -481,6 +569,34 @@ static bool render_mode_changed(obs_properties_t *props,
 	obs_property_set_visible(obs_properties_get(props, "mesh_id_single_hand"), show_single_hand);
 
 	return true;
+}
+
+/* Callback para el botón "Probar Conexión" de DOMjudge */
+static bool test_connection_callback(obs_properties_t *props,
+				     obs_property_t *property, void *data)
+{
+	struct cube_filter_data *filter = data;
+	UNUSED_PARAMETER(props);
+	UNUSED_PARAMETER(property);
+
+	const char *base = filter->api_base_url;
+	const char *cid = filter->contest_id;
+
+	if (!base || !base[0] || !cid || !cid[0]) {
+		blog(LOG_WARNING,
+		     "[CUBE] Probar Conexión: URL base o ID de torneo vacíos");
+		return false;
+	}
+
+	blog(LOG_INFO, "[CUBE] Probando conexión a %s/contests/%s", base, cid);
+	bool ok = web_sync_test_connection(base, cid);
+	if (ok) {
+		blog(LOG_INFO, "[CUBE] Conexión exitosa al servidor DOMjudge");
+	} else {
+		blog(LOG_WARNING,
+		     "[CUBE] No se pudo conectar al servidor DOMjudge");
+	}
+	return false; /* no refrescar la UI */
 }
 
 static obs_properties_t *filter_properties(void *data)
@@ -529,31 +645,40 @@ obs_properties_add_path(props, "calibration_file", "Archivo de Calibración",
 	obs_properties_add_float_slider(props, "ar_offset_rot_z","AR Offset Rotación Z", -360.0f, 360.0f,1.0f);
 
 	/* Countdown: duración y sincronización web */
-	obs_properties_add_int(props, "countdown_duration_h", "Countdown Horas", 0, 99, 1);
-	obs_properties_add_int(props, "countdown_duration_m", "Countdown Minutos", 0, 59, 1);
-	obs_properties_add_int(props, "countdown_duration_s", "Countdown Segundos", 0, 59, 1);
-	obs_properties_add_bool(props, "countdown_running", "Countdown en marcha");
-	obs_properties_add_bool(props, "countdown_reset", "Reiniciar countdown (marcar y desmarcar)");
-	obs_properties_add_bool(props, "sync_enabled", "Sincronización web activa");
-	obs_properties_add_text(props, "sync_url", "URL API (JSON: hours, minutes, seconds)", OBS_TEXT_DEFAULT);
-	obs_properties_add_float(props, "sync_interval_sec", "Intervalo sincronización (seg)", 1.0f, 300.0f, 1.0f);
+	obs_properties_add_int(props, "countdown_duration_h", "Horas", 0, 99, 1);
+	obs_properties_add_int(props, "countdown_duration_m", "Minutos", 0, 59, 1);
+	obs_properties_add_int(props, "countdown_duration_s", "Segundos", 0, 59, 1);
+	obs_properties_add_bool(props, "countdown_running", "Cuenta Atrás a Mover");
+	obs_properties_add_bool(props, "countdown_reset", "Reiniciar Reloj");
+	obs_properties_add_bool(props, "sync_enabled", "Sincronización Web");
+	obs_properties_add_text(props, "sync_url", "URL (Legacy)", OBS_TEXT_DEFAULT);
+	obs_properties_add_float(props, "sync_interval_sec", "Intervalo API (seg)", 1.0f, 300.0f, 1.0f);
 
-	/* Countdown: configuración de reloj */
-	obs_property_t *clock_mode_combo = obs_properties_add_list(
-		props, "clock_mode", "Modo de reloj",
-		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(clock_mode_combo, "Tres manecillas (H/M/S)", 0);
-	obs_property_list_add_int(clock_mode_combo, "Una manecilla (tiempo total)", 1);
-	obs_property_set_modified_callback(clock_mode_combo, render_mode_changed);
-
-	obs_property_t *use_ar_prop = obs_properties_add_bool(props, "countdown_use_ar", "Usar AR para posicionar reloj");
-	obs_property_set_modified_callback(use_ar_prop, render_mode_changed);
+	/* --- CONFIGURACIÓN RELOJ --- */
+	obs_property_t *clk_mode = obs_properties_add_list(props, "clock_mode", "Manecillas Reloj", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(clk_mode, "H/M/S (3)", 0);
+	obs_property_list_add_int(clk_mode, "Total (1)", 1);
 	
-	//obs_properties_add_int(props, "mesh_id_dial", "ID Malla Dial/Esfera", -1, 100, 1);
-	obs_properties_add_int(props, "mesh_id_hour_hand", "ID Malla Manecilla Horas", -1, 100, 1);
-	obs_properties_add_int(props, "mesh_id_minute_hand", "ID Malla Manecilla Minutos", -1, 100, 1);
-	obs_properties_add_int(props, "mesh_id_second_hand", "ID Malla Manecilla Segundos", -1, 100, 1);
-	obs_properties_add_int(props, "mesh_id_single_hand", "ID Malla Manecilla Única", -1, 100, 1);
+	obs_properties_add_int(props, "countdown_duration_h", "CD Horas", 0, 99, 1);
+	obs_properties_add_int(props, "countdown_duration_m", "CD Minutos", 0, 59, 1);
+	obs_properties_add_int(props, "countdown_duration_s", "CD Segundos", 0, 59, 1);
+	obs_properties_add_bool(props, "countdown_running", "Iniciar Cuenta Atrás");
+	obs_properties_add_bool(props, "countdown_reset", "Reiniciar Reloj");
+	obs_properties_add_bool(props, "countdown_use_ar", "Reloj en Marker AR");
+
+	/* --- DOMJUDGE & SYNC --- */
+	obs_properties_add_bool(props, "sync_enabled", "Sincronizar con DOMjudge");
+	obs_properties_add_text(props, "api_base_url", "URL API (DOMjudge)", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(props, "contest_id", "Contest ID", OBS_TEXT_DEFAULT);
+	obs_properties_add_button(props, "test_connection", "Probar Conexión", test_connection_callback);
+	obs_properties_add_float(props, "sync_interval_sec", "Intervalo Sinc (seg)", 1.0f, 300.0f, 1.0f);
+
+	/* --- SCOREBOARD OVERLAY --- */
+	obs_properties_add_bool(props, "scoreboard_centered", "Centrar en Pantalla");
+	obs_properties_add_float_slider(props, "scoreboard_offset_x", "Offset Manual X", 0.0f, 3000.0f, 5.0f);
+	obs_properties_add_float_slider(props, "scoreboard_offset_y", "Offset Manual Y", 0.0f, 3000.0f, 5.0f);
+	obs_properties_add_int(props, "scoreboard_font_size", "Tamaño de Fuente", 5, 150, 1);
+	obs_properties_add_text(props, "scoreboard_font_face", "Nombre de Fuente (Arial, Consolas...)", OBS_TEXT_DEFAULT);
 
 	obs_data_t *temp_settings = obs_data_create();
 	render_mode_changed(props, combo, temp_settings);
@@ -603,18 +728,110 @@ static void filter_update(void *data, obs_data_t *settings)
 				countdown_clock_pause(filter->countdown_clock);
 		}
 	}
-	/* Web sync: crear o actualizar si está habilitado y hay URL (nunca bloquea el render) */
-	if (filter->sync_enabled && new_sync_url && new_sync_url[0]) {
-		blog(LOG_INFO, "WEB INFO SI");
-		if (filter->web_sync) {
-			web_sync_set_url(filter->web_sync, new_sync_url);
-			web_sync_set_interval(filter->web_sync, filter->sync_interval_sec);
-			web_sync_set_enabled(filter->web_sync, true);
+	/* DOMjudge API: leer campos */
+	const char *new_base_url = obs_data_get_string(settings, "api_base_url");
+	if (!new_base_url) new_base_url = "";
+	const char *new_contest_id = obs_data_get_string(settings, "contest_id");
+	if (!new_contest_id) new_contest_id = "";
+
+	bfree(filter->api_base_url);
+	filter->api_base_url = (new_base_url[0]) ? bstrdup(new_base_url) : NULL;
+	bfree(filter->contest_id);
+	filter->contest_id = (new_contest_id[0]) ? bstrdup(new_contest_id) : NULL;
+
+	filter->scoreboard_offset_x = (float)obs_data_get_double(settings, "scoreboard_offset_x");
+	filter->scoreboard_offset_y = (float)obs_data_get_double(settings, "scoreboard_offset_y");
+	filter->scoreboard_centered = obs_data_get_bool(settings, "scoreboard_centered");
+	filter->scoreboard_font_size = (int)obs_data_get_int(settings, "scoreboard_font_size");
+	bfree(filter->scoreboard_font_face);
+	const char *ff_update = obs_data_get_string(settings, "scoreboard_font_face");
+	filter->scoreboard_font_face = (ff_update && ff_update[0]) ? bstrdup(ff_update) : NULL;
+
+	/* Crear fuente de texto siempre que estemos en modo Countdown (modo 2) para el overlay */
+	if (filter->mode == 2 && !filter->scoreboard_text_source) {
+		obs_data_t *txt_settings = obs_data_create();
+		obs_data_set_string(txt_settings, "text", "[[ MODO SCOREBOARD ACTIVO ]]\nEsperando datos...");
+		obs_data_set_int(txt_settings, "color", 0xFF00FF00); // Verde suave
+		obs_data_set_int(txt_settings, "font_size", 25);
+		obs_data_set_string(txt_settings, "font_face", "Arial");
+		obs_data_set_int(txt_settings, "opacity", 100);
+		obs_data_set_bool(txt_settings, "outline", true);
+		obs_data_set_int(txt_settings, "outline_size", 4);
+		obs_data_set_int(txt_settings, "outline_color", 0xFF000000);
+		
+		filter->scoreboard_text_source = obs_source_create_private("text_gdiplus_v2", "scoreboard_text", txt_settings);
+		if (!filter->scoreboard_text_source) {
+			filter->scoreboard_text_source = obs_source_create_private("text_gdiplus", "scoreboard_text", txt_settings);
+		}
+
+		if (filter->scoreboard_text_source) {
+			blog(LOG_INFO, "[CUBE] Fuente de texto overlay (reloj/scoreboard) creada");
+			obs_source_add_active_child(filter->source, filter->scoreboard_text_source);
+		}
+		obs_data_release(txt_settings);
+	}
+
+	/* Aplicar cambios de fuente en tiempo real si la fuente ya existe */
+	if (filter->scoreboard_text_source) {
+		obs_data_t *t_set = obs_data_create();
+		obs_data_t *font_obj = obs_data_create();
+
+		/* Si el tamaño es 0 o muy pequeño, usar un default de 25 */
+		int fs = filter->scoreboard_font_size;
+		if (fs <= 0) fs = 25;
+
+		obs_data_set_int(font_obj, "size", fs);
+		if (filter->scoreboard_font_face && filter->scoreboard_font_face[0])
+			obs_data_set_string(font_obj, "face", filter->scoreboard_font_face);
+		else
+			obs_data_set_string(font_obj, "face", "Arial");
+		
+		obs_data_set_obj(t_set, "font", font_obj);
+		obs_source_update(filter->scoreboard_text_source, t_set);
+
+		obs_data_release(font_obj);
+		obs_data_release(t_set);
+	}
+
+	/* Web sync: crear o actualizar (nunca bloquea el render) */
+	if (filter->sync_enabled) {
+		bool use_domjudge = (filter->api_base_url && filter->api_base_url[0] &&
+				     filter->contest_id && filter->contest_id[0]);
+
+		if (use_domjudge) {
+			blog(LOG_INFO, "[CUBE] Modo DOMjudge: %s/contests/%s",
+			     filter->api_base_url, filter->contest_id);
+			if (filter->web_sync) {
+				web_sync_set_contest(filter->web_sync,
+						     filter->api_base_url,
+						     filter->contest_id);
+				web_sync_set_interval(filter->web_sync,
+						      filter->sync_interval_sec);
+				web_sync_set_enabled(filter->web_sync, true);
+			} else {
+				filter->web_sync = web_sync_create_domjudge(
+					filter->api_base_url,
+					filter->contest_id,
+					filter->sync_interval_sec);
+			}
+		} else if (new_sync_url && new_sync_url[0]) {
+			/* Modo legacy */
+			blog(LOG_INFO, "[CUBE] Modo legacy sync: %s", new_sync_url);
+			if (filter->web_sync) {
+				web_sync_set_url(filter->web_sync, new_sync_url);
+				web_sync_set_interval(filter->web_sync,
+						      filter->sync_interval_sec);
+				web_sync_set_enabled(filter->web_sync, true);
+			} else {
+				filter->web_sync = web_sync_create(
+					new_sync_url, filter->sync_interval_sec);
+			}
 		} else {
-			filter->web_sync = web_sync_create(new_sync_url, filter->sync_interval_sec);
+			if (filter->web_sync)
+				web_sync_set_enabled(filter->web_sync, false);
 		}
 		bfree(filter->sync_url);
-		filter->sync_url = bstrdup(new_sync_url);
+		filter->sync_url = (new_sync_url && new_sync_url[0]) ? bstrdup(new_sync_url) : NULL;
 	} else {
 		if (filter->web_sync)
 			web_sync_set_enabled(filter->web_sync, false);
@@ -775,9 +992,52 @@ static void filter_tick(void *data, float seconds)
 		countdown_clock_tick(filter->countdown_clock, seconds);
 		if (filter->web_sync) {
 			web_sync_result_t sync_result;
-			if (web_sync_poll(filter->web_sync, &sync_result) && sync_result.valid)
+			if (web_sync_poll(filter->web_sync, &sync_result) && sync_result.valid) {
 				countdown_clock_sync_remaining(filter->countdown_clock,
 					sync_result.hours, sync_result.minutes, sync_result.seconds);
+
+				/* Actualizar scoreboard si hay datos nuevos */
+				if (sync_result.scoreboard_valid && sync_result.team_count > 0) {
+					filter->scoreboard_team_count = sync_result.team_count;
+					memcpy(filter->scoreboard_teams, sync_result.teams,
+					       sizeof(scoreboard_team_t) * sync_result.team_count);
+
+					/* Construir texto del scoreboard para overlay */
+					char sb_text[2048] = {0};
+					int offset = 0;
+					
+					/* Cabecera estética */
+					offset += snprintf(sb_text + offset, sizeof(sb_text) - offset,
+						"RK | %-20s | OK\n", "EQUIPO");
+					offset += snprintf(sb_text + offset, sizeof(sb_text) - offset,
+						"----------------------------------\n");
+
+					for (int i = 0; i < filter->scoreboard_team_count && i < 10; i++) {
+						char name_trunc[21] = {0};
+						strncpy(name_trunc, filter->scoreboard_teams[i].team_name, 20);
+						
+						offset += snprintf(sb_text + offset,
+								   sizeof(sb_text) - offset,
+								   "%2d | %-20s | %2d\n",
+								   filter->scoreboard_teams[i].rank,
+								   name_trunc,
+								   filter->scoreboard_teams[i].num_solved);
+					}
+
+					/* Crear o actualizar fuente de texto GDI+ */
+					if (filter->scoreboard_text_source) {
+						obs_data_t *txt_settings = obs_source_get_settings(
+							filter->scoreboard_text_source);
+						const char *old_text = obs_data_get_string(txt_settings, "text");
+						if (!old_text || strcmp(old_text, sb_text) != 0) {
+							obs_data_set_string(txt_settings, "text", sb_text);
+							obs_source_update(filter->scoreboard_text_source,
+									  txt_settings);
+						}
+						obs_data_release(txt_settings);
+					}
+				}
+			}
 		}
 	}
 }
@@ -811,6 +1071,13 @@ static void filter_save(void *data, obs_data_t *settings)
 	obs_data_set_bool(settings, "sync_enabled", filter->sync_enabled);
 	obs_data_set_double(settings, "sync_interval_sec", (double)filter->sync_interval_sec);
 	if (filter->sync_url) obs_data_set_string(settings, "sync_url", filter->sync_url);
+	if (filter->api_base_url) obs_data_set_string(settings, "api_base_url", filter->api_base_url);
+	if (filter->contest_id) obs_data_set_string(settings, "contest_id", filter->contest_id);
+	obs_data_set_double(settings, "scoreboard_offset_x", (double)filter->scoreboard_offset_x);
+	obs_data_set_double(settings, "scoreboard_offset_y", (double)filter->scoreboard_offset_y);
+	obs_data_set_bool(settings, "scoreboard_centered", filter->scoreboard_centered);
+	obs_data_set_int(settings, "scoreboard_font_size", filter->scoreboard_font_size);
+	if (filter->scoreboard_font_face) obs_data_set_string(settings, "scoreboard_font_face", filter->scoreboard_font_face);
 
 	// Guardar configuración de reloj
 	obs_data_set_int(settings, "clock_mode", filter->clock_mode);
@@ -868,6 +1135,20 @@ static void filter_load(void *data, obs_data_t *settings)
 	const char *su = obs_data_get_string(settings, "sync_url");
 	filter->sync_url = (su && su[0]) ? bstrdup(su) : NULL;
 
+	bfree(filter->api_base_url);
+	const char *abu = obs_data_get_string(settings, "api_base_url");
+	filter->api_base_url = (abu && abu[0]) ? bstrdup(abu) : NULL;
+	bfree(filter->contest_id);
+	const char *cid = obs_data_get_string(settings, "contest_id");
+	filter->contest_id = (cid && cid[0]) ? bstrdup(cid) : NULL;
+	filter->scoreboard_offset_x = (float)obs_data_get_double(settings, "scoreboard_offset_x");
+	filter->scoreboard_offset_y = (float)obs_data_get_double(settings, "scoreboard_offset_y");
+	filter->scoreboard_centered = obs_data_get_bool(settings, "scoreboard_centered");
+	filter->scoreboard_font_size = (int)obs_data_get_int(settings, "scoreboard_font_size");
+	bfree(filter->scoreboard_font_face);
+	const char *ff = obs_data_get_string(settings, "scoreboard_font_face");
+	filter->scoreboard_font_face = (ff && ff[0]) ? bstrdup(ff) : NULL;
+
 	// Cargar configuración de reloj
 	filter->clock_mode = (int)obs_data_get_int(settings, "clock_mode");
 	//filter->mesh_id_dial = (int)obs_data_get_int(settings, "mesh_id_dial");
@@ -911,6 +1192,13 @@ static void filter_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "sync_enabled", false);
 	obs_data_set_default_string(settings, "sync_url", "");
 	obs_data_set_default_double(settings, "sync_interval_sec", 10.0);
+	obs_data_set_default_string(settings, "api_base_url", "");
+	obs_data_set_default_string(settings, "contest_id", "");
+	obs_data_set_default_double(settings, "scoreboard_offset_x", 10.0);
+	obs_data_set_default_double(settings, "scoreboard_offset_y", 10.0);
+	obs_data_set_default_bool(settings, "scoreboard_centered", false);
+	obs_data_set_default_int(settings, "scoreboard_font_size", 24);
+	obs_data_set_default_string(settings, "scoreboard_font_face", "Arial");
 
 	// Valores por defecto de configuración de reloj
 	obs_data_set_default_int(settings, "clock_mode", 0);  // Tres manecillas por defecto

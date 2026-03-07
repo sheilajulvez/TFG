@@ -1,0 +1,5404 @@
+# RECOPILACIÓN DE CÓDIGO FUENTE
+
+
+============================================================
+/// ARCHIVO: .\aruco_detector.cpp ///
+============================================================
+
+﻿#include "aruco_detector.h"
+#include <opencv2/aruco.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/calib3d.hpp>
+#include <cmath>
+#include <limits>
+#include <opencv2/core.hpp>
+#include <opencv2/calib3d.hpp>
+#include <opencv2/aruco.hpp>
+#include <obs-module.h>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
+#ifndef M_PI_2
+#define M_PI_2 (M_PI / 2.0f)
+#endif
+
+// Estructura ArucoDetector (sin cambios)
+struct ArucoDetector {
+	cv::Ptr<cv::aruco::Dictionary> dictionary;
+	cv::Ptr<cv::aruco::DetectorParameters> detector_params;
+	cv::Mat camera_matrix, dist_coeffs, mat_bgra;
+	float marker_size;
+	int id;
+	int marker_dict;
+	std::string calibration_path;
+};
+
+// set_default_camera_params (sin cambios)
+void set_default_camera_params(ArucoDetector *det)
+{
+	// Intrinsics por defecto: fx = fy = 2000, principal point (cx, cy) = (1233, 718)
+	det->camera_matrix = (cv::Mat_<double>(3, 3) << 2000.0, 0.0, 1233.0,
+			      0.0, 2000.0, 718.0, 0.0, 0.0, 1.0);
+
+	// Distorsión por defecto: cero en todos los coeficientes
+	det->dist_coeffs = cv::Mat::zeros(1, 5, CV_64F);
+
+	blog(LOG_WARNING, "[CUBE] Usando parámetros de cámara por defecto (fx=fy=2000, cx=1233, cy=718).");
+}
+
+// obs_frame_to_bgra (sin cambios)
+cv::Mat obs_frame_to_bgra(struct obs_source_frame *frame)
+{
+	int width = frame->width;
+	int height = frame->height;
+	cv::Mat bgra; // Matriz de destino
+
+	switch (frame->format) {
+	case VIDEO_FORMAT_I420: {
+		cv::Mat yuv_packed(height + height / 2, width, CV_8UC1);
+		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],frame->linesize[0]);
+		y_plane.copyTo(yuv_packed(cv::Rect(0, 0, width, height)));
+		cv::Mat u_plane(height / 2, width / 2, CV_8UC1, frame->data[1],frame->linesize[1]);
+		u_plane.copyTo(yuv_packed(cv::Rect(0, height, width / 2, height / 2)));
+		cv::Mat v_plane(height / 2, width / 2, CV_8UC1, frame->data[2],frame->linesize[2]);
+		v_plane.copyTo(yuv_packed(cv::Rect(width / 2, height, width / 2, height / 2)));
+		cv::cvtColor(yuv_packed, bgra, cv::COLOR_YUV2BGRA_I420);
+		break;
+	}
+	case VIDEO_FORMAT_I422: {
+		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],frame->linesize[0]);
+		cv::Mat u_plane(height, width / 2, CV_8UC1, frame->data[1],	frame->linesize[1]);
+		cv::Mat v_plane(height, width / 2, CV_8UC1, frame->data[2],frame->linesize[2]);
+		cv::Mat u_resized, v_resized;
+		cv::resize(u_plane, u_resized, cv::Size(width, height), 0, 0, cv::INTER_LINEAR);
+		cv::resize(v_plane, v_resized, cv::Size(width, height), 0, 0,cv::INTER_LINEAR);
+		cv::Mat yuv_image;
+		std::vector<cv::Mat> yuv_planes = {y_plane, u_resized, v_resized};
+		cv::merge(yuv_planes, yuv_image);
+		cv::Mat bgr;
+		cv::cvtColor(yuv_image, bgr, cv::COLOR_YUV2BGR);
+		cv::cvtColor(bgr, bgra, cv::COLOR_BGR2BGRA);
+		break;
+	}
+	case VIDEO_FORMAT_NV12: {
+		cv::Mat nv12_packed(height + height / 2, width, CV_8UC1);
+		cv::Mat y_plane(height, width, CV_8UC1, frame->data[0],
+				frame->linesize[0]);
+		cv::Mat uv_plane(height / 2, width, CV_8UC1, frame->data[1],
+				 frame->linesize[1]);
+		y_plane.copyTo(nv12_packed(cv::Rect(0, 0, width, height)));
+		uv_plane.copyTo(
+			nv12_packed(cv::Rect(0, height, width, height / 2)));
+		cv::cvtColor(nv12_packed, bgra, cv::COLOR_YUV2BGRA_NV12);
+		break;
+	}
+	case VIDEO_FORMAT_YUY2: {
+		cv::Mat yuy2(height, width, CV_8UC2, frame->data[0],
+			     frame->linesize[0]);
+		cv::cvtColor(yuy2, bgra, cv::COLOR_YUV2BGRA_YUY2);
+		break;
+	}
+	case VIDEO_FORMAT_UYVY: {
+		cv::Mat uyvy(height, width, CV_8UC2, frame->data[0],
+			     frame->linesize[0]);
+		cv::cvtColor(uyvy, bgra, cv::COLOR_YUV2BGRA_UYVY);
+		break;
+	}
+	case VIDEO_FORMAT_YVYU: {
+		cv::Mat yvyu(height, width, CV_8UC2, frame->data[0],
+			     frame->linesize[0]);
+		cv::cvtColor(yvyu, bgra, cv::COLOR_YUV2BGRA_YVYU);
+		break;
+	}
+	case VIDEO_FORMAT_BGRA: {
+		bgra = cv::Mat(height, width, CV_8UC4, frame->data[0],
+			       frame->linesize[0])
+			       .clone();
+		break;
+	}
+	case VIDEO_FORMAT_RGBA: {
+		cv::Mat rgba(height, width, CV_8UC4, frame->data[0],
+			     frame->linesize[0]);
+		cv::cvtColor(rgba, bgra, cv::COLOR_RGBA2BGRA);
+		break;
+	}
+	case VIDEO_FORMAT_BGR3:
+	case VIDEO_FORMAT_BGRX: {
+		cv::Mat bgr(height, width, CV_8UC3, frame->data[0],
+			    frame->linesize[0]);
+		cv::cvtColor(bgr, bgra, cv::COLOR_BGR2BGRA);
+		break;
+	}
+	case VIDEO_FORMAT_Y800: { // Grayscale
+		cv::Mat gray(height, width, CV_8UC1, frame->data[0],
+			     frame->linesize[0]);
+		cv::cvtColor(gray, bgra, cv::COLOR_GRAY2BGRA);
+		break;
+	}
+	default:
+		blog(LOG_WARNING,
+		     "[Aruco] Formato de video no soportado para conversión a BGRA: %s (%d)",
+		     get_video_format_name(frame->format), frame->format);
+		break;
+	}
+
+	if (bgra.empty()) {
+		blog(LOG_WARNING,
+		     "[Aruco] La conversión del frame a BGRA falló para el formato %s.",
+		     get_video_format_name(frame->format));
+	}
+
+	return bgra;
+}
+
+extern "C" {
+// load_camera_calibration (sin cambios)
+bool load_camera_calibration(const std::string &filename,
+			     cv::Mat &camera_matrix, cv::Mat &dist_coeffs)
+{
+	camera_matrix.release();
+	dist_coeffs.release();
+	cv::FileStorage fs(filename, cv::FileStorage::READ);
+	if (!fs.isOpened()) {
+		blog(LOG_ERROR,
+		     "[CUBE] No se pudo abrir el archivo de calibración: %s",
+		     filename.c_str());
+		return false;
+	}
+
+	fs["camera_matrix"] >> camera_matrix;
+	fs["distortion_coefficients"] >> dist_coeffs;
+
+	if (camera_matrix.empty() || dist_coeffs.empty()) {
+		blog(LOG_ERROR,
+		     "[CUBE] Parámetros inválidos en el archivo de calibración.");
+		return false;
+	}
+
+	blog(LOG_INFO, "[CUBE] Archivo de calibración cargado con éxito.");
+	return true;
+}
+
+// set_camera_calibration (sin cambios)
+bool set_camera_calibration(ArucoDetector *det, const char *filename)
+{
+	if (!det || !filename || *filename == '\0')
+		return false;
+
+	if (!load_camera_calibration(filename, det->camera_matrix,
+				     det->dist_coeffs)) {
+		blog(LOG_WARNING,
+		     "[CUBE] Usando parámetros de cámara por defecto.");
+		set_default_camera_params(det);
+	} else {
+		det->calibration_path = filename;
+		blog(LOG_INFO,
+		     "[CUBE] Calibración cargada y establecida desde %s",
+		     filename);
+	}
+
+	return true;
+}
+
+// initialize_aruco_detector (sin cambios)
+ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,
+					 const char *calibration_file)
+{
+	auto *det = new ArucoDetector;
+	set_marker_dictionary(det, dict);
+	det->detector_params = cv::aruco::DetectorParameters::create();
+	set_marker_size(det, marker_size_meters);
+	det->id = 0;
+	blog(LOG_WARNING, "[CUBE] catgar cpsitas");
+	if (!set_camera_calibration(det, calibration_file)) {
+		blog(LOG_WARNING,
+		     "[CUBE] Usando parámetros de cámara por defecto.");
+		det->camera_matrix = (cv::Mat_<double>(3, 3) << 2000.0, 0.0,
+				      1233.0, 0.0, 2000.0, 718.0, 0.0, 0.0,
+				      1.0);
+		det->dist_coeffs = cv::Mat::zeros(1, 5, CV_64F);
+	}
+	return det;
+}
+
+// cleanup_aruco_detector (sin cambios)
+void cleanup_aruco_detector(ArucoDetector *det)
+{
+	det->detector_params.release();
+	det->camera_matrix.release();
+	det->dictionary.release();
+	det->camera_matrix.release();
+	det->dist_coeffs.release();
+	det->mat_bgra.release();
+	delete det;
+}
+
+
+static void rotation_to_euler(const cv::Mat &R, float &pitch, float &yaw,
+			      float &roll)
+{
+	
+	double r20 = R.at<double>(2, 0);
+
+	if (std::abs(r20) > 0.999) {
+		
+		pitch = (r20 < 0.0) ? M_PI_2 : -M_PI_2;
+		yaw = std::atan2(-R.at<double>(0, 1), R.at<double>(0, 2));
+		roll = 0.0;
+	} else {
+		pitch = std::asin(-r20);
+		yaw = std::atan2(R.at<double>(1, 0), R.at<double>(0, 0));
+		roll = std::atan2(R.at<double>(2, 1), R.at<double>(2, 2));
+	}
+
+	
+	pitch = static_cast<float>(pitch * 180.0 / M_PI);
+	yaw = static_cast<float>(yaw * 180.0 / M_PI);
+	roll = static_cast<float>(roll * 180.0 / M_PI);
+}
+
+
+bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
+			int base_w, int base_h, int fw, int fh,
+			ArucoResult *res)
+{
+	if (!det || !frame || !res)
+		return false;
+
+	int w = base_w; // ancho base de referencia
+	int h = base_h; // alto base de referencia
+
+	// Convertir frame a BGRA
+	cv::Mat bgra = obs_frame_to_bgra(frame);
+	if (bgra.empty()) {
+		blog(LOG_WARNING,
+		     "process_frame_rgba_scaled: conversión a BGRA falló");
+		return false;
+	}
+
+	// Convertir a gris
+	cv::Mat gray;
+	cv::cvtColor(bgra, gray, cv::COLOR_BGRA2GRAY);
+
+	// Detectar marcadores
+	std::vector<std::vector<cv::Point2f>> corners;
+	std::vector<int> ids;
+	cv::aruco::detectMarkers(gray, det->dictionary, corners, ids,
+				 det->detector_params);
+
+	if (ids.empty()) {
+		res->detected = false;
+		return false;
+	}
+
+	// Buscar marcador de interés
+	int marker_index = -1;
+	for (int i = 0; i < (int)ids.size(); ++i) {
+		if (ids[i] == det->id) {
+			marker_index = i;
+			break;
+		}
+	}
+	if (marker_index == -1) {
+		res->detected = false;
+		return false;
+	}
+
+	// Estimar pose
+	std::vector<cv::Vec3d> rvecs, tvecs;
+	cv::aruco::estimatePoseSingleMarkers(corners, det->marker_size,
+					     det->camera_matrix,
+					     det->dist_coeffs, rvecs, tvecs);
+	if (rvecs.empty() || tvecs.empty()) {
+		res->detected = false;
+		return false;
+	}
+
+	res->detected = true;
+	res->id = ids[marker_index];
+	for (int i = 0; i < 3; ++i) {
+		res->tvec[i] = float(tvecs[marker_index][i]);
+		res->rvec[i] = float(rvecs[marker_index][i]);
+	}
+
+	// Centro del marcador en coords base
+	float im_cx = 0.0f, im_cy = 0.0f;
+	for (int i = 0; i < 4; ++i) {
+		float vx = corners[marker_index][i].x * ((float)base_w / frame->width);
+		float vy = corners[marker_index][i].y * ((float)base_h / frame->height);
+
+		vx = std::clamp(vx, 0.0f, float(w - 1));
+		vy = std::clamp(vy, 0.0f, float(h - 1));
+
+		res->corners[i][0] = vx;
+		res->corners[i][1] = vy;
+
+		im_cx += vx;
+		im_cy += vy;
+	}
+	im_cx /= 4.0f;
+	im_cy /= 4.0f;
+
+	// Escalar al tamaño de salida OBS
+	double scale_x = double(fw) / double(base_w);
+	double scale_y = double(fh) / double(base_h);
+
+	res->screen_pos_x = float(im_cx * scale_x);
+	res->screen_pos_y = float(im_cy * scale_y);
+
+	res->screen_pos_x = std::clamp(res->screen_pos_x, 0.0f, float(fw));
+	res->screen_pos_y = std::clamp(res->screen_pos_y, 0.0f, float(fh));
+
+	cv::Mat R;
+	cv::Rodrigues(rvecs[marker_index], R);
+	float pitch, yaw, roll;
+	rotation_to_euler(R, pitch, yaw, roll);
+	
+	res->euler_x = pitch;
+	res->euler_y = yaw;
+	res->euler_z =-roll; // Mantenemos el -roll por si es un ajuste de ejes (OpenCV vs OBS)
+	
+
+	return true;
+}
+
+// set_marker_dictionary (sin cambios)
+void set_marker_dictionary(ArucoDetector *det, int dict_id)
+{
+	if (!det)
+		return;
+
+	cv::aruco::PREDEFINED_DICTIONARY_NAME cv_dict;
+
+	// Mapea el ID entero de OBS al enum de OpenCV
+	switch (dict_id) {
+	case ARUCO_DICT_ORIGINAL: // 9
+		cv_dict = cv::aruco::DICT_ARUCO_ORIGINAL;
+		break;
+	case ARUCO_DICT_4X4_100: // 1
+		cv_dict = cv::aruco::DICT_4X4_100;
+		break;
+	case ARUCO_DICT_5X5_100: // 5
+		cv_dict = cv::aruco::DICT_5X5_100;
+		break;
+	case ARUCO_DICT_6X6_100: // 10
+		cv_dict = cv::aruco::DICT_6X6_100;
+		break;
+	case ARUCO_DICT_7X7_100: // 14
+		cv_dict = cv::aruco::DICT_7X7_100;
+		break;
+	case ARUCO_DICT_MIP_ORIGINAL: // 32
+		cv_dict = cv::aruco::DICT_ARUCO_ORIGINAL;
+		break;
+	default:
+		// Fallback seguro si el ID no es válido
+		blog(LOG_WARNING,
+		     "[Aruco] ID de diccionario desconocido: %d. Usando 4X4_100.",
+		     dict_id);
+		cv_dict = cv::aruco::DICT_4X4_100;
+		dict_id =
+			ARUCO_DICT_4X4_100; 
+		break;
+	}
+
+	
+	det->dictionary = cv::aruco::getPredefinedDictionary(cv_dict);
+
+
+	det->marker_dict = dict_id;
+
+	blog(LOG_INFO, "[Aruco] Diccionario de marcadores cambiado a: %d",  dict_id);
+}
+
+
+void set_marker_size(ArucoDetector *const det, float size)
+{
+	det->marker_size = size;
+}
+
+
+void set_marker_id(ArucoDetector *const det, int id)
+{
+	det->id = id;
+}
+
+
+const int get_marker_dictionary(const ArucoDetector *const det)
+{
+	return det->marker_dict;
+}
+
+
+const int get_marker_size(const ArucoDetector *const det)
+{
+	return det->marker_size;
+}
+
+
+const int get_marker_id(const ArucoDetector *const det)
+{
+	return det->id;
+}
+
+
+const char *get_calibration_path(const ArucoDetector *const det)
+{
+	return det ? det->calibration_path.c_str() : NULL;
+}
+
+
+void set_calibration_path(ArucoDetector *det, const char *const path)
+{
+	if (det && path &&
+	    load_camera_calibration(path, det->camera_matrix,
+				    det->dist_coeffs)) {
+		det->calibration_path = path;
+
+	} else
+		set_default_camera_params(det);
+}
+
+} // extern "C"
+
+============================================================
+/// ARCHIVO: .\aruco_detector.h ///
+============================================================
+
+#pragma once
+#include <stdint.h>
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+	// Valores puros C para elegir el diccionario
+#define ARUCO_DICT_ORIGINAL 0
+#define ARUCO_DICT_4X4_100 1
+#define ARUCO_DICT_5X5_100 2
+#define ARUCO_DICT_6X6_100 3
+#define ARUCO_DICT_7X7_100 4
+#define ARUCO_DICT_MIP_ORIGINAL 5
+/** Parmetros y estado interno, opaque en C */
+typedef struct ArucoDetector ArucoDetector;
+
+/** Resultado de la deteccin */
+typedef struct {
+	bool detected;
+	int id;
+	float tvec[3];
+	float rvec[3];
+	float corners[4][2];
+	float screen_pos_x;
+	float screen_pos_y;
+	float euler_x;
+	float euler_y;
+	float euler_z;
+} ArucoResult;
+
+/**
+ * @brief Crea e inicializa un detector ArUco.
+ * @param marker_size_meters  Tamao (m) de tu marcador.
+ * @return Puntero opaque (liberar con cleanup).
+ */
+ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,const char * calibration_file);
+
+/** @brief Libera el detector */
+void cleanup_aruco_detector(ArucoDetector *det);
+
+/**
+ * @brief Procesa un frame BGRA y rellena ArucoResult.
+ * @return true si detect al menos un marcador.
+ */
+bool  process_frame_rgba(ArucoDetector *det,struct obs_source_frame *frame, int base_w,int base_h, int fw, int fh, ArucoResult *res);
+
+ void set_marker_dictionary(ArucoDetector *const det, int dict_id);
+ void set_marker_size(ArucoDetector *const det, float size);
+ void set_marker_id(ArucoDetector *const det, int id);
+ bool set_camera_calibration(ArucoDetector *det, const char *filename);
+ const int get_marker_dictionary(const ArucoDetector  *const det);
+ const int get_marker_size(const ArucoDetector  *const det);
+ const int get_marker_id(const ArucoDetector  *const det);
+ void set_calibration_path(ArucoDetector *det, const char * const path);
+ const char *get_calibration_path(const ArucoDetector * const det);
+#ifdef __cplusplus
+}
+#endif
+
+
+============================================================
+/// ARCHIVO: .\countdown_clock.c ///
+============================================================
+
+/**
+ * @file countdown_clock.c
+ * @brief Implementación del reloj de cuenta atrás.
+ *
+ *  estado (stopped/running/paused/finished), duración,
+ * tiempo restante y ángulos de manecillas.
+ */
+
+#include "countdown_clock.h"
+#include <stdlib.h>
+#include <string.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+struct countdown_clock {
+	
+	uint32_t duration_seconds;
+	double remaining_seconds;
+	countdown_state_t state;
+	uint32_t dial_max_hours;
+};
+
+countdown_clock_t *countdown_clock_create()
+{
+	countdown_clock_t *clock = (countdown_clock_t *)malloc(sizeof(struct countdown_clock));
+	if (!clock)return NULL;
+	memset(clock, 0, sizeof(struct countdown_clock));
+	clock->state = COUNTDOWN_STATE_STOPPED;
+	clock->dial_max_hours = 12;
+	return clock;
+}
+
+void countdown_clock_destroy(countdown_clock_t *clock)
+{
+	if (clock)free(clock);
+}
+
+void countdown_clock_set_duration(countdown_clock_t *clock, uint32_t total_seconds)
+{
+	if (!clock)
+	return;
+	clock->duration_seconds = total_seconds;
+	clock->remaining_seconds = (double)total_seconds;
+}
+
+void countdown_clock_set_duration_hms(countdown_clock_t *clock,
+                                      uint32_t hours, uint32_t minutes, 
+									  uint32_t seconds)
+{
+	if (!clock)return;
+	clock->duration_seconds = hours * 3600u + minutes * 60u + seconds;
+	clock->remaining_seconds = (double)clock->duration_seconds;
+}
+
+void countdown_clock_start(countdown_clock_t *clock)
+{
+	if (!clock)
+		return;
+	clock->remaining_seconds = (double)clock->duration_seconds;
+	clock->state = COUNTDOWN_STATE_RUNNING;
+}
+
+void countdown_clock_pause(countdown_clock_t *clock)
+{
+	if (!clock)
+		return;
+	if (clock->state == COUNTDOWN_STATE_RUNNING)
+		clock->state = COUNTDOWN_STATE_PAUSED;
+}
+
+void countdown_clock_resume(countdown_clock_t *clock)
+{
+	if (!clock)
+		return;
+	if (clock->state == COUNTDOWN_STATE_PAUSED)
+		clock->state = COUNTDOWN_STATE_RUNNING;
+}
+
+void countdown_clock_reset(countdown_clock_t *clock)
+{
+	if (!clock)
+		return;
+	clock->remaining_seconds = (double)clock->duration_seconds;
+	clock->state = COUNTDOWN_STATE_STOPPED;
+}
+
+void countdown_clock_tick(countdown_clock_t *clock, float delta_seconds)
+{
+	if (!clock || clock->state != COUNTDOWN_STATE_RUNNING)
+		return;
+	clock->remaining_seconds -= (double)delta_seconds;
+	if (clock->remaining_seconds <= 0.0) {
+		clock->remaining_seconds = 0.0;
+		clock->state = COUNTDOWN_STATE_FINISHED;
+	}
+}
+
+void countdown_clock_sync_remaining(countdown_clock_t *clock,
+                                   uint32_t hours, uint32_t minutes, uint32_t seconds)
+{
+	if (!clock)
+		return;
+	clock->remaining_seconds = (double)(hours * 3600 + minutes * 60 + seconds);
+}
+
+countdown_state_t countdown_clock_get_state(const countdown_clock_t *clock)
+{
+	return clock ? clock->state : COUNTDOWN_STATE_STOPPED;
+}
+
+void countdown_clock_get_remaining(const countdown_clock_t *clock,
+                                  uint32_t *out_hours, uint32_t *out_minutes, uint32_t *out_seconds)
+{
+	if (!clock) {
+		if (out_hours) *out_hours = 0;
+		if (out_minutes) *out_minutes = 0;
+		if (out_seconds) *out_seconds = 0;
+		return;
+	}
+	uint32_t total = (uint32_t)(clock->remaining_seconds + 0.5);
+	if (total > 0xFFFFFFFF / 3600)
+		total = 0;
+	if (out_hours) *out_hours = total / 3600;
+	if (out_minutes) *out_minutes = (total % 3600) / 60;
+	if (out_seconds) *out_seconds = total % 60;
+}
+
+double countdown_clock_get_remaining_seconds(const countdown_clock_t *clock)
+{
+	if (!clock)
+		return 0;
+	return  clock->remaining_seconds;
+}
+//te calcula en agnulo de los segundos, minutos y horas, teniendo en cuenta el maximo de horas del relojito
+#include <math.h>
+
+void countdown_clock_get_hand_angles(const countdown_clock_t *clock,
+				     float *hour_deg, float *minute_deg,
+				     float *second_deg)
+{
+	if (!clock) {
+		if (hour_deg)
+			*hour_deg = 0.0f;
+		if (minute_deg)
+			*minute_deg = 0.0f;
+		if (second_deg)
+			*second_deg = 0.0f;
+		return;
+	}
+
+	float rem = (float)clock->remaining_seconds;
+	if (rem < 0.0f)
+		rem = 0.0f;
+
+	if (second_deg) {
+		*second_deg = fmodf(rem, 60.0f) * 6.0f;
+	}
+
+	if (minute_deg) {
+		float total_minutes = floorf(rem / 60.0f);
+		*minute_deg = fmodf(total_minutes, 60.0f) * 6.0f;
+	}
+
+	if (hour_deg) {
+		float max_h = clock->dial_max_hours? (float)clock->dial_max_hours: 24.0f;
+		float total_hours = floorf(rem / 3600.0f);
+		*hour_deg = fmodf(total_hours, max_h) * (360.0f / max_h);
+	}
+}
+
+void countdown_clock_set_dial_hours(countdown_clock_t *clock, uint32_t max_hours)
+{
+	if (!clock)
+		return;
+	clock->dial_max_hours = (max_hours == 0) ? 24 : max_hours;
+}
+//devuelve el angulo de una manecilla unica que representa el tiempo restante total,
+// calculado como (tiempo_restante / duración_total) * 360 grados
+void countdown_clock_get_single_hand_angle(const countdown_clock_t *clock,
+					  float *single_hand_deg)
+{
+	if (!single_hand_deg)
+		return;
+
+	if (!clock || clock->duration_seconds == 0) {
+		*single_hand_deg = 0.0f;
+		return;
+	}
+
+	float rem = (float)clock->remaining_seconds;
+	if (rem < 0.0f)
+		rem = 0.0f;
+
+	float dur = (float)clock->duration_seconds;
+	float angle = (rem / dur) * 360.0f;
+
+	*single_hand_deg = fmodf(angle, 360.0f);
+}
+
+============================================================
+/// ARCHIVO: .\countdown_clock.h ///
+============================================================
+
+/**
+ * @file countdown_clock.h
+ * @brief Módulo de reloj de cuenta atrás (countdown timer).
+ *
+ * Gestiona el estado interno del temporizador: duración, tiempo restante
+ * y ángulos de las manecillas para un reloj analógico que muestra
+ * el tiempo restante. Diseñado para ser modular y expandible.
+ *
+ * Las manecillas indican tiempo restante: por ejemplo, si quedan 6 horas,
+ * la manecilla de horas apunta a las 6 (en un dial de 12h).
+ */
+
+#ifndef COUNTDOWN_CLOCK_H
+#define COUNTDOWN_CLOCK_H
+
+#include <stdbool.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/** Estado del countdown */
+typedef enum countdown_state {
+	COUNTDOWN_STATE_STOPPED = 0,
+	COUNTDOWN_STATE_RUNNING,
+	COUNTDOWN_STATE_PAUSED,
+	COUNTDOWN_STATE_FINISHED
+} countdown_state_t;
+
+/** Estructura opaca del reloj (implementación en .c) */
+typedef struct countdown_clock countdown_clock_t;
+
+/**
+ * Crea un reloj de cuenta atrás.
+ * @return Instancia nueva o NULL si falla.
+ */
+countdown_clock_t *countdown_clock_create();
+
+/**
+ * Destruye el reloj y libera recursos.
+ */
+void countdown_clock_destroy(countdown_clock_t *clock);
+
+/**
+ * Establece la duración total del countdown (en segundos).
+ * No reinicia el reloj; usar countdown_clock_start() después.
+ */
+void countdown_clock_set_duration(countdown_clock_t *clock, uint32_t total_seconds);
+
+/**
+ * Establece la duración en horas, minutos y segundos.
+ */
+void countdown_clock_set_duration_hms(countdown_clock_t *clock,
+                                      uint32_t hours, uint32_t minutes, uint32_t seconds);
+
+/**
+ * Inicia la cuenta atrás desde la duración configurada.
+ */
+void countdown_clock_start(countdown_clock_t *clock);
+
+/**
+ * Pausa el countdown (el tiempo restante se mantiene).
+ */
+void countdown_clock_pause(countdown_clock_t *clock);
+
+/**
+ * Reanuda si estaba pausado.
+ */
+void countdown_clock_resume(countdown_clock_t *clock);
+
+/**
+ * Reinicia al estado inicial (duración actual) sin iniciar.
+ */
+void countdown_clock_reset(countdown_clock_t *clock);
+
+/**
+ * Actualiza el estado del reloj (llamar desde video_tick con delta en segundos).
+ * No debe bloquear; solo actualiza tiempo restante y ángulos.
+ */
+void countdown_clock_tick(countdown_clock_t *clock, float delta_seconds);
+
+/**
+ * Sincroniza el tiempo restante desde una fuente externa (p. ej. API web).
+ * Ajusta el countdown para que muestre exactamente h, m, s restantes.
+ */
+void countdown_clock_sync_remaining(countdown_clock_t *clock,
+                                    uint32_t hours, uint32_t minutes, uint32_t seconds);
+
+/**
+ * Obtiene el estado actual.
+ */
+countdown_state_t countdown_clock_get_state(const countdown_clock_t *clock);
+
+/**
+ * Obtiene el tiempo restante (horas, minutos, segundos enteros).
+ */
+void countdown_clock_get_remaining(const countdown_clock_t *clock,
+                                  uint32_t *out_hours, uint32_t *out_minutes, uint32_t *out_seconds);
+
+/**
+ * Obtiene el tiempo restante total en segundos (puede incluir fracción si se desea en el futuro).
+ */
+double countdown_clock_get_remaining_seconds(const countdown_clock_t *clock);
+
+/**
+ * Ángulos en grados (0–360) para las manecillas del reloj analógico.
+ * Convención: 0° = "12 en punto", sentido horario positivo (o antihorario según modelo 3D).
+ * - hour_deg: manecilla de horas (suele usar dial de 12h).
+ * - minute_deg: manecilla de minutos (60 divisiones).
+ * - second_deg: manecilla de segundos (60 divisiones).
+ */
+void countdown_clock_get_hand_angles(const countdown_clock_t *clock,
+                                    float *hour_deg, float *minute_deg, float *second_deg);
+
+/**
+ * Establece el número máximo de horas en el dial (12 o 24) para el cálculo de la manecilla de horas.
+ * Por defecto 12.
+ */
+void countdown_clock_set_dial_hours(countdown_clock_t *clock, uint32_t max_hours);
+
+/**
+ * Obtiene el ángulo para una manecilla única que representa el tiempo restante total.
+ * El ángulo se calcula como: (tiempo_restante / duración_total) * 360 grados.
+ * Si la duración es 0, devuelve 0 grados.
+ * @param clock Instancia del reloj
+ * @param single_hand_deg Puntero donde se almacenará el ángulo en grados (0-360)
+ */
+void countdown_clock_get_single_hand_angle(const countdown_clock_t *clock,
+                                           float *single_hand_deg);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* COUNTDOWN_CLOCK_H */
+
+
+============================================================
+/// ARCHIVO: .\cuadrado.c ///
+============================================================
+
+
+
+//video tick
+source_def.video_tick = function(data, dt) local video_info =
+	obs.obs_video_info()
+
+		-- Check to see if stream resoluiton resized and
+	recreate texture if so-- TODO : Is there a signal that does this
+	? if obs.obs_get_video_info(video_info) and
+		  (video_info.base_width ~ =
+			   data.width or video_info.base_height ~ = data.height)
+			  then data.width = video_info.base_width data.height =
+		  video_info.base_height create_whiteboard_texture(data)
+    end
+
+    if data.texture == nil then
+        return
+    end
+    
+    if not data.active then
+        return
+    end
+
+    if needs_clear then
+        local prev_render_target = obs.gs_get_render_target()
+        local prev_zstencil_target = obs.gs_get_zstencil_target()
+
+        obs.gs_viewport_push()
+        obs.gs_set_viewport(0, 0, data.width, data.height)
+
+        obs.obs_enter_graphics()
+        obs.gs_set_render_target(data.texture, nil)
+        obs.gs_clear(obs.GS_CLEAR_COLOR, obs.vec4(), 1.0, 0)
+
+        obs.gs_viewport_pop()
+        obs.gs_set_render_target(prev_render_target, prev_zstencil_target)
+
+        obs.obs_leave_graphics()
+
+        needs_clear = false
+    end
+
+    if swap_color then
+        color_index = color_index + 1
+        if color_index > color_count then
+            color_index = 1
+        end
+        swap_color = false
+    end
+    
+    -- The hotkeyed size toggle increases size by increments of 2,
+    -- starting from 2. This is due to single pixel increments being
+    -- generally unnoticeable.
+    if toggle_size then
+        -- If the current size is an even number, increment by 2,
+        -- otherwise increment by 1 to make it even.
+        odd = size % 2
+        if odd == 1 then
+            size = size + 1
+        else
+            size = size + 2
+        end
+        if size > size_max then
+            size = 2
+        end
+        update_vertices()
+        toggle_size = false
+    end
+    
+    -- If the size of the pencil was changed, we need to update the
+    -- vertices used to draw our line.
+    if setting_update then
+        update_vertices()
+        setting_update = false
+    end
+        
+    local mouse_down = winapi.GetAsyncKeyState(winapi.VK_LBUTTON)
+    if mouse_down then
+        local mouse_pos = winapi.GetCursorPos()
+        if data.mouse_pos == nil then
+            data.mouse_pos = mouse_pos
+        end
+        
+        local window = winapi.GetForegroundWindow()
+        window_name = winapi.InternalGetWindowText(window, nil)
+        if window_match(window_name) and 
+        (string.find(window_name, window_projector_name, 1, true) or
+        string.find(window_name, fullscreen_projector_name, 1, true)) then
+            winapi.ScreenToClient(window, mouse_pos)
+            local window_rect = winapi.GetClientRect(window)
+            
+            local output_aspect = data.width / data.height
+
+            local window_width = window_rect.right - window_rect.left
+            local window_height = window_rect.bottom - window_rect.top
+            local window_aspect = window_width / window_height
+            local offset_x = 0
+            local offset_y = 0
+            if window_aspect >= output_aspect then
+                offset_x = (window_width - window_height * output_aspect) / 2
+            else
+                offset_y = (window_height - window_width / output_aspect) / 2
+            end
+
+            mouse_pos.x = data.width * (mouse_pos.x - offset_x) / (window_width - offset_x*2)
+            mouse_pos.y = data.height * (mouse_pos.y - offset_y) / (window_height - offset_y*2)
+            
+            if valid_position(mouse_pos.x, mouse_pos.y, data.mouse_pos.x, data.mouse_pos.y, data.width, data.height) then
+                effect = obs.obs_get_base_effect(obs.OBS_EFFECT_DEFAULT)
+                if not effect then
+                    return
+                end
+
+                obs.obs_enter_graphics()
+
+                local prev_render_target = obs.gs_get_render_target()
+                local prev_zstencil_target = obs.gs_get_zstencil_target()
+
+                obs.gs_set_render_target(data.texture, nil)
+                obs.gs_viewport_push()
+                obs.gs_set_viewport(0, 0, data.width, data.height)
+                obs.gs_projection_push()
+                obs.gs_ortho(0, data.width, 0, data.height, 0.0, 1.0)
+
+                obs.gs_blend_state_push()
+                obs.gs_reset_blend_state()
+                
+                -- Set the color being used (or set the eraser).
+                local solid = obs.obs_get_base_effect(obs.OBS_EFFECT_SOLID)
+                local color = obs.gs_effect_get_param_by_name(solid, "color")
+                local tech  = obs.gs_effect_get_technique(solid, "Solid")
+
+                if eraser then
+                    obs.gs_blend_function(obs.GS_BLEND_SRCALPHA, obs.GS_BLEND_SRCALPHA)
+                    obs.gs_effect_set_vec4(color, eraser_v4)
+                else
+                    local color_v4 = obs.vec4()
+                    obs.vec4_from_rgba(color_v4, color_array[color_index])
+                    obs.gs_effect_set_vec4(color, color_v4)
+                end
+            
+                obs.gs_technique_begin(tech)
+                obs.gs_technique_begin_pass(tech, 0)
+
+                -- Calculate distance mouse has traveled since our
+                -- last update.
+                local dx = mouse_pos.x - data.mouse_pos.x
+                local dy = mouse_pos.y - data.mouse_pos.y
+                local len = math.sqrt(dx*dx + dy*dy)
+                local angle = math.atan2(dy, dx)
+                
+                -- Perform matrix transformations for the dot at the
+                -- start of the line (start cap).
+                obs.gs_matrix_push()
+                obs.gs_matrix_identity()
+                obs.gs_matrix_translate3f(data.mouse_pos.x, data.mouse_pos.y, 2)
+
+                obs.gs_matrix_push()
+                obs.gs_matrix_translate3f(-size, -size, 2)
+                
+                -- Draw start of line.
+                obs.gs_load_vertexbuffer(dot_vert)
+                obs.gs_draw(obs.GS_LINESTRIP, 0, 0)
+
+                obs.gs_matrix_pop()
+
+                -- Perform matrix transformations for the actual line.
+                obs.gs_matrix_rotaa4f(0, 0, 1, angle)
+                obs.gs_matrix_translate3f(0, -size, 2)
+                obs.gs_matrix_scale3f(len / size, 1.0, 1.0)
+
+                -- Draw actual line.
+                obs.gs_load_vertexbuffer(line_vert)
+                obs.gs_draw(obs.GS_TRIS, 0, 0)
+
+
+                -- Perform matrix transforms for the dot at the end
+                -- of the line (end cap).
+                obs.gs_matrix_identity()
+                obs.gs_matrix_translate3f(mouse_pos.x, mouse_pos.y, 2)
+                obs.gs_matrix_translate3f(-size, -size, 2)
+                obs.gs_load_vertexbuffer(dot_vert)
+                obs.gs_draw(obs.GS_LINESTRIP, 0, 0)
+
+                -- Done drawing line, restore everything.
+                obs.gs_technique_end_pass(tech)
+                obs.gs_technique_end(tech)
+
+                obs.gs_matrix_pop()
+
+                obs.gs_projection_pop()
+                obs.gs_viewport_pop()
+                obs.gs_blend_state_pop()
+                obs.gs_set_render_target(prev_render_target, prev_zstencil_target)
+
+                obs.obs_leave_graphics()
+                
+            end
+
+            data.mouse_pos = mouse_pos
+        end
+    else
+        data.mouse_pos = nil
+    end
+end
+
+
+//video render
+source_def.video_render = function(data, effect) effect =
+	obs.obs_get_base_effect(obs.OBS_EFFECT_DEFAULT)
+
+		if effect and
+	data.texture then obs.gs_blend_state_push()
+		obs.gs_reset_blend_state() obs.gs_matrix_push()
+			obs.gs_matrix_identity()
+
+				while obs.gs_effect_loop(effect, "Draw") do obs
+					.obs_source_draw(data.texture, 0, 0, 0,
+							 0, false);
+end
+
+	obs.gs_matrix_pop() obs.gs_blend_state_pop() end end
+
+//get width get height
+
+	source_def.get_width = function(data) return 0 end
+source_def.get_height =function(data) return 0 end
+
+
+function update_vertices()
+    obs.obs_enter_graphics()
+    
+    -- LINE VERTICES
+    -- Create vertices for line of given width (user-defined 'size').
+    -- These vertices are for two triangles that make up each line.
+    obs.gs_render_start(true)
+    local width = size * 2
+    obs.gs_vertex2f(0, 0)
+    obs.gs_vertex2f(size, 0)
+    obs.gs_vertex2f(0, width)
+    obs.gs_vertex2f(0, width)
+    obs.gs_vertex2f(size, width)
+    obs.gs_vertex2f(size, 0)
+    
+    line_vert = obs.gs_render_save()
+    
+    
+    -- DOT VERTICES
+    -- Create vertices for a dot (filled circle) of specified width,
+    -- which is used to round off the ends of the lines.
+    local decision = 0
+    local xcoord = 0
+     -- set initial ycoord to radius of circle (user-defined 'size')
+    local ycoord = size
+    
+    obs.gs_render_start(true)
+    while ycoord >= xcoord do
+        -- shift the actual coordinates by the size of the circle,
+        -- so the entire circle has positive coordinates
+        local y_pos = ycoord + size
+        local y_neg = -ycoord + size
+        local x_pos = xcoord + size
+        local x_neg = -xcoord + size
+        -- create horizontal lines to fill the entire circle
+        obs.gs_vertex2f(x_pos, y_pos)
+        obs.gs_vertex2f(x_neg, y_pos)
+        obs.gs_vertex2f(x_pos, y_neg)
+        obs.gs_vertex2f(x_neg, y_neg)
+        obs.gs_vertex2f(y_pos, x_pos)
+        obs.gs_vertex2f(y_neg, x_pos)
+        obs.gs_vertex2f(y_pos, x_neg)
+        obs.gs_vertex2f(y_neg, x_neg)
+        
+        -- update coordinates and decision parameter
+        xcoord = xcoord + 1
+        if decision < 0 then
+            ycoord = ycoord
+            decision = decision + (2 * xcoord) + 1
+        else
+            ycoord = ycoord - 1
+            decision = decision + (2 * xcoord) + 1 - (2 * ycoord)
+        end
+    end
+    
+    dot_vert = obs.gs_render_save()    
+    obs.obs_leave_graphics()
+end
+
+
+============================================================
+/// ARCHIVO: .\Cubo-plugin.c ///
+============================================================
+
+// Inclusión de las cabeceras del API de OBS Studio.
+#include <obs-module.h>
+#include <graphics/graphics.h>
+#include <graphics/matrix4.h>
+#include <graphics/image-file.h>
+#include <util/platform.h>
+#include <graphics/vec4.h>
+
+// Inclusión de bibliotecas estándar de C.
+#include <string.h>
+#include <stdint.h>
+#include "SJ_3DModel.h"
+#include "countdown_clock.h"
+#include "web_sync.h"
+
+// For M_PI on Windows
+#define _USE_MATH_DEFINES
+#define DEGREES_TO_RADIANS(angle) ((angle) * (float)M_PI / 180.0f)
+#include <math.h>
+
+#include "aruco_detector.h"
+
+OBS_DECLARE_MODULE()
+OBS_MODULE_USE_DEFAULT_LOCALE("cube", "en-US")
+
+MODULE_EXPORT const char *obs_module_description(void)
+{
+	return "SJ_3D";
+}
+static inline float degrees_to_radians(float degrees)
+{
+	return degrees * (float)M_PI / 180.0f;
+}
+struct cube_filter_data {
+	gs_zstencil_t *zstencil;
+	obs_source_t *source;
+	gs_texture_t *texture;
+	float width_screen;
+	float height_screen;
+
+	float *model_width;
+	float *model_height;
+
+	struct Mesh *g_meshes;
+	size_t g_mesh_count;
+	char *model_path_str;
+	char *texture_path_str;
+	// Parámetros de posición / escala / rotación manual
+	float pos_x;
+	float pos_y;
+	float pos_z;
+	float scale;
+	float current_scale;
+	float rotation_x;
+	float rotation_y;
+	float rotation_z;
+	gs_texture_t *loaded_texture;
+
+
+	float ar_offset_pos_x;
+	float ar_offset_pos_y;
+	float ar_offset_pos_z;
+	float ar_offset_rot_x;
+	float ar_offset_rot_y;
+	float ar_offset_rot_z;
+	
+
+	// Resultados del ArUco
+	ArucoDetector *detector; //
+	ArucoResult last_result; //
+
+	int mode;
+
+
+	countdown_clock_t *countdown_clock;
+	web_sync_t *web_sync;
+	bool countdown_running;
+	bool countdown_reset_requested;
+	uint32_t countdown_duration_h;
+	uint32_t countdown_duration_m;
+	uint32_t countdown_duration_s;
+	bool sync_enabled;
+	char *sync_url;
+	float sync_interval_sec;
+
+
+	int clock_mode;              // 0 = tres manecillas, 1 = una manecilla
+	int mesh_id_dial;            //
+	int mesh_id_hour_hand;       // ID de la malla de la manecilla de horas
+	int mesh_id_minute_hand;     // ID 
+	int mesh_id_second_hand;     // I
+	int mesh_id_single_hand;     // ID
+	bool countdown_use_ar;       // true = usar AR para posicionar reloj, false = posición manual
+};
+
+static struct obs_source_frame *filter_video(void *data,
+					     struct obs_source_frame *frame)
+{
+	struct cube_filter_data *filter = data;
+
+	if (!frame) {
+		blog(LOG_WARNING, "cube_filter_filter_video: frame es NULL");
+		return NULL;
+	}
+
+	if (filter->mode == 0 || (filter->mode == 2 && !filter->countdown_use_ar)) {
+		filter->current_scale = filter->scale;
+		filter->last_result.detected = false;
+		return frame;
+	}
+
+	bool detected = false;
+
+
+	detected = process_frame_rgba(filter->detector, frame,
+				      filter->width_screen,
+				      filter->height_screen, frame->width,
+				      frame->height, &filter->last_result);
+
+	if (detected && filter->last_result.detected) {
+	
+		filter->pos_x = filter->last_result.screen_pos_x +filter->ar_offset_pos_x;
+		filter->pos_y = filter->last_result.screen_pos_y +filter->ar_offset_pos_y;
+		filter->pos_z =0 +filter->ar_offset_pos_z; 
+
+
+		const float reference_distance = 1.0f;
+
+		if (filter->last_result.tvec[2] > 0.1f) {
+			filter->current_scale = filter->scale;
+			// * (reference_distance / filter->last_result.tvec[2]);
+		} else {
+			filter->current_scale = filter->scale;
+		}
+
+	} else {
+		filter->last_result.detected = false;
+	}
+
+	return frame;
+}
+
+static uint32_t cube_source_get_width(void *data)
+{
+	struct cube_filter_data *filter = data;
+	return filter->width_screen;
+}
+
+static uint32_t cube_source_get_height(void *data)
+{
+	struct cube_filter_data *filter = data;
+	return filter->height_screen;
+}
+gs_texture_t *load_texture_file(const char *path)
+{
+	if (!path || strlen(path) == 0) {
+		return NULL;
+	}
+
+	obs_enter_graphics();
+	gs_image_file_t image;
+	gs_image_file_init(&image, path);
+	gs_image_file_init_texture(&image);
+	obs_leave_graphics();
+
+	if (image.loaded) {
+		blog(LOG_INFO, "Textura de usuario cargada: %s", path);
+		gs_texture_t *new_texture = image.texture;
+		gs_image_file_free(
+			&image); // Libera los datos internos de la imagen, no la textura
+		return new_texture;
+	} else {
+		if (image.texture) { // Si hubo un intento de crear la textura pero falló la carga
+			gs_texture_destroy(image.texture);
+		}
+		blog(LOG_WARNING, "No se pudo cargar la textura de usuario: %s",
+		     path);
+		gs_image_file_free(
+			&image); // Asegúrate de liberar la estructura de imagen
+		return NULL;
+	}
+}
+void image_source_load(gs_image_file_t *image, const char *file)
+{
+	obs_enter_graphics();
+	gs_image_file_free(image);
+	obs_leave_graphics();
+
+	gs_image_file_init(image, file);
+
+	obs_enter_graphics();
+	gs_image_file_init_texture(image);
+	obs_leave_graphics();
+
+	if (!image->loaded) {
+		blog(LOG_WARNING, "failed to load texture %s", file);
+	}
+}
+
+void create_texture(struct cube_filter_data *data)
+{
+	obs_enter_graphics();
+
+	if (data->texture != NULL) {
+		gs_texture_destroy(data->texture);
+		data->texture = NULL;
+	}
+
+	data->texture = gs_texture_create(data->width_screen,
+					  data->height_screen, GS_RGBA, 1, NULL,
+					  GS_RENDER_TARGET);
+	data->zstencil = gs_zstencil_create(data->width_screen,
+					    data->height_screen, GS_Z16);
+	blog(LOG_INFO, "create whiteboard texture %d %d", data->width_screen,
+	     data->height_screen);
+
+	obs_leave_graphics();
+}
+
+static const char *filter_get_name(void *unused)
+{
+	UNUSED_PARAMETER(unused);
+	return "SJ_3D";
+}
+
+static void *filter_create(obs_data_t *settings, obs_source_t *source)
+{
+	struct cube_filter_data *data =
+		bzalloc(sizeof(struct cube_filter_data));
+
+	data->source = source;
+	data->g_meshes = NULL;
+	data->g_mesh_count = 0;
+	data->model_width = NULL;  //
+	data->model_height = NULL; //
+	data->loaded_texture = NULL;
+
+	data->detector =
+		initialize_aruco_detector(0.1f, ARUCO_DICT_ORIGINAL, NULL);
+
+	data->countdown_clock = countdown_clock_create();
+	data->web_sync = NULL;
+	data->countdown_running = false;
+	data->countdown_reset_requested = false;
+	data->countdown_duration_h = 0;
+	data->countdown_duration_m = 0;
+	data->countdown_duration_s = 0;
+	data->sync_enabled = false;
+	data->sync_url = NULL;
+	data->sync_interval_sec = 10.0f;
+
+	
+	data->clock_mode = 0;              // Tres manecillas por defecto
+	data->mesh_id_dial = 0;
+	data->mesh_id_hour_hand = 1;
+	data->mesh_id_minute_hand = 2;
+	data->mesh_id_second_hand = 3;
+	data->mesh_id_single_hand = 1;
+	data->countdown_use_ar = false;    // Posición manual por defecto
+
+	struct obs_video_info ovi;
+	if (obs_get_video_info(&ovi)) {
+		data->width_screen = ovi.base_width;
+		data->height_screen = ovi.base_height;
+		create_texture(data);
+	} else {
+		blog(LOG_WARNING, "Failed to get video resolution");
+	}
+
+	return data;
+}
+
+static void filter_destroy(void *data)
+{
+	/*blog(LOG_WARNING, "CERRANDO");*/
+	struct cube_filter_data *filter = (struct cube_filter_data *)data;
+	cleanup_global_meshes(&filter->g_meshes, &filter->g_mesh_count,
+			      &filter->model_width, &filter->model_height,
+			      filter->loaded_texture);
+	obs_enter_graphics();
+	if (filter->texture) {
+		gs_texture_destroy(filter->texture);
+	}
+	if (filter->loaded_texture) {
+		gs_texture_destroy(filter->loaded_texture);
+	}
+	if (filter->zstencil) {
+		gs_zstencil_destroy(filter->zstencil);
+	}
+
+	obs_leave_graphics();
+	if (filter->countdown_clock)countdown_clock_destroy(filter->countdown_clock);
+	if (filter->web_sync)web_sync_destroy(filter->web_sync);
+	bfree(filter->sync_url);
+	bfree(filter->model_path_str);
+	bfree(filter->texture_path_str);
+	bfree(filter);
+}
+
+static void filter_render(void *data, gs_effect_t *effect)
+{
+	struct cube_filter_data *filter = data;
+	obs_source_t *target = obs_filter_get_target(filter->source);
+	if (!target) {
+		return;
+	}
+
+	uint32_t width = obs_source_get_width(filter->source);
+	uint32_t height = obs_source_get_height(filter->source);
+
+	
+	if (!filter->g_meshes || width == 0 || height == 0) {
+		obs_source_skip_video_filter(filter->source);
+		return;
+	}
+	if ((filter->mode == 1 || (filter->mode == 2 && filter->countdown_use_ar)) && !filter->last_result.detected) {
+		obs_source_skip_video_filter(filter->source);
+		return;
+	}
+	if (filter->mode == 2 && (!filter->g_meshes || filter->g_mesh_count == 0)) {
+		obs_source_skip_video_filter(filter->source);
+		return;
+	}
+	obs_enter_graphics();
+	if (!filter->texture ||
+	    gs_texture_get_width(filter->texture) != width ||
+	    gs_texture_get_height(filter->texture) != height) {
+		if (filter->texture)
+			gs_texture_destroy(filter->texture);
+		if (filter->zstencil)
+			gs_zstencil_destroy(filter->zstencil);
+
+		filter->texture = gs_texture_create(width, height, GS_RGBA, 1,
+						    NULL, GS_RENDER_TARGET);
+		filter->zstencil = gs_zstencil_create(width, height, GS_Z16);
+	}
+
+
+	gs_texture_t *prev_render_target = gs_get_render_target();
+	gs_zstencil_t *prev_zstencil_target = gs_get_zstencil_target();
+
+	gs_set_render_target(filter->texture, filter->zstencil);
+	gs_clear(GS_CLEAR_COLOR | GS_CLEAR_DEPTH, (struct vec4[]){{0.0f, 0.0f, 0.0f, 0.0f}}, 1.0f, 0);
+
+	gs_projection_push();
+	gs_set_3d_mode(60.0f, 0.1f, 5000.0f); 
+	gs_enable_depth_test(true);
+	gs_depth_function(GS_LESS);
+
+	gs_matrix_push();
+	gs_matrix_identity();
+
+	// Traslación global (ya incluye el offset si es modo AR, o la pos 3D si es modo 3D)
+	gs_matrix_translate3f(filter->pos_x, filter->pos_y, filter->pos_z);
+
+
+	float rot_x, rot_y, rot_z;
+	if (filter->mode == 0) {
+		rot_x = filter->rotation_x;
+		rot_y = filter->rotation_y;
+		rot_z = filter->rotation_z;
+	} else if (filter->mode == 1) {
+		rot_x = filter->ar_offset_rot_x;
+		rot_y = filter->ar_offset_rot_y;
+		rot_z = filter->ar_offset_rot_z;
+	} else {
+		// usar AR si está activado, sino rotación manual
+		if (filter->countdown_use_ar) {
+			rot_x = filter->ar_offset_rot_x;
+			rot_y = filter->ar_offset_rot_y;
+			rot_z = filter->ar_offset_rot_z;
+		} else {
+			rot_x = filter->rotation_x;
+			rot_y = filter->rotation_y;
+			rot_z = filter->rotation_z;
+		}
+	}
+
+	if (filter->mode == 2 && filter->countdown_clock) {
+		float hour_deg, min_deg, sec_deg, single_deg;
+		countdown_clock_get_hand_angles(filter->countdown_clock,&hour_deg, &min_deg, &sec_deg);
+		countdown_clock_get_single_hand_angle(filter->countdown_clock, &single_deg);
+		
+		render_model_clock_c(filter->g_meshes, filter->g_mesh_count,
+				     filter->model_width, filter->model_height,
+				     filter->current_scale, filter->last_result.rvec,
+				     filter->last_result.detected,
+				     rot_x, rot_y, rot_z,
+				     filter->clock_mode,
+				     filter->mesh_id_dial, filter->mesh_id_hour_hand,
+				     filter->mesh_id_minute_hand, filter->mesh_id_second_hand,
+				     filter->mesh_id_single_hand,
+				     &hour_deg, &min_deg, &sec_deg, &single_deg);
+	} else {
+		render_model_c(filter->g_meshes, filter->g_mesh_count,
+			      filter->model_width, filter->model_height,
+			      filter->current_scale, filter->last_result.rvec,
+			      filter->last_result.detected, rot_x, rot_y, rot_z);
+	}
+	gs_matrix_pop();
+	gs_projection_pop();
+	gs_enable_depth_test(false);
+
+	gs_set_render_target(prev_render_target, prev_zstencil_target);
+	obs_leave_graphics();
+
+	
+	obs_enter_graphics();
+
+	obs_source_video_render(target);
+
+
+	gs_blend_state_push();
+	gs_enable_blending(true);
+	gs_blend_function(GS_BLEND_SRCALPHA,
+ GS_BLEND_INVSRCALPHA);
+
+	gs_effect_t *base_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+	while (gs_effect_loop(base_effect, "Draw")) {
+		obs_source_draw(filter->texture, 0, 0, 0, 0, false);
+	}
+
+	gs_blend_state_pop();
+	obs_leave_graphics();
+}
+static bool render_mode_changed(obs_properties_t *props,
+				obs_property_t *property, obs_data_t *settings)
+{
+	int mode = (int)obs_data_get_int(settings, "render_mode");
+	bool show_3d = (mode == 0);
+	bool show_ar = (mode == 1);
+	bool show_countdown = (mode == 2);
+
+	// Leer configuración de countdown
+	bool countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
+	int clock_mode = (int)obs_data_get_int(settings, "clock_mode");
+	
+
+	bool show_manual_pos = show_3d || (show_countdown && !countdown_use_ar);
+	obs_property_set_visible(obs_properties_get(props, "pos_x"), show_manual_pos);
+	obs_property_set_visible(obs_properties_get(props, "pos_y"), show_manual_pos);
+	obs_property_set_visible(obs_properties_get(props, "pos_z"), show_manual_pos);
+	obs_property_set_visible(obs_properties_get(props, "rotation_x_slider_value"), show_manual_pos);
+	obs_property_set_visible(obs_properties_get(props, "rotation_y_slider_value"), show_manual_pos);
+	obs_property_set_visible(obs_properties_get(props, "rotation_z_slider_value"), show_manual_pos);
+
+	
+	bool show_ar_controls = show_ar || (show_countdown && countdown_use_ar);
+	obs_property_set_visible(obs_properties_get(props, "marker_id"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "marker_size"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "marker_dict"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "calibration_path"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_x"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_y"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_z"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_x"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_y"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_z"), show_ar_controls);
+
+	/* Countdown: duración, ejecución, sincronización web */
+	obs_property_set_visible(obs_properties_get(props, "countdown_duration_h"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "countdown_duration_m"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "countdown_duration_s"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "countdown_running"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "countdown_reset"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "sync_enabled"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "sync_url"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "sync_interval_sec"), show_countdown);
+
+	
+	obs_property_set_visible(obs_properties_get(props, "clock_mode"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "countdown_use_ar"), show_countdown);
+	//obs_property_set_visible(obs_properties_get(props, "mesh_id_dial"), show_countdown);
+	
+	// Mostrar IDs de manecillas según el modo de reloj
+	bool show_three_hands = show_countdown && (clock_mode == 0);
+	bool show_single_hand = show_countdown && (clock_mode == 1);
+	obs_property_set_visible(obs_properties_get(props, "mesh_id_hour_hand"), show_three_hands);
+	obs_property_set_visible(obs_properties_get(props, "mesh_id_minute_hand"), show_three_hands);
+	obs_property_set_visible(obs_properties_get(props, "mesh_id_second_hand"), show_three_hands);
+	obs_property_set_visible(obs_properties_get(props, "mesh_id_single_hand"), show_single_hand);
+
+	return true;
+}
+
+static obs_properties_t *filter_properties(void *data)
+{
+
+	obs_properties_t *props = obs_properties_create();
+	obs_property_t *combo = obs_properties_add_list(props, "render_mode",
+							"Modo de renderizado",
+							OBS_COMBO_TYPE_LIST,
+							OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(combo, "3D", 0);
+	obs_property_list_add_int(combo, "AR", 1);
+	obs_property_list_add_int(combo, "Countdown (reloj)", 2);
+	obs_property_set_modified_callback(combo, render_mode_changed);
+
+	// Propiedades 3D
+	obs_properties_add_float_slider(props, "pos_x", "Posición X", -3000.0f,3000.0f, 10.0f);
+	obs_properties_add_float_slider(props, "pos_y", "Posición Y", -3000.0f,3000.0f, 10.0f);
+	obs_properties_add_float_slider(props, "pos_z", "Posición Z", -3000.0f,3000.0f, 10.0f);
+	obs_properties_add_float_slider(props, "scale", "Escala", 0.1f, 1000.0f,0.01f);
+	obs_properties_add_float_slider(props, "rotation_x_slider_value","Rotación X (Grados)", -360.0f, 360.0f,1.0f);
+	obs_properties_add_float_slider(props, "rotation_y_slider_value","Rotación Y (Grados)", -360.0f, 360.0f,1.0f);
+	obs_properties_add_float_slider(props, "rotation_z_slider_value","Rotación Z (Grados)", -360.0f, 360.0f,1.0f);
+
+	// Propiedades Comunes
+	obs_properties_add_path(props, "texture_path", "Ruta de la Textura", OBS_PATH_FILE,"Imágenes (*.png *.jpg *.jpeg *.bmp *.tga);;Todos (*.*)", NULL);
+	obs_properties_add_path(props, "model_path", "Ruta del Modelo 3D", OBS_PATH_FILE,"Modelos 3D (*.obj *.fbx *.dae *.gltf);;Todos (*.*)", NULL);
+
+	// Propiedades AR
+	obs_properties_add_int(props, "marker_id", "ID del Marker", 0, 100, 1);
+	obs_properties_add_float_slider(props, "marker_size",	"Tamaño del Marker", 0.1f, 10.0f, 0.1f);
+	obs_property_t *dict = obs_properties_add_list(props, "marker_dict", "Diccionario de Marker", OBS_COMBO_TYPE_LIST,OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(dict, "Original", ARUCO_DICT_ORIGINAL);
+	obs_property_list_add_int(dict, "4×4 (100)", ARUCO_DICT_4X4_100);
+	obs_property_list_add_int(dict, "5×5 (100)", ARUCO_DICT_5X5_100);
+	obs_property_list_add_int(dict, "6×6 (100)", ARUCO_DICT_6X6_100);
+	obs_property_list_add_int(dict, "7×7 (100)", ARUCO_DICT_7X7_100);
+obs_properties_add_path(props, "calibration_file", "Archivo de Calibración", 
+                        OBS_PATH_FILE, "YAML (*.yml *.yaml);;Todos (*.*)", NULL);
+
+	obs_properties_add_float_slider(props, "ar_offset_pos_x","AR Offset Posición X", -1000,1000.0f, 10.0f);
+	obs_properties_add_float_slider(props, "ar_offset_pos_y","AR Offset Posición Y", -1000.0f,1000.0f, 10.0f);
+	obs_properties_add_float_slider(props, "ar_offset_pos_z","AR Offset Posición Z", -1000.0f,1000.0f, 10.0f);
+	obs_properties_add_float_slider(props, "ar_offset_rot_x","AR Offset Rotación X", -360.0f, 360.0f,1.0f);
+	obs_properties_add_float_slider(props, "ar_offset_rot_y","AR Offset Rotación Y", -360.0f, 360.0f,1.0f);
+	obs_properties_add_float_slider(props, "ar_offset_rot_z","AR Offset Rotación Z", -360.0f, 360.0f,1.0f);
+
+	/* Countdown: duración y sincronización web */
+	obs_properties_add_int(props, "countdown_duration_h", "Countdown Horas", 0, 99, 1);
+	obs_properties_add_int(props, "countdown_duration_m", "Countdown Minutos", 0, 59, 1);
+	obs_properties_add_int(props, "countdown_duration_s", "Countdown Segundos", 0, 59, 1);
+	obs_properties_add_bool(props, "countdown_running", "Countdown en marcha");
+	obs_properties_add_bool(props, "countdown_reset", "Reiniciar countdown (marcar y desmarcar)");
+	obs_properties_add_bool(props, "sync_enabled", "Sincronización web activa");
+	obs_properties_add_text(props, "sync_url", "URL API (JSON: hours, minutes, seconds)", OBS_TEXT_DEFAULT);
+	obs_properties_add_float(props, "sync_interval_sec", "Intervalo sincronización (seg)", 1.0f, 300.0f, 1.0f);
+
+	/* Countdown: configuración de reloj */
+	obs_property_t *clock_mode_combo = obs_properties_add_list(
+		props, "clock_mode", "Modo de reloj",
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(clock_mode_combo, "Tres manecillas (H/M/S)", 0);
+	obs_property_list_add_int(clock_mode_combo, "Una manecilla (tiempo total)", 1);
+	obs_property_set_modified_callback(clock_mode_combo, render_mode_changed);
+
+	obs_property_t *use_ar_prop = obs_properties_add_bool(props, "countdown_use_ar", "Usar AR para posicionar reloj");
+	obs_property_set_modified_callback(use_ar_prop, render_mode_changed);
+	
+	//obs_properties_add_int(props, "mesh_id_dial", "ID Malla Dial/Esfera", -1, 100, 1);
+	obs_properties_add_int(props, "mesh_id_hour_hand", "ID Malla Manecilla Horas", -1, 100, 1);
+	obs_properties_add_int(props, "mesh_id_minute_hand", "ID Malla Manecilla Minutos", -1, 100, 1);
+	obs_properties_add_int(props, "mesh_id_second_hand", "ID Malla Manecilla Segundos", -1, 100, 1);
+	obs_properties_add_int(props, "mesh_id_single_hand", "ID Malla Manecilla Única", -1, 100, 1);
+
+	obs_data_t *temp_settings = obs_data_create();
+	render_mode_changed(props, combo, temp_settings);
+	obs_data_release(temp_settings);
+	return props;
+}
+
+static void filter_update(void *data, obs_data_t *settings)
+{
+	struct cube_filter_data *filter = data;
+	if (!filter || !settings)return;
+
+	
+	filter->mode = (int)obs_data_get_int(settings, "render_mode");
+	filter->pos_x = (float)obs_data_get_double(settings, "pos_x");
+	filter->countdown_running = obs_data_get_bool(settings, "countdown_running");
+	filter->countdown_reset_requested = obs_data_get_bool(settings, "countdown_reset");
+	filter->countdown_duration_h = (uint32_t)obs_data_get_int(settings, "countdown_duration_h");
+	filter->countdown_duration_m = (uint32_t)obs_data_get_int(settings, "countdown_duration_m");
+	filter->countdown_duration_s = (uint32_t)obs_data_get_int(settings, "countdown_duration_s");
+	filter->sync_enabled = obs_data_get_bool(settings, "sync_enabled");
+	filter->sync_interval_sec = (float)obs_data_get_double(settings, "sync_interval_sec");
+	const char *new_sync_url = obs_data_get_string(settings, "sync_url");
+	if (!new_sync_url) new_sync_url = "";
+	
+	// Leer configuración de reloj
+	filter->clock_mode = (int)obs_data_get_int(settings, "clock_mode");
+	filter->mesh_id_dial = (int)obs_data_get_int(settings, "mesh_id_dial");
+	filter->mesh_id_hour_hand = (int)obs_data_get_int(settings, "mesh_id_hour_hand");
+	filter->mesh_id_minute_hand = (int)obs_data_get_int(settings, "mesh_id_minute_hand");
+	filter->mesh_id_second_hand = (int)obs_data_get_int(settings, "mesh_id_second_hand");
+	filter->mesh_id_single_hand = (int)obs_data_get_int(settings, "mesh_id_single_hand");
+	filter->countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
+	
+	if (filter->countdown_clock) {
+		blog(LOG_INFO, "SET DURATION");
+		countdown_clock_set_duration_hms(filter->countdown_clock,filter->countdown_duration_h, filter->countdown_duration_m, filter->countdown_duration_s);
+		countdown_state_t state = countdown_clock_get_state(filter->countdown_clock);
+		
+		if (filter->countdown_running) {
+			if (state == COUNTDOWN_STATE_STOPPED)
+				countdown_clock_start(filter->countdown_clock);
+			else if (state == COUNTDOWN_STATE_PAUSED)
+				countdown_clock_resume(filter->countdown_clock);
+		} else {
+			if (state == COUNTDOWN_STATE_RUNNING)
+				countdown_clock_pause(filter->countdown_clock);
+		}
+	}
+	/* Web sync: crear o actualizar si está habilitado y hay URL (nunca bloquea el render) */
+	if (filter->sync_enabled && new_sync_url && new_sync_url[0]) {
+		blog(LOG_INFO, "WEB INFO SI");
+		if (filter->web_sync) {
+			web_sync_set_url(filter->web_sync, new_sync_url);
+			web_sync_set_interval(filter->web_sync, filter->sync_interval_sec);
+			web_sync_set_enabled(filter->web_sync, true);
+		} else {
+			filter->web_sync = web_sync_create(new_sync_url, filter->sync_interval_sec);
+		}
+		bfree(filter->sync_url);
+		filter->sync_url = bstrdup(new_sync_url);
+	} else {
+		if (filter->web_sync)
+			web_sync_set_enabled(filter->web_sync, false);
+		bfree(filter->sync_url);
+		filter->sync_url = (new_sync_url && new_sync_url[0]) ? bstrdup(new_sync_url) : NULL;
+	}
+	filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
+	filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
+	filter->scale = (float)obs_data_get_double(settings, "scale");
+	filter->rotation_x =(float)obs_data_get_double(settings, "rotation_x_slider_value");
+	filter->rotation_y =(float)obs_data_get_double(settings, "rotation_y_slider_value");
+	filter->rotation_z =(float)obs_data_get_double(settings, "rotation_z_slider_value");
+
+	filter->ar_offset_pos_x =(float)obs_data_get_double(settings, "ar_offset_pos_x");
+	filter->ar_offset_pos_y =(float)obs_data_get_double(settings, "ar_offset_pos_y");
+	filter->ar_offset_pos_z =(float)obs_data_get_double(settings, "ar_offset_pos_z");
+	filter->ar_offset_rot_x =(float)obs_data_get_double(settings, "ar_offset_rot_x");
+	filter->ar_offset_rot_y =(float)obs_data_get_double(settings, "ar_offset_rot_y");
+	filter->ar_offset_rot_z =(float)obs_data_get_double(settings, "ar_offset_rot_z");
+
+
+	int id = (int)obs_data_get_int(settings, "marker_id");
+	float size = (float)obs_data_get_double(settings, "marker_size");
+
+	if (filter->detector) {
+		if (size != get_marker_size(filter->detector))
+			set_marker_size(filter->detector, size);
+		if (id != get_marker_id(filter->detector))
+			set_marker_id(filter->detector, id);
+	}
+
+
+	const char *new_model_path_c_str =
+		obs_data_get_string(settings, "model_path");
+	if (!new_model_path_c_str)
+		new_model_path_c_str = "";
+
+	if (!filter->model_path_str ||
+	    strcmp(filter->model_path_str, new_model_path_c_str) != 0 ||
+	    filter->g_mesh_count == 0) {
+
+		bfree(filter->model_path_str);
+		filter->model_path_str = bstrdup(new_model_path_c_str);
+
+		if (filter->model_path_str && filter->model_path_str[0]) {
+			blog(LOG_INFO, "[CUBE] Cargando nuevo modelo desde: %s",
+			     filter->model_path_str);
+			load_model_c(filter->model_path_str, &filter->g_meshes,
+				     &filter->g_mesh_count,
+				     &filter->model_width,
+				     &filter->model_height);
+		}
+	}
+
+
+	const char *new_texture_path_c_str =
+		obs_data_get_string(settings, "texture_path");
+	if (!new_texture_path_c_str)
+		new_texture_path_c_str = "";
+
+	bool model_present =
+		(filter->g_meshes != NULL && filter->g_mesh_count > 0);
+
+	bool texture_path_changed = false;
+	if (!filter->texture_path_str)
+		texture_path_changed = (new_texture_path_c_str[0] != '\0');
+	else
+		texture_path_changed = (strcmp(filter->texture_path_str,
+					       new_texture_path_c_str) != 0);
+
+
+	bool should_reload_texture = false;
+	if (model_present) {
+		if (texture_path_changed)
+			should_reload_texture = true;
+		else if (filter->loaded_texture == NULL &&
+			 new_texture_path_c_str[0] != '\0')
+			should_reload_texture = true;
+	}
+
+	if (should_reload_texture) {
+		/* Mantengo exactamente la secuencia original para borrar/recargar */
+		bfree(filter->texture_path_str);
+		filter->texture_path_str = bstrdup(new_texture_path_c_str);
+
+		/* Si existía una textura cargada, la destruyo (igual que en tu lógica original). */
+		if (filter->loaded_texture) {
+			obs_enter_graphics();
+			gs_texture_destroy(filter->loaded_texture);
+			filter->loaded_texture = NULL;
+			obs_leave_graphics();
+		}
+
+		if (filter->texture_path_str && filter->texture_path_str[0]) {
+			filter->loaded_texture =
+				load_texture_file(filter->texture_path_str);
+			if (filter->loaded_texture) {
+				blog(LOG_INFO,
+				     "[CUBE] Nueva textura cargada desde: %s",
+				     filter->texture_path_str);
+				replace_mesh_textures(filter->g_meshes,
+						      filter->g_mesh_count,
+						      filter->loaded_texture,
+						      NULL);
+			} else {
+				blog(LOG_WARNING,
+				     "[CUBE] No se pudo cargar la nueva textura desde: %s",
+				     filter->texture_path_str);
+			}
+		} else {
+			/* ruta vacía: eliminar texturas en mallas */
+			blog(LOG_INFO,
+			     "[CUBE] Ruta de textura vacía: eliminando textura en mallas");
+			replace_mesh_textures(filter->g_meshes,
+					      filter->g_mesh_count, NULL, NULL);
+		}
+	} else {
+	
+		if (model_present && new_texture_path_c_str[0] == '\0' &&
+		    filter->loaded_texture) {
+			obs_enter_graphics();
+			gs_texture_destroy(filter->loaded_texture);
+			filter->loaded_texture = NULL;
+			obs_leave_graphics();
+			replace_mesh_textures(filter->g_meshes,
+					      filter->g_mesh_count, NULL, NULL);
+		}
+	}
+
+	
+	int marker_dict = obs_data_get_int(settings, "marker_dict");
+	if (filter->detector &&
+	    marker_dict != get_marker_dictionary(filter->detector)) {
+		set_marker_dictionary(filter->detector, marker_dict);
+	}
+}
+
+static void filter_tick(void *data, float seconds)
+{
+	struct cube_filter_data *filter = data;
+	struct obs_video_info video_info;
+
+	if (obs_get_video_info(&video_info)) {
+		if (video_info.base_width != filter->width_screen ||
+		    video_info.base_height != filter->height_screen) {
+			filter->width_screen = video_info.base_width;
+			filter->height_screen = video_info.base_height;
+			create_texture(filter);
+		}
+	}
+
+	/* Modo Countdown: actualizar reloj y sincronización web (nunca bloquea el render) */
+	if (filter->mode == 2 && filter->countdown_clock) {
+		if (filter->countdown_reset_requested) {
+			countdown_clock_reset(filter->countdown_clock);
+			filter->countdown_reset_requested = false;
+		}
+		countdown_clock_tick(filter->countdown_clock, seconds);
+		if (filter->web_sync) {
+			web_sync_result_t sync_result;
+			if (web_sync_poll(filter->web_sync, &sync_result) && sync_result.valid)
+				countdown_clock_sync_remaining(filter->countdown_clock,
+					sync_result.hours, sync_result.minutes, sync_result.seconds);
+		}
+	}
+}
+
+static void filter_save(void *data, obs_data_t *settings)
+{
+	struct cube_filter_data *filter = data;
+	blog(LOG_INFO, "[CUBE] guardando valores");
+	obs_data_set_double(settings, "pos_x", filter->pos_x);
+	obs_data_set_double(settings, "pos_y", filter->pos_y);
+	obs_data_set_double(settings, "pos_z", filter->pos_z);
+	obs_data_set_double(settings, "scale", filter->scale);
+	obs_data_set_double(settings, "rotation_x_slider_value", filter->rotation_x);
+	obs_data_set_double(settings, "rotation_y_slider_value", filter->rotation_y);
+	obs_data_set_double(settings, "rotation_z_slider_value", filter->rotation_z);
+	obs_data_set_double(settings, "marker_size", get_marker_size(filter->detector));
+	obs_data_set_int(settings, "marker_id", get_marker_id(filter->detector));
+	obs_data_set_int(settings, "marker_dict", get_marker_dictionary(filter->detector));
+
+	obs_data_set_double(settings, "ar_offset_pos_x", filter->ar_offset_pos_x);
+	obs_data_set_double(settings, "ar_offset_pos_y", filter->ar_offset_pos_y);
+	obs_data_set_double(settings, "ar_offset_pos_z", filter->ar_offset_pos_z);
+	obs_data_set_double(settings, "ar_offset_rot_x", filter->ar_offset_rot_x);
+	obs_data_set_double(settings, "ar_offset_rot_y", filter->ar_offset_rot_y);
+	obs_data_set_double(settings, "ar_offset_rot_z", filter->ar_offset_rot_z);
+
+	obs_data_set_int(settings, "countdown_duration_h", (int)filter->countdown_duration_h);
+	obs_data_set_int(settings, "countdown_duration_m", (int)filter->countdown_duration_m);
+	obs_data_set_int(settings, "countdown_duration_s", (int)filter->countdown_duration_s);
+	obs_data_set_bool(settings, "countdown_running", filter->countdown_running);
+	obs_data_set_bool(settings, "sync_enabled", filter->sync_enabled);
+	obs_data_set_double(settings, "sync_interval_sec", (double)filter->sync_interval_sec);
+	if (filter->sync_url) obs_data_set_string(settings, "sync_url", filter->sync_url);
+
+	// Guardar configuración de reloj
+	obs_data_set_int(settings, "clock_mode", filter->clock_mode);
+	//obs_data_set_int(settings, "mesh_id_dial", filter->mesh_id_dial);
+	obs_data_set_int(settings, "mesh_id_hour_hand", filter->mesh_id_hour_hand);
+	obs_data_set_int(settings, "mesh_id_minute_hand", filter->mesh_id_minute_hand);
+	obs_data_set_int(settings, "mesh_id_second_hand", filter->mesh_id_second_hand);
+	obs_data_set_int(settings, "mesh_id_single_hand", filter->mesh_id_single_hand);
+	obs_data_set_bool(settings, "countdown_use_ar", filter->countdown_use_ar);
+
+	if (filter->model_path_str) obs_data_set_string(settings, "model_path", filter->model_path_str);
+	if (filter->texture_path_str) obs_data_set_string(settings, "texture_path", filter->texture_path_str);
+	if (get_calibration_path(filter->detector)) obs_data_set_string(settings, "calibration_path", get_calibration_path(filter->detector));
+}
+
+static void filter_load(void *data, obs_data_t *settings)
+{
+	struct cube_filter_data *filter = data;
+	blog(LOG_INFO, "[CUBE] cargando valores");
+	filter->pos_x = (float)obs_data_get_double(settings, "pos_x");
+	filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
+	filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
+	filter->scale = (float)obs_data_get_double(settings, "scale");
+	filter->rotation_x = (float)obs_data_get_double(settings, "rotation_x_slider_value");
+	filter->rotation_y = (float)obs_data_get_double(settings, "rotation_y_slider_value");
+	filter->rotation_z = (float)obs_data_get_double(settings, "rotation_z_slider_value");
+	filter->ar_offset_pos_x = (float)obs_data_get_double(settings, "ar_offset_pos_x");
+	filter->ar_offset_pos_y = (float)obs_data_get_double(settings, "ar_offset_pos_y");
+	filter->ar_offset_pos_z = (float)obs_data_get_double(settings, "ar_offset_pos_z");
+	filter->ar_offset_rot_x = (float)obs_data_get_double(settings, "ar_offset_rot_x");
+	filter->ar_offset_rot_y = (float)obs_data_get_double(settings, "ar_offset_rot_y");
+	filter->ar_offset_rot_z = (float)obs_data_get_double(settings, "ar_offset_rot_z");
+	int id = (int)obs_data_get_int(settings, "marker_id");
+	int dict = (int)obs_data_get_int(settings, "marker_dict");
+	float siz = (float)obs_data_get_double(settings, "marker_size");
+	if (id != get_marker_id(filter->detector)) set_marker_id(filter->detector, id);
+	if (dict != get_marker_dictionary(filter->detector)) set_marker_dictionary(filter->detector, dict);
+	if (siz != get_marker_size(filter->detector)) set_marker_size(filter->detector, siz);
+	const char *mp = obs_data_get_string(settings, "model_path");
+	if (filter->model_path_str) bfree(filter->model_path_str);
+	filter->model_path_str = (mp && *mp) ? bstrdup(mp) : NULL;
+	const char *tp = obs_data_get_string(settings, "texture_path");
+	if (filter->texture_path_str) bfree(filter->texture_path_str);
+	filter->texture_path_str = (tp && *tp) ? bstrdup(tp) : NULL;
+	const char *cp = obs_data_get_string(settings, "calibration_path");
+	if (cp && *cp) set_calibration_path(filter->detector, cp);
+
+	filter->countdown_duration_h = (uint32_t)obs_data_get_int(settings, "countdown_duration_h");
+	filter->countdown_duration_m = (uint32_t)obs_data_get_int(settings, "countdown_duration_m");
+	filter->countdown_duration_s = (uint32_t)obs_data_get_int(settings, "countdown_duration_s");
+	filter->countdown_running = obs_data_get_bool(settings, "countdown_running");
+	filter->sync_enabled = obs_data_get_bool(settings, "sync_enabled");
+	filter->sync_interval_sec = (float)obs_data_get_double(settings, "sync_interval_sec");
+	bfree(filter->sync_url);
+	const char *su = obs_data_get_string(settings, "sync_url");
+	filter->sync_url = (su && su[0]) ? bstrdup(su) : NULL;
+
+	// Cargar configuración de reloj
+	filter->clock_mode = (int)obs_data_get_int(settings, "clock_mode");
+	//filter->mesh_id_dial = (int)obs_data_get_int(settings, "mesh_id_dial");
+	filter->mesh_id_hour_hand = (int)obs_data_get_int(settings, "mesh_id_hour_hand");
+	filter->mesh_id_minute_hand = (int)obs_data_get_int(settings, "mesh_id_minute_hand");
+	filter->mesh_id_second_hand = (int)obs_data_get_int(settings, "mesh_id_second_hand");
+	filter->mesh_id_single_hand = (int)obs_data_get_int(settings, "mesh_id_single_hand");
+	filter->countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
+
+	filter_update(data, settings);
+}
+static void filter_defaults(obs_data_t *settings)
+{
+	obs_data_set_default_double(settings, "pos_x", 0.0);
+	obs_data_set_default_double(settings, "pos_y", 0.0);
+	obs_data_set_default_double(settings, "pos_z", 0.0);
+	obs_data_set_default_double(settings, "scale", 100.0);
+	obs_data_set_default_double(settings, "rotation_x_slider_value", 0.0);
+	obs_data_set_default_double(settings, "rotation_y_slider_value", 0.0);
+	obs_data_set_default_double(settings, "rotation_z_slider_value", 0.0);
+	obs_data_set_default_double(settings, "marker_size", 0.1);
+	obs_data_set_default_int(settings, "marker_id", 0);
+	obs_data_set_default_string(settings, "model_path", "");
+	obs_data_set_default_string(settings, "texture_path", "");
+	obs_data_set_default_int(settings, "marker_dict", ARUCO_DICT_ORIGINAL);
+	obs_data_set_default_string(settings, "calibration_path", "calibration.yml");
+
+
+	obs_data_set_default_double(settings, "ar_offset_pos_x", 0.0);
+	obs_data_set_default_double(settings, "ar_offset_pos_y", 0.0);
+	obs_data_set_default_double(settings, "ar_offset_pos_z", 0.0);
+	obs_data_set_default_double(settings, "ar_offset_rot_x", 0.0);
+	obs_data_set_default_double(settings, "ar_offset_rot_y", 0.0);
+	obs_data_set_default_double(settings, "ar_offset_rot_z", 0.0);
+
+	obs_data_set_default_int(settings, "countdown_duration_h", 0);
+	obs_data_set_default_int(settings, "countdown_duration_m", 5);
+	obs_data_set_default_int(settings, "countdown_duration_s", 0);
+	obs_data_set_default_bool(settings, "countdown_running", false);
+	obs_data_set_default_bool(settings, "countdown_reset", false);
+	obs_data_set_default_bool(settings, "sync_enabled", false);
+	obs_data_set_default_string(settings, "sync_url", "");
+	obs_data_set_default_double(settings, "sync_interval_sec", 10.0);
+
+	// Valores por defecto de configuración de reloj
+	obs_data_set_default_int(settings, "clock_mode", 0);  // Tres manecillas por defecto
+	//obs_data_set_default_int(settings, "mesh_id_dial", 0);
+	obs_data_set_default_int(settings, "mesh_id_hour_hand", 1);
+	obs_data_set_default_int(settings, "mesh_id_minute_hand", 2);
+	obs_data_set_default_int(settings, "mesh_id_second_hand", 3);
+	obs_data_set_default_int(settings, "mesh_id_single_hand", 1);
+	obs_data_set_default_bool(settings, "countdown_use_ar", false);
+}
+static struct obs_source_info cube_filter = {
+	.id = "cube_filter",
+	.type = OBS_SOURCE_TYPE_FILTER,
+	.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_CUSTOM_DRAW,
+	.get_name = filter_get_name,
+	.create = filter_create,
+	.destroy = filter_destroy,
+	.video_render = filter_render,
+	.video_tick = filter_tick,
+	.get_properties = filter_properties,
+	.update = filter_update,
+	.save = filter_save,
+	.get_defaults = filter_defaults,
+	.load = filter_load,
+	.filter_video = filter_video,
+
+};
+bool obs_module_load(void)
+{
+	blog(LOG_INFO, "[CUBE] Registrando filtro");
+	obs_register_source(&cube_filter);
+	blog(LOG_INFO, "[CUBE] Registrade");
+	return true;
+}
+
+============================================================
+/// ARCHIVO: .\Cubo-plugincambios.c ///
+============================================================
+
+﻿#include <obs-module.h>
+#include "graphics/graphics.h"
+#include "graphics/effect.h"
+#include "graphics/vec4.h"
+#include <graphics/image-file.h>
+#include "graphics/quat.h"
+#include <obs.h>
+#include <plugin-support.h>
+#include "Windows.h"
+#include <util/platform.h>  // bmemdup, bmalloc, etc. (memoria multiplataforma)
+#include "obs-config.h"
+#include "obs-defs.h"
+#include "obs-data.h"
+#include "obs-properties.h"
+#include "obs-interaction.h"
+
+OBS_DECLARE_MODULE()
+OBS_MODULE_USE_DEFAULT_LOCALE("cube", "en-US")
+
+MODULE_EXPORT const char *obs_module_description(void)
+{
+	return "PLANO";
+}
+
+struct cube_filter_data {
+	obs_source_t *source;
+	gs_texture_t *texture;
+	int width, height;
+	int pox, posy;
+	float rotation_z;
+};
+int vel = 100;
+
+
+
+
+static uint32_t cube_source_get_width(void *data)
+{
+	UNUSED_PARAMETER(data);
+	return 0; // O el ancho que tú quieras
+}
+
+static uint32_t cube_source_get_height(void *data)
+{
+	UNUSED_PARAMETER(data);
+	return 0; // O la altura deseada
+}
+
+void image_source_load(gs_image_file_t *image, const char *file)
+{
+	obs_enter_graphics();
+
+	gs_image_file_free(image);
+
+	obs_leave_graphics();
+
+	gs_image_file_init(image, file);
+
+	obs_enter_graphics();
+
+	gs_image_file_init_texture(image);
+
+	obs_leave_graphics();
+
+	if (!image->loaded) {
+		blog(LOG_WARNING, "failed to load texture %s", file);
+	}
+}
+
+static gs_vertbuffer_t *cube_faces[6];
+
+static gs_indexbuffer_t *indexbuffer; //triangulos 
+static gs_vertbuffer_t *vertexbuffer; //vertices
+
+static gs_vertbuffer_t *vertexbuffers_faces[6] = {NULL};
+static gs_indexbuffer_t *indexbuffers_faces[6] = {NULL};
+
+// Vértices por cara (6 vértices por cara, 2 triángulos)
+static const struct vec3 face_vertices[6][6] = {
+	// Cara trasera (Z=0)
+	{{0, 0, 0}, {50, 0, 0}, {50, 50, 0}, {50, 50, 0}, {0, 50, 0}, {0, 0, 0}},
+	// Cara delantera (Z=50)
+	{{0, 0, 50},
+	 {50, 0, 50},
+	 {50, 50, 50},
+	 {50, 50, 50},
+	 {0, 50, 50},
+	 {0, 0, 50}},
+	// Cara izquierda (X=0)
+	{{0, 0, 0}, {0, 0, 50}, {0, 50, 50}, {0, 50, 50}, {0, 50, 0}, {0, 0, 0}},
+	// Cara derecha (X=50)
+	{{50, 0, 0},
+	 {50, 0, 50},
+	 {50, 50, 50},
+	 {50, 50, 50},
+	 {50, 50, 0},
+	 {50, 0, 0}},
+	// Cara superior (Y=50)
+	{{0, 50, 0},
+	 {50, 50, 0},
+	 {50, 50, 50},
+	 {50, 50, 50},
+	 {0, 50, 50},
+	 {0, 50, 0}},
+	// Cara inferior (Y=0)
+	{{0, 0, 0}, {50, 0, 0}, {50, 0, 50}, {50, 0, 50}, {0, 0, 50}, {0, 0, 0}},
+};
+
+// Índices siempre de 0 a 5 (6 vértices por cara)
+static const uint16_t face_indices[6] = {0, 1, 2, 3, 4, 5};
+
+// Colores por cara
+static struct vec4 face_colors[6] = {
+	{1, 0, 0, 1}, // rojo
+	{0, 1, 0, 1}, // verde
+	{0, 0, 1, 1}, // azul
+	{1, 1, 0, 1}, // amarillo
+	{1, 0, 1, 1}, // magenta
+	{0, 1, 1, 1}  // cyan
+};
+
+static void create_face_buffers(void)
+{
+	obs_enter_graphics();
+
+	for (int i = 0; i < 6; i++) {
+		struct gs_vb_data vbd = {0};
+		vbd.num = 6;
+		vbd.points = bmemdup(face_vertices[i], sizeof(struct vec3) * 6);
+
+		// Colores para los 6 vértices (igual para cada uno, el color de la cara)
+		struct vec4 *colors = bmemdup(NULL, sizeof(struct vec4) * 6);
+		for (int c = 0; c < 6; c++) {
+			colors[c] = face_colors[i];
+		}
+		vbd.colors = colors;
+
+		vertexbuffers_faces[i] = gs_vertexbuffer_create(&vbd, 0);
+
+		// Array de 6 arrays de índices, cada uno para una cara
+		static const uint16_t cube_face_indices[6][6] = {
+			{0, 1, 3, 3, 2, 0}, // Cara 0
+			{4, 6, 7, 7, 5, 4}, // Cara 1
+			{0, 2, 6, 6, 4, 0}, // Cara 2
+			{1, 5, 7, 7, 3, 1}, // Cara 3
+			{2, 3, 7, 7, 6, 2}, // Cara 4
+			{0, 4, 5, 5, 1, 0}  // Cara 5
+		};
+
+		// Al crear los index buffers:
+		for (int i = 0; i < 6; i++) {
+			uint16_t *indices_dup = bmemdup(cube_face_indices[i],
+							sizeof(uint16_t) * 6);
+			indexbuffers_faces[i] = gs_indexbuffer_create(
+				GS_UNSIGNED_SHORT, indices_dup, 6, 0);
+		}
+	}
+
+	obs_leave_graphics();
+}
+
+static int size = 50; // Ejemplo, ajustar según necesidad
+
+static void update_vertices(void)
+{
+	obs_enter_graphics();
+	gs_render_start(true);
+	// --- LINE VERTICES ---
+	////cara 1
+
+	// Cara frontal (z = size)
+	size = 50;
+	gs_vertex3f(0, 0, 0);
+	gs_vertex3f(size, 0, 0);
+	gs_vertex3f(0, size, 0);
+
+	gs_vertex3f(0, size, 0);
+	gs_vertex3f(size, size, 0);
+	gs_vertex3f(size, 0, 0);
+	cube_faces[0] = gs_render_save();
+	//atras
+	gs_vertex3f(0, 0, size);
+	gs_vertex3f(size, 0, size);
+	gs_vertex3f(0, size, size);
+
+	gs_vertex3f(0, size, size);
+	gs_vertex3f(size, size, size);
+	gs_vertex3f(size, 0, size);
+	cube_faces[1] = gs_render_save();
+
+	// Cara derexha (z = 0) SI
+
+	gs_vertex3f(size, 0, 0);
+	gs_vertex3f(size, 0, size);
+	gs_vertex3f(size, size, 0);
+
+	gs_vertex3f(size, size, 0);
+	gs_vertex3f(size, size, size);
+	gs_vertex3f(size, 0, size);
+	cube_faces[2] = gs_render_save();
+
+	// Cara izquierda  SI
+	gs_vertex3f(0, 0, size);
+	gs_vertex3f(0, 0, 0);
+	gs_vertex3f(0, size, size);
+
+	gs_vertex3f(0, size, size);
+	gs_vertex3f(0, size, 0);
+	gs_vertex3f(0, 0, 0);
+	cube_faces[3] = gs_render_save();
+	// Cara arriba (y = 0)
+
+	gs_vertex3f(0, 0, size);
+	gs_vertex3f(size, 0, size);
+	gs_vertex3f(0, 0, 0);
+
+	gs_vertex3f(0, 0, 0);
+	gs_vertex3f(size, 0, 0);
+	gs_vertex3f(size, 0, size);
+	cube_faces[4] = gs_render_save();
+	// Cara abajo (x = 0)
+	gs_vertex3f(0, size, size);
+	gs_vertex3f(size, size, size);
+	gs_vertex3f(0, size, 0);
+
+	gs_vertex3f(0, size, 0);
+	gs_vertex3f(size, size, 0);
+	gs_vertex3f(size, size, size);
+	cube_faces[5] = gs_render_save();
+
+
+		
+
+
+
+	obs_leave_graphics();
+
+
+
+
+	// No liberar dot_data ni dot_data->points (la función gs_vertexbuffer_create toma la propiedad)
+}
+// Función para crear una textura blanca para la pizarra
+void create_whiteboard_texture(struct cube_filter_data *data)
+{
+	obs_enter_graphics();
+
+	if (data->texture != NULL) {
+		gs_texture_destroy(data->texture);
+		data->texture = NULL;
+	}
+
+	data->texture = gs_texture_create(data->width, data->height, GS_RGBA, 1,
+					  NULL, GS_RENDER_TARGET);
+
+	blog(LOG_INFO, "create whiteboard texture %d %d", data->width,
+	     data->height);
+
+	obs_leave_graphics();
+}
+static void *cube_filter_create(obs_data_t *settings, obs_source_t *source)
+{
+	struct cube_filter_data *data =bzalloc(sizeof(struct cube_filter_data));
+	data->source = source;
+	data->pox = 0;
+	data->posy = 0;
+	//update_vertices();
+	obs_enter_graphics();
+	gs_render_start(true);
+
+
+	create_face_buffers();
+	obs_leave_graphics();
+	// Obtener la resolución del vídeo de salida
+	struct obs_video_info ovi;
+	if (obs_get_video_info(&ovi)) {
+		data->width = ovi.base_width;
+		data->height = ovi.base_height;
+
+		create_whiteboard_texture(data);
+	} 
+	else {
+		blog(LOG_WARNING, "Whiteboard: Failed to get video resolution");
+	}
+
+	return data;
+
+
+}
+
+
+
+static void cube_filter_destroy(void *data)
+{
+	if (vertexbuffer)
+		gs_vertexbuffer_destroy(vertexbuffer);
+	if (indexbuffer)
+		gs_indexbuffer_destroy(indexbuffer);
+
+}
+
+static void cube_filter_render(void *data, gs_effect_t *effect1)
+{
+	struct cube_filter_data *filter = (struct cube_filter_data *)data;
+
+
+	// Obtener el efecto base por defecto
+	gs_effect_t* effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+
+	if (effect && filter->texture) {
+		gs_blend_state_push();
+		gs_reset_blend_state();
+		gs_matrix_push();
+		gs_matrix_identity();
+
+		while (gs_effect_loop(effect, "Draw")) {
+			
+		obs_source_draw(filter->texture, 0, 0, 0, 0, false);
+		}
+
+		gs_matrix_pop();
+		gs_blend_state_pop();
+	}
+	
+}
+
+static const char *cube_filter_get_name(void *unused)
+{
+	UNUSED_PARAMETER(unused); // Macro común en OBS para evitar warnings
+	return "Cubo 3D (Índices y UV, sin textura)";
+}
+static void cue_filter_tick(void* data, float seconds) {
+	struct cube_filter_data *filter = data;
+	struct obs_video_info video_info;
+
+	filter->rotation_z += 45.0f * seconds;
+
+	if (filter->rotation_z >= 360.0f)
+		filter->rotation_z -= 360.0f;
+	if (obs_get_video_info(&video_info)) {
+		
+			if (video_info.base_width != filter->width|| video_info.base_height != filter->height) {
+			filter->width = video_info.base_width;
+			filter->height = video_info.base_height;
+			create_whiteboard_texture(filter);
+		}
+	}
+
+	if (filter->texture == NULL) {
+		blog("MAL", "MAL");
+		return;
+	}
+	
+	obs_enter_graphics();
+
+	gs_texture_t *prev_render_target = gs_get_render_target();
+	gs_texture_t *prev_zstencil_target = gs_get_zstencil_target();
+
+	gs_set_render_target(filter->texture, NULL);
+	gs_clear(GS_CLEAR_COLOR, (float[]){0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0);
+	gs_viewport_push();
+	gs_set_viewport(0, 0, filter->width, filter->height);
+	gs_projection_push();
+	
+	gs_set_3d_mode(60.0f, 0.1f, 1000.0f);
+
+	gs_blend_state_push();
+	gs_reset_blend_state();
+
+	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
+	gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
+
+	gs_technique_begin(tech);
+	gs_technique_begin_pass(tech, 0);
+	POINT mouse_pos;
+	if (GetCursorPos(&mouse_pos)) {
+		// mouse_pos.x y mouse_pos.y contienen la posición del cursor en pantalla
+	} else {
+		// Error al obtener la posición del cursor
+	} 
+	
+	float dx = (float)mouse_pos.x;
+	float dy = (float)mouse_pos.y;
+
+	float len = sqrt(dx*dx + dy*dy); // longitud arbitraria para escalar la línea
+	float angle = atan2f(dy, dx); // ángulo entre (0,0) y (dx, dy)
+
+
+	//gs_set_3d_mode(60.0, 1.0, 1000.0);
+	gs_enable_depth_test(true);
+	gs_depth_function(GS_LESS);
+	
+	//gs_depth_function()// con esta función una vez detectados los pixeles decides cual quieres pintar sobre cual, recibe el enum de :
+						//->el menor
+						//->el menor igual	
+						//->el mayor....
+	gs_matrix_push();
+	gs_matrix_identity();
+	
+	// Mueve el sistema de coordenadas a la posición del cursor
+	gs_matrix_translate3f(filter->pox+500, filter->posy+500, 0.0f);
+
+	
+
+	gs_matrix_translate3f(size/2, size/2, -size/2); // centro del cuadrado
+
+	// Rota y escala la línea para que apunte hacia el cursor
+	float angle_rad = filter->rotation_z * (float)M_PI / 180.0f;
+	gs_matrix_rotaa4f(1.0f, 1.0f, 0.0f, angle_rad);
+	//gs_matrix_translate3f(0.0f, -size, 0.0f);
+	gs_matrix_translate3f(-size / 2, -size / 2,size / 2); // centro del cuadrado
+	gs_matrix_scale3f(1.0f, 1.0f, 1.0f);
+
+
+	
+	for (int face = 0; face < 6; face++) {
+		gs_effect_set_vec4(color_param,&face_colors[face]); // Setea el color para esta cara
+		gs_load_vertexbuffer(vertexbuffers_faces[face]);
+		gs_load_indexbuffer(indexbuffers_faces[face]);
+		gs_draw(GS_TRIS, 0, 6);
+	}
+
+	
+	gs_technique_end_pass(tech);
+	gs_technique_end(tech);
+
+	gs_matrix_pop();
+	gs_enable_depth_test(false);
+	// Luego, ya fuera de la matriz, restauras estados gráficos
+	gs_projection_pop();
+	gs_viewport_pop();
+	gs_blend_state_pop();
+
+	gs_set_render_target(prev_render_target, prev_zstencil_target);
+
+	obs_leave_graphics();
+
+
+
+
+}
+
+static struct obs_source_info cube_filter = {
+	.id = "cube_filter",
+	.type = OBS_SOURCE_TYPE_INPUT,
+	.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_CUSTOM_DRAW,
+	.get_name = cube_filter_get_name,
+	.create = cube_filter_create,
+	.destroy = cube_filter_destroy,
+	.video_render = cube_filter_render,
+	.video_tick = cue_filter_tick,
+	.get_width = cube_source_get_width,
+	.get_height = cube_source_get_height,
+	
+	
+};
+
+bool obs_module_load(void)
+{
+	blog(LOG_INFO, "[CUBE] Registrando filtro");
+
+	obs_register_source(&cube_filter);
+	blog(LOG_INFO, "[CUBE] Registrade");
+	return true;
+}
+
+
+
+
+
+
+
+============================================================
+/// ARCHIVO: .\Model3DSource.cpp ///
+============================================================
+
+// Model3DSource.cpp
+
+#include "Model3DSource.hpp"
+#include <QFile>
+#include <QTextStream>
+#include <QDebug>
+
+Model3DSource::Model3DSource(const QString &path)
+	: vbo(QOpenGLBuffer::VertexBuffer)
+{
+	initializeOpenGLFunctions();
+	loadModel(path);
+	vao.create();
+	vao.bind();
+
+	vbo.create();
+	vbo.bind();
+	vbo.allocate(vertices.data(), vertices.size() * sizeof(float));
+
+	program.addShaderFromSourceFile(QOpenGLShader::Vertex,
+					":/shaders/simple.vert");
+	program.addShaderFromSourceFile(QOpenGLShader::Fragment,
+					":/shaders/simple.frag");
+	program.link();
+	program.bind();
+
+	program.enableAttributeArray(0);
+	program.setAttributeBuffer(0, GL_FLOAT, 0, 3);
+
+	vao.release();
+	vbo.release();
+	program.release();
+}
+
+Model3DSource::~Model3DSource()
+{
+	vao.destroy();
+	vbo.destroy();
+}
+
+void Model3DSource::loadModel(const QString &path)
+{
+	QFile file(path);
+	if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+		qWarning() << "No se pudo abrir el modelo:" << path;
+		return;
+	}
+
+	QTextStream in(&file);
+	while (!in.atEnd()) {
+		QString line = in.readLine();
+		if (line.startsWith("v ")) {
+			QStringList parts = line.split(" ", Qt::SkipEmptyParts);
+			if (parts.size() == 4) {
+				vertices.push_back(parts[1].toFloat());
+				vertices.push_back(parts[2].toFloat());
+				vertices.push_back(parts[3].toFloat());
+			}
+		}
+	}
+}
+
+void Model3DSource::render(int width, int height)
+{
+	projectionMatrix.setToIdentity();
+	projectionMatrix.perspective(45.0f, (float)width / (float)height, 0.1f,
+				     100.0f);
+
+	program.bind();
+	vao.bind();
+
+	program.setUniformValue("mvp", projectionMatrix);
+	glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
+
+	vao.release();
+	program.release();
+}
+
+
+============================================================
+/// ARCHIVO: .\Model3D_OBS.c ///
+============================================================
+
+	//#include "Model3DSource.hpp"
+
+	//#include <obs-module.h>
+	//#include <plugin-support.h>
+	//struct model_source {
+	//	std::unique_ptr<Model3DSource> model;
+	//};
+
+	//static const char *model_source_get_name(void *unused)
+	//{
+	//	return "3D Model Source";
+	//}
+
+	//static void *model_source_create(obs_data_t *settings, obs_source_t *source)
+	//{
+	//	auto *context = new model_source;
+	//	context->model = std::make_unique<Model3DSource>("models/monkey.obj");
+	//	return context;
+	//}
+
+	//static void model_source_destroy(void *data)
+	//{
+	//	delete static_cast<model_source *>(data);
+	//}
+
+	//static void model_source_render(void *data, gs_effect_t *effect)
+	//{
+	//	auto *context = static_cast<model_source *>(data);
+	//	if (!context || !context->model)
+	//		return;
+
+	//	// Obtener el puntero a la fuente correctamente
+	//	obs_source_t *source =
+	//		obs_filter_get_parent(context->model->getOBSParent());
+
+	//	// Si tienes el source guardado directamente (mejor):
+	//	int width = obs_source_get_base_width(
+	//		context->model->getOBSParent());
+	//	int height = obs_source_get_base_height(
+	//		context->model->getOBSParent());
+
+	//	context->model->render(width, height);
+	//}
+
+
+	//extern "C" void register_model_source()
+	//{
+	//	obs_source_info info = {};
+	//	info.id = "model_3d_source";
+	//	info.type = OBS_SOURCE_TYPE_INPUT;
+	//	info.output_flags = OBS_SOURCE_VIDEO;
+	//	info.get_name = model_source_get_name;
+	//	info.create = model_source_create;
+	//	info.destroy = model_source_destroy;
+	//	info.render = model_source_render;
+
+	//	obs_register_source(&info);
+	//}
+	/*
+Plugin Name
+Copyright (C) <Year> <Developer> <Email Address>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program. If not, see <https://www.gnu.org/licenses/>
+*/
+#include <obs-module.h>
+#include <plugin-support.h>
+
+	struct pixel_art_plugin_data {
+
+		obs_source_t *context;
+		gs_effect_t *effect;
+
+		gs_texrender_t *render;
+
+		gs_eparam_t *dither_spread_param;
+		gs_eparam_t *red_color_count_param;
+		gs_eparam_t *green_color_count_param;
+		gs_eparam_t *blue_color_count_param;
+		gs_eparam_t *texture_width, *texture_height;
+
+		enum gs_color_space space;
+
+		int downscales, bayer_level, red_count, green_count, blue_count;
+		uint32_t base_width, base_height;
+		float dither_spread, texwidth, texheight;
+		bool processed_frame;
+	};
+
+	static const char *pixel_art_plugin_getname(void *unused)
+	{
+
+		UNUSED_PARAMETER(unused);
+		return obs_module_text("JOSESHEILA");
+	}
+
+	static void pixel_art_plugin_update(void *data, obs_data_t *settings)
+	{
+
+		struct pixel_art_plugin_data *filter = data;
+		filter->downscales =
+			(int)obs_data_get_int(settings, "downscales");
+		filter->dither_spread =
+			(float)obs_data_get_double(settings, "ditherspread");
+		filter->bayer_level =
+			(int)obs_data_get_int(settings, "bayerlevel");
+		filter->red_count = (int)obs_data_get_int(settings, "redcount");
+		filter->green_count =
+			(int)obs_data_get_int(settings, "greencount");
+		filter->blue_count =
+			(int)obs_data_get_int(settings, "bluecount");
+	}
+
+	static void pixel_art_plugin_destroy(void *data)
+	{
+
+		struct pixel_art_plugin_data *filter = data;
+
+		if (filter->effect) {
+			obs_enter_graphics();
+			gs_effect_destroy(filter->effect);
+			obs_leave_graphics();
+		}
+
+		bfree(data);
+	}
+
+	static void *pixel_art_plugin_create(obs_data_t *settings,
+					     obs_source_t *context)
+	{
+
+		struct pixel_art_plugin_data *filter =
+			bzalloc(sizeof(struct pixel_art_plugin_data));
+		char *effect_path = obs_module_file("pixel_art.effect");
+
+		filter->context = context;
+
+		obs_enter_graphics();
+
+		filter->effect = gs_effect_create_from_file(effect_path, NULL);
+
+		if (filter->effect) {
+			filter->dither_spread_param =
+				gs_effect_get_param_by_name(filter->effect,
+							    "spread");
+
+			filter->red_color_count_param =
+				gs_effect_get_param_by_name(filter->effect,
+							    "redColorCount");
+
+			filter->green_color_count_param =
+				gs_effect_get_param_by_name(filter->effect,
+							    "greenColorCount");
+
+			filter->blue_color_count_param =
+				gs_effect_get_param_by_name(filter->effect,
+							    "blueColorCount");
+
+			filter->texture_width = gs_effect_get_param_by_name(
+				filter->effect, "texelWidth");
+
+			filter->texture_height = gs_effect_get_param_by_name(
+				filter->effect, "texelHeight");
+		}
+		obs_leave_graphics();
+
+		bfree(effect_path);
+
+		if (!filter->effect) {
+			pixel_art_plugin_destroy(filter);
+			return NULL;
+		}
+
+		pixel_art_plugin_update(filter, settings);
+		return filter;
+	}
+
+	void pixel_art_plugin_draw_frame(struct pixel_art_plugin_data *filter)
+	{
+		gs_effect_t *effect = filter->effect;
+
+		filter->texwidth = (float)filter->base_width;
+		filter->texheight = (float)filter->base_height;
+
+		gs_blend_state_push();
+		gs_blend_function(GS_BLEND_ONE, GS_BLEND_INVSRCALPHA);
+
+		const bool previous = gs_framebuffer_srgb_enabled();
+		gs_enable_framebuffer_srgb(true);
+
+		gs_texture_t *tex = gs_texrender_get_texture(filter->render);
+		if (!tex)
+			return;
+
+		gs_effect_set_texture_srgb(
+			gs_effect_get_param_by_name(effect, "image"), tex);
+
+		gs_effect_set_float(filter->texture_width, filter->texwidth);
+		gs_effect_set_float(filter->texture_height, filter->texheight);
+		gs_effect_set_float(filter->dither_spread_param,
+				    filter->dither_spread);
+		gs_effect_set_int(filter->red_color_count_param,
+				  filter->red_count);
+		gs_effect_set_int(filter->green_color_count_param,
+				  filter->green_count);
+		gs_effect_set_int(filter->blue_color_count_param,
+				  filter->blue_count);
+
+		if (filter->bayer_level == 0) {
+			while (gs_effect_loop(effect, "Draw"))
+				gs_draw_sprite(tex, 0, filter->base_width,
+					       filter->base_height);
+		} else if (filter->bayer_level == 1) {
+			while (gs_effect_loop(effect, "Draw4"))
+				gs_draw_sprite(tex, 0, filter->base_width,
+					       filter->base_height);
+		} else {
+			while (gs_effect_loop(effect, "Draw8"))
+				gs_draw_sprite(tex, 0, filter->base_width,
+					       filter->base_height);
+		}
+
+		gs_enable_framebuffer_srgb(previous);
+		gs_blend_state_pop();
+	}
+
+	static void cube_filter_render(void *data, gs_effect_t *effect)
+	{
+		struct cube_filter_data *filter = data;
+
+		if (!filter->vb || !filter->ib || !filter->effect ||
+		    !filter->param_view_proj || !filter->param_world) {
+			obs_source_skip_video_filter(filter->context);
+			return;
+		}
+
+		if (!obs_source_process_filter_begin(filter->context, GS_RGBA,
+						     OBS_ALLOW_DIRECT_RENDERING))
+			return;
+
+		obs_source_t *target = obs_filter_get_target(filter->context);
+		if (target) {
+			obs_source_video_render(target);
+		}
+
+		uint32_t width = obs_source_get_width(filter->context);
+		uint32_t height = obs_source_get_height(filter->context);
+
+		if (width == 0)
+			width = 1;
+		if (height == 0)
+			height = 1;
+
+		struct matrix4 proj, view, view_proj_matrix;
+		struct matrix4 world_matrix, rot_x_matrix, rot_y_matrix;
+
+		// Configuramos la perspectiva
+		matrix4_perspective(&proj, 60.0f * (float)M_PI / 180.0f,
+				    (float)width / (float)height, 0.1f, 100.0f);
+
+		// Establecemos la vista
+		matrix4_identity(&view);
+		matrix4_translate3f(&view, &view, 0.0f, 0.0f, -2.5f);
+
+		matrix4_mul(&view_proj_matrix, &proj, &view);
+
+		// Configuramos la rotacin
+		matrix4_identity(&world_matrix);
+
+		struct axisang rot_params_y = {0.0f, 1.0f, 0.0f,
+					       filter->angle_y * (float)M_PI /
+						       180.0f};
+		matrix4_from_axisang(&rot_y_matrix, &rot_params_y);
+
+		struct axisang rot_params_x = {1.0f, 0.0f, 0.0f,
+					       filter->angle_x * (float)M_PI /
+						       180.0f};
+		matrix4_from_axisang(&rot_x_matrix, &rot_params_x);
+
+		matrix4_mul(&world_matrix, &rot_x_matrix, &rot_y_matrix);
+
+		gs_effect_set_matrix4(filter->param_view_proj,
+				      &view_proj_matrix);
+		gs_effect_set_matrix4(filter->param_world, &world_matrix);
+
+		gs_technique_t *tech =
+			gs_effect_get_technique(filter->effect, "Draw");
+		if (tech) {
+			size_t num_passes = gs_technique_begin(tech);
+			for (size_t i = 0; i < num_passes; i++) {
+				if (gs_technique_begin_pass(tech, i)) {
+					// Configurar el modo 3D
+					gs_set_3d_mode(60.0f, 0.1f, 100.0f);
+
+					// Cargar los buffers de vrtices e ndices
+					gs_load_vertexbuffer(filter->vb);
+					gs_load_indexbuffer(filter->ib);
+
+					// Dibujar el cubo utilizando la funcin adecuada
+					gs_draw_sprite(
+						NULL, 0, 0,
+						0); // Nota: Cambiar este enfoque, si es necesario
+
+					gs_technique_end_pass(tech);
+				}
+			}
+			gs_technique_end(tech);
+		}
+
+		obs_source_process_filter_end(filter->context, effect, 0, 0);
+	}
+
+
+	void pixel_art_default_render(void *data, obs_source_t *target,
+				      bool source_render_type)
+	{
+
+		struct pixel_art_plugin_data *filter = data;
+
+		gs_texrender_reset(filter->render);
+
+		if (gs_texrender_begin_with_color_space(
+			    filter->render, filter->base_width,
+			    filter->base_height, filter->space)) {
+
+			gs_ortho(0.0f, (float)filter->base_width, 0.0f,
+				 (float)filter->base_height, -100.0f, 100.0f);
+
+			if (source_render_type) {
+				obs_source_default_render(target);
+			} else {
+				obs_source_video_render(target);
+			}
+			gs_texrender_end(filter->render);
+		}
+	}
+
+	static void pixel_art_plugin_render(void *data, gs_effect_t *effect)
+	{
+
+		UNUSED_PARAMETER(effect);
+
+		struct pixel_art_plugin_data *filter = data;
+
+		obs_source_t *target = obs_filter_get_target(filter->context);
+		obs_source_t *parent = obs_filter_get_parent(filter->context);
+
+		filter->base_width = obs_source_get_width(target);
+		filter->base_height = obs_source_get_height(target);
+
+		uint32_t parent_flags = obs_source_get_output_flags(target);
+		bool custom_draw = (parent_flags & OBS_SOURCE_CUSTOM_DRAW) != 0;
+		bool async = (parent_flags & OBS_SOURCE_ASYNC) != 0;
+		bool source_render_type =
+			(target == parent && !custom_draw && !async);
+
+		if (!filter->base_width || !filter->base_height || !target ||
+		    !parent) {
+			obs_source_skip_video_filter(filter->context);
+			return;
+		}
+
+		if (filter->processed_frame) {
+			pixel_art_plugin_draw_frame(filter);
+			return;
+		}
+
+		const enum gs_color_space preferred_spaces[] = {
+			GS_CS_SRGB,
+			GS_CS_SRGB_16F,
+			GS_CS_709_EXTENDED,
+		};
+
+		const enum gs_color_space space = obs_source_get_color_space(
+			target, OBS_COUNTOF(preferred_spaces),
+			preferred_spaces);
+		const enum gs_color_format format =
+			gs_get_format_from_space(space);
+		filter->space = space;
+
+		if (!filter->render ||
+		    gs_texrender_get_format(filter->render) != format) {
+			gs_texrender_destroy(filter->render);
+			filter->render =
+				gs_texrender_create(format, GS_ZS_NONE);
+		} else {
+			gs_texrender_reset(filter->render);
+		}
+
+		gs_viewport_push();
+		gs_blend_state_push();
+		gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+
+		if (filter->downscales == 0) {
+			pixel_art_default_render(filter, target,
+						 source_render_type);
+		} else {
+			pixel_art_downscale_render(filter, target,
+						   source_render_type);
+		}
+
+		gs_blend_state_pop();
+		gs_viewport_pop();
+
+		filter->processed_frame = true;
+
+		pixel_art_plugin_draw_frame(filter);
+	}
+
+	static obs_properties_t *pixel_art_plugin_properties(void *data)
+	{
+
+		UNUSED_PARAMETER(data);
+		obs_properties_t *props = obs_properties_create();
+
+		obs_property_t *prop = obs_properties_add_int_slider(
+			props, "downscales",
+			obs_module_text("TimesToDownscale"), 0, 8, 1);
+
+		obs_properties_t *dither = obs_properties_create();
+
+		prop = obs_properties_add_float_slider(
+			dither, "ditherspread", obs_module_text("DitherSpread"),
+			0.0, 1.0, 0.01);
+
+		prop = obs_properties_add_int_slider(
+			dither, "bayerlevel", obs_module_text("BayerLevel"), 0,
+			2, 1);
+
+		prop = obs_properties_add_int_slider(
+			dither, "redcount", obs_module_text("RedColorCount"), 1,
+			16, 1);
+
+		prop = obs_properties_add_int_slider(
+			dither, "greencount",
+			obs_module_text("GreenColorCount"), 1, 16, 1);
+
+		prop = obs_properties_add_int_slider(
+			dither, "bluecount", obs_module_text("BlueColorCount"),
+			1, 16, 1);
+
+		obs_properties_add_group(props, "dither",
+					 obs_module_text("Dithering"),
+					 OBS_GROUP_NORMAL, dither);
+
+		return props;
+	}
+
+	static void pixel_art_plugin_defaults(obs_data_t *settings)
+	{
+		obs_data_set_default_int(settings, "downscales", 0);
+		obs_data_set_default_int(settings, "bayerlevel", 0);
+		obs_data_set_default_int(settings, "redcount", 16);
+		obs_data_set_default_int(settings, "greencount", 16);
+		obs_data_set_default_int(settings, "bluecount", 16);
+		obs_data_set_default_double(settings, "ditherspread", 0.0);
+	}
+
+	void pixel_art_plugin_video_tick(void *data, float seconds)
+	{
+		UNUSED_PARAMETER(seconds);
+		struct pixel_art_plugin_data *context = data;
+		context->processed_frame = false;
+	}
+
+	static enum gs_color_space pixel_art_plugin_get_color_space(
+		void *data, size_t count,
+		const enum gs_color_space *preferred_spaces)
+	{
+		UNUSED_PARAMETER(count);
+		UNUSED_PARAMETER(preferred_spaces);
+
+		const enum gs_color_space potential_spaces[] = {
+			GS_CS_SRGB,
+			GS_CS_SRGB_16F,
+			GS_CS_709_EXTENDED,
+		};
+
+		struct pixel_art_plugin_data *const filter = data;
+		const enum gs_color_space source_space =
+			obs_source_get_color_space(
+				obs_filter_get_target(filter->context),
+				OBS_COUNTOF(potential_spaces),
+				potential_spaces);
+
+		return source_space;
+	}
+
+	struct obs_source_info pixel_art_plugin = {
+		.id = "pixel_art_plugin",
+		.type = OBS_SOURCE_TYPE_FILTER,
+		.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_SRGB,
+		.get_name = pixel_art_plugin_getname,
+		.create = pixel_art_plugin_create,
+		.video_render = pixel_art_plugin_render,
+		.video_tick = pixel_art_plugin_video_tick,
+		.update = pixel_art_plugin_update,
+		.destroy = pixel_art_plugin_destroy,
+		.get_properties = pixel_art_plugin_properties,
+		.get_defaults = pixel_art_plugin_defaults,
+		.video_get_color_space = pixel_art_plugin_get_color_space,
+	};
+
+============================================================
+/// ARCHIVO: .\Pixel_art_effect.cpp ///
+============================================================
+
+
+//EFECTO BASICO QUE COMPILA PERO NO HACE NI MIERDAS
+
+
+
+#include <obs-module.h>
+#include <graphics/graphics.h>
+OBS_DECLARE_MODULE()
+OBS_MODULE_USE_DEFAULT_LOCALE("simple_color_overlay", "en-US")
+
+extern "C" {
+static const char *plugin_effect_get_name(void *unused)
+{
+	return "Simple Color Overlay";
+}
+
+static void *plugin_effect_create(obs_data_t *settings, obs_source_t *source)
+{
+	UNUSED_PARAMETER(settings);
+	UNUSED_PARAMETER(source);
+	return source;
+}
+
+static void plugin_effect_destroy(void *data)
+{
+	UNUSED_PARAMETER(data);
+}
+
+static void plugin_effect_update(void *data, obs_data_t *settings)
+{
+	UNUSED_PARAMETER(data);
+	UNUSED_PARAMETER(settings);
+}
+
+static struct obs_source_frame * plugin_effect_filter_video(void *data, struct obs_source_frame *frame)
+{
+	if (!frame || frame->format != VIDEO_FORMAT_RGBA) {
+		// slo manejamos RGBA en este ejemplo
+		return frame;
+	}
+
+	uint8_t *pixels = frame->data[0];
+	uint32_t ls = frame->linesize[0];
+	uint32_t w = frame->width;
+	uint32_t h = frame->height;
+
+	// Recorremos cada fila
+	for (uint32_t y = 0; y < h; y++) {
+		uint8_t *row = pixels + y * ls;
+		// Cada pxel son 4 bytes: R, G, B, A (RGBA)
+		for (uint32_t x = 0; x < w; x++) {
+			uint8_t *px = row + x * 4;
+			// Tintamos el canal R al 100%, y mezclamos 30%:
+			px[0] = (uint8_t)(px[0] * 0.7f + 255 * 0.3f);
+			// dejamos G,B,A igual
+		}
+	}
+
+	return frame;
+}
+
+//static void ApplyEffect(void *data, gs_effect_t *effect)
+//{
+//	obs_source_t *source = static_cast<obs_source_t *>(data);
+//
+//	// Obtener la textura de la fuente (esto se realiza mediante la API correcta)
+//	gs_texture_t *texture = obs_source_get_texture(source);
+//	if (!texture)
+//		return;
+//
+//	// Crear un efecto base para dibujar la textura
+//	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+//	if (!solid)
+//		return;
+//
+//	gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
+//
+//	// Inicializa vec4 para definir el color
+//	vec4 redColor = {1.0f, 0.0f, 0.0f, 0.3f}; // Rojo con transparencia
+//
+//	// Establecer el color en el shader
+//	gs_effect_set_vec4(color, &redColor);
+//
+//	// Aplica el filtro (renderiza sobre la fuente original)
+//	while (gs_effect_loop(solid, "Solid")) {
+//		// Dibuja la textura de la fuente
+//		gs_draw_sprite(texture, 0, 0, 0); // Dibuja la textura completa
+//	}
+//}
+
+static struct obs_source_info plugin_effect_info = {
+	.id = "simple_color_overlay",
+	.type = OBS_SOURCE_TYPE_FILTER,
+	.output_flags = OBS_SOURCE_VIDEO,
+
+	.get_name = plugin_effect_get_name,
+	.create = plugin_effect_create,
+	.destroy = plugin_effect_destroy,
+	.video_tick = nullptr,
+	.filter_video = plugin_effect_filter_video,
+
+	.audio_render = nullptr};
+
+bool obs_module_load(void)
+{
+	obs_register_source(&plugin_effect_info);
+	return true;
+}
+}
+
+============================================================
+/// ARCHIVO: .\plugin-main.c ///
+============================================================
+
+//#include <obs.h>
+//#include <graphics/graphics.h> // Necesario para los gráficos de OBS
+//#include <obs-module.h>
+//
+//OBS_DECLARE_MODULE()
+//// Estructura para el filtro
+//typedef struct color_filter {
+//	gs_effect_t *effect; // Efecto gráfico
+//} color_filter_t;
+//
+//// Función para renderizar el filtro
+//static void *color_filter_create(obs_data_t *settings, obs_source_t *source)
+//{
+//	color_filter_t *filter =
+//		(color_filter_t *)bzalloc(sizeof(color_filter_t));
+//
+//	// Crear un shader que simplemente pinta todo de rojo
+//	filter->effect = gs_effect_create_from_file("red_color_effect.fx",
+//						    NULL); // Archivo de efecto
+//
+//	return filter;
+//}
+//
+//// Función para obtener el nombre del filtro
+//static const char *color_filter_get_name(void *data)
+//{
+//	return "Red Color Filter"; // Nombre del filtro
+//}
+//
+//
+//// Función para destruir el filtro
+//static void color_filter_destroy(void *data)
+//{
+//	color_filter_t *filter = (color_filter_t *)data;
+//	if (filter) {
+//		if (filter->effect) {
+//
+//			gs_effect_destroy(
+//				filter->effect); // Libera el efecto gráfico
+//		}
+//		bfree(filter); // Libera la memoria del filtro
+//	}
+//}
+//
+//
+//// Función para obtener las dimensiones del filtro
+//static uint32_t color_filter_get_width(void *data)
+//{
+//	return 1920; // Ancho del filtro
+//}
+//
+//static uint32_t color_filter_get_height(void *data)
+//{
+//	return 1080; // Alto del filtro
+//}
+//
+//// Información sobre el filtro que OBS utilizará
+//static obs_source_info color_filter_info = {
+//	"RedColorFilter",        // ID del filtro
+//	OBS_SOURCE_TYPE_FILTER,  // Tipo de fuente (filtro)
+//	OBS_SOURCE_VIDEO,        // Datos de salida (video)
+//	color_filter_get_name,   // Función para obtener el nombre del filtro
+//	color_filter_create,     // Función para crear el filtro
+//	color_filter_destroy,    // Función para destruir el filtro
+//	color_filter_get_width,  // Función para obtener el ancho
+//	color_filter_get_height, // Función para obtener el alto
+//	      // Función para renderizar el filtro
+//};
+//
+//// Función para renderizar el filtro
+//static void color_filter_render(void *data, gs_effect_t *effect)
+//{
+//	color_filter_t *filter = (color_filter_t *)data;
+//	if (filter && filter->effect) {
+//		gs_effect_set_texture(gs_effect_get_param_by_name(
+//					      filter->effect, "color_texture"),
+//				      NULL); // Sin textura
+//		gs_effect_set_int(gs_effect_get_param_by_name(filter->effect,
+//							      "is_red"),
+//				  1); // Parámetro para activar el color rojo
+//		//gs_draw_sprite(NULL, 0, 0,1000,1000); // Dibuja el sprite sin textura
+//	}
+//}
+//
+//
+//// Función de inicialización del plugin
+//bool obs_module_load(void)
+//{
+//	blog(LOG_INFO, "CARGANDO PLUGIN");
+//	obs_register_source(&color_filter_info); // Registra la fuente en OBS
+//	blog(LOG_INFO, "SE CARGO EL  PLUGIN [YULVEZ Y JOSE]");
+//	return true;
+//}
+//
+//// Función de limpieza del plugin
+//void obs_module_unload(void)
+//{
+//	// Aquí puedes liberar recursos si es necesario
+//}
+
+
+
+
+////PARA C
+#include <obs-module.h>
+#include <plugin-support.h>
+
+OBS_DECLARE_MODULE()
+OBS_MODULE_AUTHOR("DSPStanky");
+OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
+
+MODULE_EXPORT const char *obs_module_description(void)
+{
+	return obs_module_text("Description");
+}
+
+MODULE_EXPORT const char *obs_module_name(void)
+{
+	return obs_module_text("JOSESHEILAPLUGIN");
+}
+
+extern struct obs_source_info pixel_art_plugin;
+
+bool obs_module_load(void)
+{
+	obs_register_source(&pixel_art_plugin);
+
+	obs_log(LOG_INFO, "plugin loaded successfully (version %s)",
+		PLUGIN_VERSION);
+	return true;
+}
+
+void obs_module_unload(void)
+{
+	obs_log(LOG_INFO, "plugin unloaded");
+}
+
+//para c++
+//#include <obs-module.h>
+//#include "pixel_art_effect.hpp"
+//
+//OBS_DECLARE_MODULE()
+//OBS_MODULE_USE_DEFAULT_LOCALE("pixel_art_plugin", "en-US")
+//MODULE_EXPORT const char *obs_module_description(void)
+//{
+//	return "Plugin de Filtro Pixel Art";
+//}
+//
+//bool obs_module_load(void)
+//{
+//	static struct obs_source_info pixel_art_filter = {
+//		.id = "pixel_art_filter",
+//		.type = OBS_SOURCE_TYPE_FILTER,
+//		.output_flags = OBS_SOURCE_VIDEO,
+//		.get_name = PixelArtPlugin::get_name,
+//		.create = PixelArtPlugin::create,
+//		.destroy = PixelArtPlugin::destroy,
+//		.update = PixelArtPlugin::update,
+//		.video_render=PixelArtPlugin::render,
+//		
+//	};
+//
+//	obs_register_source(&pixel_art_filter);
+//	return true;
+//}
+
+
+//PRUEBA MODELO 3D
+//
+//#include <obs-module.h>
+//#include <graphics/graphics.h>
+//#include <stdint.h>
+//#include <vector>
+//#include <string>
+//#include <QtCore/QCoreApplication>
+//#include <QtGui/QOpenGLFunctions>
+//#include <QtOpenGLWidgets/qopenglwidget.h>
+//#include <qopengl.h>
+//#include "qwidget.h"
+//#include <obs.h>
+//#include <QOpenGLShaderProgram>
+//#include <QOpenGLBuffer>
+//#include <QOpenGLVertexArrayObject>
+//#include <obs-module.h>
+//
+//class OpenGLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
+//	Q_OBJECT
+//
+//public:
+//	OpenGLWidget(QWidget *parent = nullptr) : QOpenGLWidget(parent) {}
+//
+//	~OpenGLWidget() override
+//	{
+//		delete shaderProgram;
+//		delete vertexBuffer;
+//		delete indexBuffer;
+//		delete vao;
+//	}
+//
+//protected:
+//	void initializeGL() override
+//	{
+//		initializeOpenGLFunctions();
+//		initShaders();
+//		initModel();
+//	}
+//
+//	void resizeGL(int w, int h) override { glViewport(0, 0, w, h); }
+//
+//	void paintGL() override
+//	{
+//		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//		renderModel();
+//	}
+//
+//private:
+//	QOpenGLShaderProgram *shaderProgram;
+//	QOpenGLBuffer *vertexBuffer;
+//	QOpenGLBuffer *indexBuffer;
+//	QOpenGLVertexArrayObject *vao;
+//
+//	std::vector<float> vertices = {-0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+//				       0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+//				       0.5f,  0.5f,  -0.5f, 0.0f, 0.0f, 1.0f,
+//				       -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, 0.0f,
+//				       -0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 1.0f,
+//				       0.5f,  -0.5f, 0.5f,  0.0f, 1.0f, 1.0f,
+//				       0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,
+//				       -0.5f, 0.5f,  0.5f,  0.5f, 0.5f, 0.5f};
+//
+//	std::vector<unsigned int> indices = {
+//		0, 1, 2, 2, 3, 0, // Frente
+//		4, 5, 6, 6, 7, 4, // Atrás
+//		0, 1, 5, 5, 4, 0, // Abajo
+//		2, 3, 7, 7, 6, 2, // Arriba
+//		0, 3, 7, 7, 4, 0, // Izquierda
+//		1, 2, 6, 6, 5, 1  // Derecha
+//	};
+//
+//	void initShaders()
+//	{
+//		shaderProgram = new QOpenGLShaderProgram(this);
+//		shaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex,
+//						       ":/shaders/model.vert");
+//		shaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment,
+//						       ":/shaders/model.frag");
+//		shaderProgram->link();
+//	}
+//
+//	void initModel()
+//	{
+//		vertexBuffer = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+//		vertexBuffer->create();
+//		vertexBuffer->bind();
+//		vertexBuffer->allocate(vertices.data(),
+//				       vertices.size() * sizeof(float));
+//
+//		indexBuffer = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+//		indexBuffer->create();
+//		indexBuffer->bind();
+//		indexBuffer->allocate(indices.data(),
+//				      indices.size() * sizeof(unsigned int));
+//
+//		vao = new QOpenGLVertexArrayObject();
+//		vao->create();
+//		vao->bind();
+//	}
+//
+//	void renderModel()
+//	{
+//		shaderProgram->bind();
+//		vao->bind();
+//		glDrawElements(GL_TRIANGLES,
+//			       indexBuffer->size() / sizeof(unsigned int),
+//			       GL_UNSIGNED_INT, nullptr);
+//		vao->release();
+//		shaderProgram->release();
+//	}
+//};
+//
+//// Define el filtro de OBS que usará este OpenGLWidget
+//class Model3DFilter : public obs_source_filter {
+//public:
+//	Model3DFilter(obs_source_t *source)
+//	{
+//		// Crea el widget de OpenGL
+//		widget = new OpenGLWidget();
+//		widget->show();
+//	}
+//
+//	~Model3DFilter() { delete widget; }
+//
+//	void render() override { widget->update(); }
+//
+//private:
+//	OpenGLWidget *widget;
+//};
+//
+//// Registrar el filtro
+//extern "C" {
+//bool obs_module_load()
+//{
+//	obs_register_source(&Model3DFilter);
+//	return true;
+//}
+//}
+
+============================================================
+/// ARCHIVO: .\plugin-support.h ///
+============================================================
+
+/*
+Plugin Name
+Copyright (C) <Year> <Developer> <Email Address>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program. If not, see <https://www.gnu.org/licenses/>
+*/
+
+#pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
+
+extern const char *PLUGIN_NAME;
+extern const char *PLUGIN_VERSION;
+
+void obs_log(int log_level, const char *format, ...);
+extern void blogva(int log_level, const char *format, va_list args);
+
+#ifdef __cplusplus
+}
+#endif
+
+
+============================================================
+/// ARCHIVO: .\shader.cpp ///
+============================================================
+
+//
+//#include <string>
+//#include <fstream>
+//#include <sstream>
+//#include <iostream>
+//
+//class Shader {
+//public:
+//    GLuint shaderProgram;
+//    GLuint vertexShader;
+//    GLuint fragmentShader;
+//
+//    Shader(const std::string& vertexPath, const std::string& fragmentPath) {
+//        vertexShader = loadShader(vertexPath, GL_VERTEX_SHADER);
+//        fragmentShader = loadShader(fragmentPath, GL_FRAGMENT_SHADER);
+//
+//        shaderProgram = glCreateProgram();
+//        glAttachShader(shaderProgram, vertexShader);
+//        glAttachShader(shaderProgram, fragmentShader);
+//        glLinkProgram(shaderProgram);
+//
+//        GLint success;
+//        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+//        if (!success) {
+//            char infoLog[512];
+//            glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+//            std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+//        }
+//
+//        glDeleteShader(vertexShader);
+//        glDeleteShader(fragmentShader);
+//    }
+//
+//    ~Shader() {
+//        glDeleteProgram(shaderProgram);
+//    }
+//
+//    void use() {
+//        glUseProgram(shaderProgram);
+//    }
+//
+//private:
+//    GLuint loadShader(const std::string& path, GLenum shaderType) {
+//        std::ifstream shaderFile(path);
+//        if (!shaderFile.is_open()) {
+//            std::cerr << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ: " << path << std::endl;
+//            return 0;
+//        }
+//
+//        std::stringstream shaderStream;
+//        shaderStream << shaderFile.rdbuf();
+//        shaderFile.close();
+//
+//        std::string shaderCode = shaderStream.str();
+//        const char* shaderCodeCStr = shaderCode.c_str();
+//
+//        GLuint shader = glCreateShader(shaderType);
+//        glShaderSource(shader, 1, &shaderCodeCStr, NULL);
+//        glCompileShader(shader);
+//
+//        GLint success;
+//        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+//        if (!success) {
+//            char infoLog[512];
+//            glGetShaderInfoLog(shader, 512, NULL, infoLog);
+//            std::cerr << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
+//        }
+//
+//        return shader;
+//    }
+//};
+
+
+============================================================
+/// ARCHIVO: .\shaderEffect.cpp ///
+============================================================
+
+//#include <obs-module.h>
+//#include <graphics/graphics.h>
+//#include "shader.cpp"
+//
+//class ShaderEffect {
+//public:
+//    Shader* shader;
+//    obs_source_t* source;
+//
+//    ShaderEffect(const std::string& vertexPath, const std::string& fragmentPath, obs_source_t* source) {
+//        this->source = source;
+//        shader = new Shader(vertexPath, fragmentPath);
+//    }
+//
+//    ~ShaderEffect() {
+//        delete shader;
+//    }
+//
+//    void apply() {
+//        if (!source) {
+//            std::cerr << "Error: Source is not initialized" << std::endl;
+//            return;
+//        }
+//
+//        shader->use();
+//
+//        GLuint textureId = getTextureIdFromSource(source);
+//        if (textureId != 0) {
+//            glBindTexture(GL_TEXTURE_2D, textureId);
+//            glUniform1i(glGetUniformLocation(shader->shaderProgram, "tex0"), 0); // Bind texture unit 0
+//            glBindTexture(GL_TEXTURE_2D, 0);
+//        }
+//    }
+//
+//private:
+//    GLuint getTextureIdFromSource(obs_source_t* source) {
+//        // Acceder a la textura de la fuente multimedia
+//        obs_source_frame_t* frame = obs_source_get_frame(source);
+//        if (!frame) {
+//            std::cerr << "Error: Failed to get frame from source" << std::endl;
+//            return 0;
+//        }
+//
+//        GLuint textureId = frame->texture;
+//        obs_source_release_frame(source);
+//        return textureId;
+//    }
+//};
+
+
+============================================================
+/// ARCHIVO: .\SJ_3DModel.c ///
+============================================================
+
+	// Inclusión de la biblioteca Assimp (Open Asset Import Library) para la carga de modelos 3D.
+	#include <assimp/cimport.h>
+	#include <assimp/scene.h>
+	#include <assimp/postprocess.h>
+	#include <assimp/material.h>
+
+	// Inclusión de las cabeceras del API de OBS Studio.
+	#include <obs-module.h>
+	#include <graphics/graphics.h>
+	#include <graphics/matrix4.h>
+	#include <graphics/image-file.h>
+	#include <util/platform.h>
+	#include <graphics/vec4.h>
+
+	// Inclusión de bibliotecas estándar de C.
+	#include <string.h>
+	#include <assimp/types.h>
+	#include "SJ_3DModel.h"
+
+
+	#include <float.h>
+
+	static bool auto_detect_forward_scene(const struct aiScene *scene,
+					      float top_percent,
+					      float *out_x_deg,
+					      float *out_y_deg,
+					      float *out_z_deg)
+	{
+		if (!scene || scene->mNumMeshes == 0 || !out_x_deg ||
+		    !out_y_deg || !out_z_deg)
+			return false;
+
+		if (top_percent <= 0.0f || top_percent >= 0.5f)
+			top_percent = 0.10f;
+
+		// 1) calcular bbox global en Z (y X/Y por si quieres extender)
+		float min_x = FLT_MAX, max_x = -FLT_MAX;
+		float min_y = FLT_MAX, max_y = -FLT_MAX;
+		float min_z = FLT_MAX, max_z = -FLT_MAX;
+
+		for (unsigned m = 0; m < scene->mNumMeshes; ++m) {
+			const struct aiMesh *mesh = scene->mMeshes[m];
+			for (unsigned i = 0; i < mesh->mNumVertices; ++i) {
+				const struct aiVector3D *v =
+					&mesh->mVertices[i];
+				if (v->x < min_x)
+					min_x = v->x;
+				if (v->x > max_x)
+					max_x = v->x;
+				if (v->y < min_y)
+					min_y = v->y;
+				if (v->y > max_y)
+					max_y = v->y;
+				if (v->z < min_z)
+					min_z = v->z;
+				if (v->z > max_z)
+					max_z = v->z;
+			}
+		}
+
+		const float depth_z = max_z - min_z;
+		if (depth_z <= 0.0f)
+			return false;
+
+		const float z_threshold = max_z - depth_z * top_percent;
+		const float center_x = (max_x + min_x) * 0.5f;
+		const float center_y = (max_y + min_y) * 0.5f;
+		const float center_z = (max_z + min_z) * 0.5f;
+
+		// 2) acumular vectores (normales si existen, fallback centro->vértice)
+		double acc_x = 0.0, acc_y = 0.0, acc_z = 0.0;
+		size_t count = 0;
+		bool any_normals = false;
+
+		for (unsigned m = 0; m < scene->mNumMeshes; ++m) {
+			const struct aiMesh *mesh = scene->mMeshes[m];
+			bool mesh_has_normals = (mesh->mNormals != NULL);
+			if (mesh_has_normals)
+				any_normals = true;
+
+			for (unsigned i = 0; i < mesh->mNumVertices; ++i) {
+				const struct aiVector3D *p =
+					&mesh->mVertices[i];
+				if (p->z < z_threshold)
+					continue;
+
+				if (mesh_has_normals) {
+					const struct aiVector3D *n =
+						&mesh->mNormals[i];
+					acc_x += n->x;
+					acc_y += n->y;
+					acc_z += n->z;
+				} else {
+					acc_x += (p->x - center_x);
+					acc_y += (p->y - center_y);
+					acc_z += (p->z - center_z);
+				}
+				++count;
+			}
+		}
+
+		// fallback si no hay suficientes vértices en top_percent -> probar top 25%
+		if (count == 0) {
+			const float z_thr2 = max_z - depth_z * 0.25f;
+			for (unsigned m = 0; m < scene->mNumMeshes; ++m) {
+				const struct aiMesh *mesh = scene->mMeshes[m];
+				bool mesh_has_normals =
+					(mesh->mNormals != NULL);
+
+				for (unsigned i = 0; i < mesh->mNumVertices;
+				     ++i) {
+					const struct aiVector3D *p =
+						&mesh->mVertices[i];
+					if (p->z < z_thr2)
+						continue;
+
+					if (mesh_has_normals) {
+						const struct aiVector3D *n =
+							&mesh->mNormals[i];
+						acc_x += n->x;
+						acc_y += n->y;
+						acc_z += n->z;
+					} else {
+						acc_x += (p->x - center_x);
+						acc_y += (p->y - center_y);
+						acc_z += (p->z - center_z);
+					}
+					++count;
+				}
+			}
+			if (count == 0)
+				return false;
+		}
+
+		// promedio
+		acc_x /= (double)count;
+		acc_y /= (double)count;
+		acc_z /= (double)count;
+
+		double len =
+			sqrt(acc_x * acc_x + acc_y * acc_y + acc_z * acc_z);
+		if (len < 1e-6)
+			return false;
+
+		double vx = acc_x / len, vy = acc_y / len, vz = acc_z / len;
+
+		// calcular yaw/pitch como en tu heurística por malla
+		double yaw = atan2(vx, vz); // rad
+		double pitch = atan2(vy, sqrt(vx * vx + vz * vz));
+
+		double yaw_deg = yaw * 180.0 / M_PI;
+		double pitch_deg = pitch * 180.0 / M_PI;
+
+		// aplicar signos igual que tu heurístico: -pitch, -yaw para llevar v a +Z
+		*out_x_deg = (float)(-pitch_deg);
+		*out_y_deg = (float)(-yaw_deg);
+		*out_z_deg = 0.0f;
+
+		return true;
+	}
+
+	static void free_single_mesh(Mesh *mesh, gs_texture_t *user_texture_to_exclude)
+	{
+		if (!mesh) return;
+		blog(LOG_INFO, "[CUBE] free_single_mesh: mesh=%p, texture=%p", mesh, mesh->texture);
+		obs_enter_graphics();
+		if (mesh->vb) { gs_vertexbuffer_destroy(mesh->vb); mesh->vb = NULL; }
+		if (mesh->ib) { gs_indexbuffer_destroy(mesh->ib); mesh->ib = NULL; }
+		if (mesh->texture) { blog(LOG_INFO, "[CUBE] free_single_mesh: anulando textura de malla %p", mesh->texture); mesh->texture = NULL; }
+		obs_leave_graphics();
+	}
+	void cleanup_global_meshes(struct Mesh **g_meshes, size_t *g_mesh_count, float **mesh_widths, float **mesh_heights, gs_texture_t *user_texture_to_exclude)
+	{
+		if (!*g_meshes) return;
+		blog(LOG_INFO, "[CUBE] cleanup_global_meshes: liberando %zu mallas", *g_mesh_count);
+		for (size_t i = 0; i < *g_mesh_count; ++i) free_single_mesh(&(*g_meshes)[i], user_texture_to_exclude);
+		bfree(*g_meshes);
+		*g_meshes = NULL;
+		*g_mesh_count = 0;
+		if (mesh_widths && *mesh_widths) { bfree(*mesh_widths); *mesh_widths = NULL; }
+		if (mesh_heights && *mesh_heights) { bfree(*mesh_heights); *mesh_heights = NULL; }
+		blog(LOG_INFO, "[CUBE] Todas las mallas y arrays de dimensiones han sido liberados.");
+	}
+
+	
+	static void draw_debug_axes(float size)
+	{
+		struct gs_vb_data vbd;
+		vbd.num = 6;
+		vbd.points =
+			(struct vec3 *)bmalloc(sizeof(struct vec3) * vbd.num);
+		vbd.colors = (uint32_t *)bmalloc(sizeof(uint32_t) * vbd.num);
+		vbd.num_tex = 0;
+		vbd.tvarray = NULL;
+		vbd.normals = NULL;
+		vbd.tangents = NULL;
+
+		// +X
+		vbd.points[0].x = 0;
+		vbd.points[0].y = 0;
+		vbd.points[0].z = 0;
+		vbd.points[1].x = size;
+		vbd.points[1].y = 0;
+		vbd.points[1].z = 0;
+		// +Y
+		vbd.points[2].x = 0;
+		vbd.points[2].y = 0;
+		vbd.points[2].z = 0;
+		vbd.points[3].x = 0;
+		vbd.points[3].y = size;
+		vbd.points[3].z = 0;
+		// +Z
+		vbd.points[4].x = 0;
+		vbd.points[4].y = 0;
+		vbd.points[4].z = 0;
+		vbd.points[5].x = 0;
+		vbd.points[5].y = 0;
+		vbd.points[5].z = size;
+
+		vbd.colors[0] = vbd.colors[1] = 0xFFFF0000;
+		vbd.colors[2] = vbd.colors[3] = 0xFF00FF00;
+		vbd.colors[4] = vbd.colors[5] = 0xFF0000FF;
+
+		obs_enter_graphics();
+		gs_vertbuffer_t *vb =
+			gs_vertexbuffer_create(&vbd, GS_DUP_BUFFER);
+		obs_leave_graphics();
+
+		gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+		gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
+		gs_eparam_t *col = gs_effect_get_param_by_name(solid, "color");
+		struct vec4 white = {1, 1, 1, 1};
+
+		gs_technique_begin(tech);
+		gs_technique_begin_pass(tech, 0);
+		gs_effect_set_vec4(col, &white);
+
+		gs_load_vertexbuffer(vb);
+		gs_draw(GS_LINES, 0, 6);
+
+		gs_technique_end_pass(tech);
+		gs_technique_end(tech);
+
+		obs_enter_graphics();
+		gs_vertexbuffer_destroy(vb);
+		obs_leave_graphics();
+
+		bfree(vbd.points);
+		bfree(vbd.colors);
+	}
+
+	/**
+ 	 * @brief Carga un modelo 3D desde un archivo utilizando Assimp.
+ 	 *
+ 	 * Procesa el archivo, extrae la información de las mallas (vértices, índices, texturas)
+ 	 * y crea los recursos gráficos correspondientes en OBS.
+ 	 *
+ 	 * @param path Ruta al archivo del modelo 3D.
+ 	 * @return `true` si el modelo se cargó correctamente, `false` en caso contrario.
+ 	 */
+	bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float **mesh_widths, float **mesh_heights)
+	{
+		// Importa el archivo del modelo usando Assimp.
+		// `aiProcess_Triangulate`: Convierte todas las primitivas a triángulos.
+		// `aiProcess_FlipUVs`: Invierte las coordenadas de textura en el eje Y.
+		// `aiProcess_CalcTangentSpace`: Calcula las tangentes y bitangentes si no existen.
+		const struct aiScene *scene =aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs |aiProcess_CalcTangentSpace);
+
+		// Verifica si la importación falló.
+		if (!scene) {
+			blog(LOG_ERROR, "Assimp error: %s", aiGetErrorString());
+			return false;
+		}
+
+		// Si ya hay un modelo cargado (g_meshes no es nulo), se liberan sus recursos.
+		if (*g_meshes) {
+			cleanup_global_meshes(g_meshes, g_mesh_count, mesh_widths,mesh_heights, NULL);
+		}
+		float model_rot_x = 0.0f, model_rot_y = 0.0f, model_rot_z = 0.0f;
+		bool model_has_rot = false;
+
+		if (auto_detect_forward_scene(scene, 0.10f, &model_rot_x, &model_rot_y, &model_rot_z)) {
+			model_has_rot = true;
+			blog(LOG_INFO, "[AUTO-FWD-MODEL] model rot offsets: x=%f y=%f z=%f",
+				 model_rot_x, model_rot_y, model_rot_z);
+		} else {
+			model_has_rot = false;
+			blog(LOG_INFO, "[AUTO-FWD-MODEL] no detection");
+		}
+		// Asigna memoria para el nuevo conjunto de mallas del modelo.
+		*g_mesh_count = scene->mNumMeshes;
+		*g_meshes = (Mesh *)bmalloc(sizeof(Mesh) * (*g_mesh_count));
+		*mesh_widths = (float *)bmalloc(sizeof(float) * (*g_mesh_count));
+		*mesh_heights = (float *)bmalloc(sizeof(float) * (*g_mesh_count));
+
+		// Itera sobre cada malla en la escena de Assimp.
+		for (size_t m = 0; m < *g_mesh_count; m++) {
+			struct aiMesh *mesh = scene->mMeshes[m];
+			size_t vert_count = mesh->mNumVertices;
+			size_t idx_count = mesh->mNumFaces *3; // Cada cara es un triángulo (3 índices).
+		
+			// Estructura para almacenar los datos de los vértices antes de crear el buffer de OBS.
+			struct gs_vb_data *vbd =(struct gs_vb_data *)bmalloc(sizeof(struct gs_vb_data));
+			(*g_meshes)[m].center_x = 0.0f;
+			(*g_meshes)[m].center_y = 0.0f;
+			(*g_meshes)[m].center_z = 0.0f;
+			(*g_meshes)[m].depth_z = 0.0f;
+			(*g_meshes)[m].rot_offset_x = 0.0f;
+			(*g_meshes)[m].rot_offset_y = 0.0f;
+			(*g_meshes)[m].rot_offset_z = 0.0f;
+			(*g_meshes)[m].has_rot_offset = false;
+			// Asigna memoria para los datos de los vértices.
+			vbd->num = vert_count;
+			vbd->points = (struct vec3 *)bmalloc(sizeof(struct vec3) *vert_count);
+			vbd->normals = (struct vec3 *)bmalloc(sizeof(struct vec3) *vert_count);
+			vbd->tangents = (struct vec3 *)bmalloc(sizeof(struct vec3) * vert_count);
+			vbd->colors =(uint32_t *)bmalloc(sizeof(uint32_t) * vert_count);
+			// --- INICIO: CÁLCULO DE ANCHO Y ALTO ---
+			// NUEVO: Inicializar variables para calcular dimensiones aquí
+			float min_y = FLT_MAX;
+			float max_y = -FLT_MAX;
+			float min_x = FLT_MAX;
+			float max_x = -FLT_MAX;
+			float min_z = FLT_MAX; // <-- nuevo
+			float max_z = -FLT_MAX;
+
+			float center_x = 0, center_y = 0;
+			// --- FIN: CÁLCULO DE ANCHO Y ALTO ---
+			// Copia los datos de cada vértice desde la estructura de Assimp a nuestra estructura.
+			for (size_t i = 0; i < vert_count; i++) {
+				// Posiciones
+				vbd->points[i].x = mesh->mVertices[i].x;
+				vbd->points[i].y = mesh->mVertices[i].y;
+				vbd->points[i].z = mesh->mVertices[i].z;
+				if (vbd->points[i].y < min_y)
+					min_y = vbd->points[i].y;
+				if (vbd->points[i].y > max_y)
+					max_y = vbd->points[i].y;
+				if (vbd->points[i].x < min_x)
+					min_x = vbd->points[i].x;
+				if (vbd->points[i].x > max_x)
+					max_x = vbd->points[i].x;
+				if (vbd->points[i].z < min_z)
+					min_z = vbd->points[i].z;
+				if (vbd->points[i].z > max_z)
+					max_z = vbd->points[i].z;
+				// Normales (si existen)
+				if (mesh->mNormals) {
+					vbd->normals[i].x = mesh->mNormals[i].x;
+					vbd->normals[i].y = mesh->mNormals[i].y;
+					vbd->normals[i].z = mesh->mNormals[i].z;
+				} else {
+					vbd->normals[i].x = 0.0f;
+					vbd->normals[i].y = 0.0f;
+					vbd->normals[i].z = 0.0f;
+				}
+
+				// Tangentes (si existen)
+				if (mesh->mTangents) {
+					vbd->tangents[i].x = mesh->mTangents[i].x;
+					vbd->tangents[i].y = mesh->mTangents[i].y;
+					vbd->tangents[i].z = mesh->mTangents[i].z;
+				} else {
+					vbd->tangents[i].x = 0.0f;
+					vbd->tangents[i].y = 0.0f;
+					vbd->tangents[i].z = 0.0f;
+				}
+
+				// Colores de vértice (si existen)
+				if (mesh->mColors[0]) {
+					uint8_t r = (uint8_t)(mesh->mColors[0][i].r *255.0f);
+					uint8_t g = (uint8_t)(mesh->mColors[0][i].g * 255.0f);
+					uint8_t b = (uint8_t)(mesh->mColors[0][i].b * 255.0f);
+					uint8_t a = (uint8_t)(mesh->mColors[0][i].a * 255.0f);
+					// Empaqueta los componentes RGBA en un entero de 32 bits (formato ARGB).
+					vbd->colors[i] = (a << 24) | (r << 16) |(g << 8) | b;
+				} else {
+					vbd->colors[i] =0xFFFFFFFF; // Esto sigue siendo blanco opaco en ARGB
+				}
+			}
+
+			// Procesa las coordenadas de textura (UVs) si existen.
+			if (mesh->mTextureCoords[0]) {
+				blog(LOG_WARNING, " tiene coordenadas de textura");
+				vbd->num_tex = 1;
+				vbd->tvarray = (struct gs_tvertarray *)bmalloc(sizeof(struct gs_tvertarray));
+				vbd->tvarray[0].width = 2; // Coordenadas 2D (U, V).
+				vbd->tvarray[0].array =bmalloc(sizeof(float) * 2 * vert_count);
+
+				const struct aiVector3D *uvs = mesh->mTextureCoords[0];
+				float *uv_array = (float *)vbd->tvarray[0].array;
+
+				// Copia las coordenadas UV.
+				for (size_t i = 0; i < vert_count; i++) {
+					uv_array[i * 2 + 0] = uvs[i].x;
+					uv_array[i * 2 + 1] = uvs[i].y;
+				}
+			} else {
+				blog(LOG_WARNING, " NO tiene coordenadas de textura");
+				vbd->num_tex = 0;
+				vbd->tvarray = NULL;
+			}
+
+			// Asigna memoria y copia los índices de las caras.
+			uint32_t *indices =(uint32_t *)bmalloc(sizeof(uint32_t) * idx_count);
+			size_t idx_written = 0;
+			for (size_t f = 0; f < mesh->mNumFaces; f++) {
+				const struct aiFace *face = &mesh->mFaces[f];
+				// Asegura que la cara es un triángulo.
+				if (face->mNumIndices != 3)
+					continue;
+				// Copia los tres índices del triángulo.
+				indices[idx_written++] = face->mIndices[0];
+				indices[idx_written++] = face->mIndices[1];
+				indices[idx_written++] = face->mIndices[2];
+			}
+
+			// Crea los buffers de la GPU dentro del contexto gráfico de OBS.
+			obs_enter_graphics();
+
+			gs_render_start(true);
+
+			// Crea el buffer de vértices y el buffer de índices.
+			gs_vertbuffer_t *vb =gs_vertexbuffer_create(vbd, GS_DUP_BUFFER);
+			gs_indexbuffer_t *ib = gs_indexbuffer_create(GS_UNSIGNED_LONG, indices, (uint32_t)idx_written,GS_DUP_BUFFER);
+
+			obs_leave_graphics();
+
+			// Almacena los punteros a los buffers y la información de la malla.
+			(*g_meshes)[m].vb = vb;
+			(*g_meshes)[m].ib = ib;
+			(*g_meshes)[m].num_indices = (uint32_t)idx_written;
+			(*g_meshes)[m].num_vertex = (uint32_t)vert_count;
+			(*g_meshes)[m].texture = NULL; // Initialize to NULL
+			(*mesh_heights)[m] = max_y - min_y;
+			(*mesh_widths)[m] = max_x - min_x;
+			center_x = (max_x + min_x) * 0.5f;
+			center_y = (max_y + min_y) * 0.5f;
+			(*g_meshes)[m].center_z = (max_z + min_z) * 0.5f;
+			// guarda el centro real (usando min/max)
+			(*g_meshes)[m].depth_z = (max_z - min_z);
+			(*g_meshes)[m].center_x = (max_x + min_x) * 0.5f;
+			(*g_meshes)[m].center_y = (max_y + min_y) * 0.5f;
+			(*g_meshes)[m].rot_offset_x = model_rot_x;
+			(*g_meshes)[m].rot_offset_y = model_rot_y;
+			(*g_meshes)[m].rot_offset_z = model_rot_z;
+			(*g_meshes)[m].has_rot_offset = model_has_rot;
+
+			//auto_detect_forward(&(*g_meshes)[m], vbd->points,(mesh->mNormals ? vbd->normals : NULL), vert_count,min_x, max_x, min_y, max_y, min_z, max_z, 0.10f);
+			bfree(indices);
+			bfree(vbd->points);
+			bfree(vbd->normals);
+			bfree(vbd->tangents);
+			bfree(vbd->colors);
+
+			if (vbd->tvarray) {
+				bfree(vbd->tvarray[0].array);
+				bfree(vbd->tvarray);
+			}
+			bfree(vbd);
+
+			// Procesa el material y la textura de la malla.
+			struct aiMaterial *material =scene->mMaterials[mesh->mMaterialIndex];
+			// Comprueba si el material tiene una textura de tipo difuso.
+			if (material && aiGetMaterialTextureCount(material, aiTextureType_DIFFUSE) > 0) {
+				struct aiString texPath;
+				// Obtiene la ruta de la primera textura difusa.
+				if (aiGetMaterialTexture( material, aiTextureType_DIFFUSE, 0, &texPath, NULL, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+					char fullTexPath[512] = {0};
+					// Intenta construir la ruta completa de la textura, asumiendo que es relativa al archivo del modelo.
+
+					const char *modelDir = strrchr(path, '/');
+
+					if (!modelDir)
+						modelDir = strrchr(path, '\\');
+
+					// Si se encontró un separador de directorio (significa que el modelo está en un subdirectorio).
+					if (modelDir) {
+						// Calcula la longitud de la ruta del directorio del modelo, incluyendo el separador.
+						size_t len = modelDir - path + 1;
+						// Copia la parte de la ruta del directorio del modelo a 'fullTexPath'.
+						memcpy(fullTexPath, path, len);
+						// Asegura que la cadena esté terminada en nulo.
+						fullTexPath[len] = '\0';
+						// Concatena el nombre de la textura a la ruta base del modelo.
+						strncat(fullTexPath, texPath.data,sizeof(fullTexPath) - len - 1);
+					} else {
+						// Si no se encontró un separador (el modelo está en el "directorio raíz" de la búsqueda).
+						// Simplemente copia el nombre de la textura directamente, asumiendo que está en el mismo directorio.
+						strncpy(fullTexPath, texPath.data,sizeof(fullTexPath) - 1);fullTexPath[sizeof(fullTexPath) - 1] ='\0';
+					}
+					// Cargar la imagen
+					obs_enter_graphics();
+					gs_image_file_t *image =(gs_image_file_t *)bmalloc(sizeof(gs_image_file_t));
+					gs_image_file_init(image, fullTexPath);
+
+					gs_image_file_init_texture(image);
+					obs_leave_graphics();
+
+					if (image->loaded) {
+						blog(LOG_INFO, "Textura cargada: %s",fullTexPath);
+						(*g_meshes)[m].texture =image->texture; // Guarda la textura para renderizar.
+						gs_image_file_free(image); // Free internal image data
+						bfree(image); // Free the image struct
+					} else {
+						if (image->texture) {
+							gs_texture_destroy(image->texture);
+							image->texture = NULL;
+						}
+						blog(LOG_WARNING,"No se pudo cargar textura: %s", fullTexPath);
+						gs_image_file_free(image); // Free internal image data
+						bfree(image); // Free the image struct
+					}
+				}
+			} else {
+				blog(LOG_WARNING, "No tiene materiales");
+			}
+		}
+
+		obs_leave_graphics();
+		// Libera la escena de Assimp para evitar fugas de memoria.
+		aiReleaseImport(scene);
+		blog(LOG_INFO, "Modelo cargado con %zu mallas", *g_mesh_count);
+		return true;
+	}
+	/**
+	 * @brief Aplica una textura dada a todas las mallas del modelo 3D.
+	 *
+	 * Esta funci�n itera a trav�s de todas las mallas en el array 'g_meshes'
+	 * y asigna 'new_texture' a la propiedad 'texture' de cada malla.
+	 * Es crucial que 'new_texture' sea gestionada externamente (creada y destruida)
+	 * y que 'free_single_mesh' est� adaptada para no destruir esta textura compartida
+	 * si se asigna a m�ltiples mallas.
+	 *
+	 * @param g_meshes Puntero al array de mallas.
+	 * @param g_mesh_count N�mero de mallas en el array.
+	 * @param new_texture La textura (gs_texture_t*) que se asignar� a todas las mallas.
+	 * Puede ser NULL para "desaplicar" una textura y volver al estado sin textura.
+	 */
+	void apply_texture_to_all_meshes(Mesh *g_meshes, size_t g_mesh_count,
+					 gs_texture_t *new_texture)
+	{
+		if (!g_meshes) {
+			blog(LOG_WARNING, "No hay mallas para aplicar la textura.");
+			return;
+		}
+
+		for (size_t i = 0; i < g_mesh_count; ++i) {
+			// Importante: No destruimos la textura anterior de la malla aqu�.
+			// La gesti�n de la memoria de las texturas (ya sean las de Assimp o la 'new_texture')
+			// debe ser manejada por las funciones de limpieza (free_single_mesh y cleanup_global_meshes)
+			// para evitar "double frees" o fugas de memoria, especialmente si 'new_texture' es compartida.
+			g_meshes[i].texture =new_texture; // Asigna directamente la nueva textura a la malla
+		}
+
+		if (new_texture) {
+			blog(LOG_INFO, "Textura '%p' aplicada a todas las %zu mallas.",
+				 (void *)new_texture, g_mesh_count);
+		} else {
+			blog(LOG_INFO, "Textura eliminada de todas las %zu mallas.",
+				 g_mesh_count);
+		}
+	}
+
+
+	static inline float degrees_to_radians(float degrees){
+			return degrees * (float)M_PI / 180.0f;
+	}
+
+
+void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths, float *heights, float scale,
+	const float rvec[3], bool detected, float offset_rot_x_deg, float offset_rot_y_deg, float offset_rot_z_deg)
+	{
+		gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+		if (!solid)
+			return;
+		gs_eparam_t *col = gs_effect_get_param_by_name(solid, "color");
+		if (!col)
+			return;
+		gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
+		if (!tech)
+			return;
+
+		// --- CÁLCULO DE EJE-ÁNGULO (rvec) ---
+		float angle_rad = 0.0f;
+		float ax = 0.0f, ay = 0.0f, az = 1.0f;
+		if (detected) {
+			angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] +
+					 rvec[2] * rvec[2]);
+			if (angle_rad > 1e-5f) { // Evitar división por cero
+				ax = rvec[0] / angle_rad;
+				ay = rvec[1] / angle_rad;
+				az = rvec[2] / angle_rad;
+			} else {
+				angle_rad = 0.0f;
+			}
+		}
+	
+		struct vec4 c = {1.0f, 0.0f, 0.0f,
+				 1.0f}; 
+		gs_technique_begin(tech);
+		gs_technique_begin_pass(tech, 0);
+		gs_effect_set_vec4(col, &c);
+
+		for (size_t i = 0; i < g_mesh_count; i++) {
+			Mesh *m = &g_meshes[i];
+			if (!m->vb || !m->ib)
+				continue;
+
+			// Centro del modelo (pivote)
+			float cx = m->center_x;
+			float cy = m->center_y;
+			float cz = m->center_z;
+
+			gs_matrix_push();
+
+			// 1. Mover pivote al origen
+			gs_matrix_translate3f(-cx, -cy, -cz);
+			// 2. Escala
+			gs_matrix_scale3f(-scale, scale, -scale);
+			// 3. Corrección de coordenadas (Y-Abajo de OpenCV a Y-Arriba de OBS)
+			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
+
+			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,
+					  degrees_to_radians(offset_rot_x_deg));
+			gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,
+					  degrees_to_radians(offset_rot_y_deg));
+			gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,
+					  degrees_to_radians(offset_rot_z_deg));
+
+			// 5. Aplicar la rotación del tracker (rvec) SEGUNDO
+			if (detected) {
+				gs_matrix_rotaa4f(ax, ay, az, angle_rad);
+			}
+			
+			// 6. Dibujar
+			gs_load_vertexbuffer(m->vb);
+			gs_load_indexbuffer(m->ib);
+			gs_draw(GS_TRIS, 0, m->num_indices);
+
+			gs_matrix_pop();
+		}
+
+		gs_technique_end_pass(tech);
+		gs_technique_end(tech);
+	}
+
+void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *heights, float scale, const float rvec[3],	bool detected,float offset_rot_x_deg, float offset_rot_y_deg, float offset_rot_z_deg)
+{
+	gs_effect_t *default_effect =
+		obs_get_base_effect(OBS_EFFECT_DEFAULT);
+	if (!default_effect)
+		return;
+	gs_eparam_t *image_param =
+		gs_effect_get_param_by_name(default_effect, "image");
+	if (!image_param)
+		return;
+	gs_technique_t *tech =
+		gs_effect_get_technique(default_effect, "Draw");
+	if (!tech)
+		return;
+
+
+	float angle_rad = 0.0f;
+	float ax = 0.0f, ay = 0.0f, az = 1.0f;
+	if (detected) {
+		angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] + rvec[2] * rvec[2]);
+		if (angle_rad > 1e-5f) {
+			ax = rvec[0] / angle_rad;
+			ay = rvec[1] / angle_rad;
+			az = rvec[2] / angle_rad;
+		} else {
+			angle_rad = 0.0f;
+		}
+	}
+	
+
+	gs_technique_begin(tech);
+	gs_technique_begin_pass(tech, 0);
+
+	for (size_t i = 0; i < g_mesh_count; i++) {
+		Mesh *m = &g_meshes[i];
+		if (!m->vb || !m->ib)
+			continue;
+
+		// Si la malla no tiene textura, delegamos en la versión NoTexture
+		if (!m->texture) {
+			gs_technique_end_pass(tech);
+			gs_technique_end(tech);
+			
+			// Llamada a la versión SIN textura (pasando todos los parámetros)
+			render_model_c_NoTexture(g_meshes, g_mesh_count,
+						 widths, heights, scale,
+						 rvec, detected,
+						 offset_rot_x_deg, offset_rot_y_deg, offset_rot_z_deg);
+			return; // Salir para no renderizar doble
+		}
+
+		// Centro del modelo (pivote)
+		float cx = m->center_x;
+		float cy = m->center_y;
+		float cz = m->center_z;
+
+		gs_matrix_push();
+
+		// 1. mover pivote al origen 3D
+		gs_matrix_translate3f(cx, cy, cz);
+		// 2. escala
+		gs_matrix_scale3f(-scale, scale, -scale);
+		// 3. Corrección de coordenadas (Y-Abajo a Y-Arriba)
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
+
+	
+        gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, degrees_to_radians(offset_rot_x_deg));
+        gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, degrees_to_radians(offset_rot_y_deg));
+        gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, degrees_to_radians(offset_rot_z_deg));
+
+	
+		if (detected) {
+			
+			gs_matrix_rotaa4f(ax, -ay, -az, angle_rad); 
+		}
+	
+
+		gs_effect_set_texture(image_param, m->texture);
+		gs_load_vertexbuffer(m->vb);
+		gs_load_indexbuffer(m->ib);
+		gs_draw(GS_TRIS, 0, m->num_indices);
+
+		gs_matrix_pop();
+	}
+
+	gs_technique_end_pass(tech);
+	gs_technique_end(tech);
+}
+
+void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
+			  float *heights, float scale, const float rvec[3],
+			  bool detected, float offset_rot_x_deg,
+			  float offset_rot_y_deg, float offset_rot_z_deg,
+			  int clock_mode, int mesh_id_dial, int mesh_id_hour,
+			  int mesh_id_minute, int mesh_id_second,
+			  int mesh_id_single, const float *clock_hour_deg,
+			  const float *clock_minute_deg,
+			  const float *clock_second_deg,
+			  const float *clock_single_deg)
+{
+	gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+	if (!default_effect)
+		return;
+	gs_eparam_t *image_param =
+		gs_effect_get_param_by_name(default_effect, "image");
+	if (!image_param)
+		return;
+	gs_technique_t *tech = gs_effect_get_technique(default_effect, "Draw");
+	if (!tech)
+		return;
+
+	// Cálculo del ángulo del vector de rotación (ArUco)
+	float angle_rad = 0.0f;
+	float ax = 0.0f, ay = 0.0f, az = 1.0f;
+	if (detected) {
+		angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] +
+				 rvec[2] * rvec[2]);
+		if (angle_rad > 1e-5f) {
+			ax = rvec[0] / angle_rad;
+			ay = rvec[1] / angle_rad;
+			az = rvec[2] / angle_rad;
+		} else {
+			angle_rad = 0.0f;
+		}
+	}
+
+	gs_technique_begin(tech);
+	gs_technique_begin_pass(tech, 0);
+
+	for (size_t i = 0; i < g_mesh_count; i++) {
+		Mesh *m = &g_meshes[i];
+		if (!m->vb || !m->ib || !m->texture)
+			continue;
+
+		float cx = m->center_x;
+		float cy = m->center_y;
+		float cz = m->center_z;
+
+		// Detectar si es una manecilla
+		bool is_hand = false;
+		if (clock_mode == 0) {
+			if ((int)i == mesh_id_hour ||
+			    (int)i == mesh_id_minute ||
+			    (int)i == mesh_id_second)
+				is_hand = true;
+		} else if (clock_mode == 1) {
+			if ((int)i == mesh_id_single)
+				is_hand = true;
+		}
+
+		
+		float pivot_y = cy;
+		
+		float extra_rotation = 0.0f;
+		bool apply_rotation = false;
+
+		if (clock_mode == 0) {
+			if ((int)i == mesh_id_hour && clock_hour_deg) {
+				extra_rotation = *clock_hour_deg;
+				apply_rotation = true;
+			} else if ((int)i == mesh_id_minute &&
+				   clock_minute_deg) {
+				extra_rotation = *clock_minute_deg;
+				apply_rotation = true;
+			} else if ((int)i == mesh_id_second &&
+				   clock_second_deg) {
+				extra_rotation = *clock_second_deg;
+				apply_rotation = true;
+			}
+		} else if (clock_mode == 1) {
+			if ((int)i == mesh_id_single && clock_single_deg) {
+				extra_rotation = *clock_single_deg;
+				apply_rotation = true;
+			}
+		}
+
+		gs_matrix_push();
+
+	
+		gs_matrix_scale3f(-scale, scale, -scale);
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
+
+		// Rotación del Tracker (ArUco)
+		if (detected) {
+			gs_matrix_rotaa4f(ax, ay, az, angle_rad);
+		}
+
+		
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,degrees_to_radians(offset_rot_x_deg));
+		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, degrees_to_radians(offset_rot_y_deg));
+		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, degrees_to_radians(offset_rot_z_deg));
+
+		
+		
+		gs_matrix_translate3f(cx, pivot_y, cz);
+
+		
+	if (apply_rotation) {
+		
+		if (clock_mode == 0) { //DUDA SOBRE COMO ORIENTAR ESTAR ROTACIONES
+			// IR HACIA ATRAS? O IR HACIA ADELTANTE?
+			// AHORA SEGUNDOS VA HACIA SENTIDO HORARIO Y MINUROS Y SEGUNDOS AL REVES ES SOLO CAMBIAR EL SIGNO DE LA ROTACION, PERO NO SE SI ES ASI O AL REVES
+			if ((int)i == mesh_id_hour && clock_hour_deg) {
+				gs_matrix_rotaa4f(
+					0.0f, 1.0f, 0.0f,
+					degrees_to_radians(extra_rotation));
+			} else if ((int)i == mesh_id_minute &&
+				   clock_minute_deg) {
+				gs_matrix_rotaa4f(
+					0.0f, 1.0f, 0.0f,
+					degrees_to_radians(extra_rotation));
+			} else if ((int)i == mesh_id_second &&
+				   clock_second_deg) {
+				gs_matrix_rotaa4f(
+					0.0f, 1.0f, 0.0f,
+					degrees_to_radians(-extra_rotation));
+			}
+		} else if (clock_mode == 1) {
+			if ((int)i == mesh_id_single && clock_single_deg) {
+				gs_matrix_rotaa4f(
+					0.0f, 1.0f, 0.0f,
+					degrees_to_radians(-extra_rotation));
+			}
+		}
+		}
+
+
+		gs_matrix_translate3f(-cx, -pivot_y, -cz);
+
+		gs_effect_set_texture(image_param, m->texture);
+		gs_load_vertexbuffer(m->vb);
+		gs_load_indexbuffer(m->ib);
+		gs_draw(GS_TRIS, 0, m->num_indices);
+
+		gs_matrix_pop();
+	}
+
+	gs_technique_end_pass(tech);
+	gs_technique_end(tech);
+}
+
+
+void replace_mesh_textures(struct Mesh *meshes, size_t count,
+			   gs_texture_t *new_tex, gs_texture_t *old_tex)
+{
+	// Para cada sub-malla, libera textura antigua y asigna la nueva
+	for (size_t i = 0; i < count; i++) {
+		struct Mesh *m = &meshes[i];
+		if (old_tex && m->texture == old_tex) {
+			gs_texture_destroy(m->texture);
+			m->texture = NULL;
+		}
+		if (new_tex) {
+			m->texture = new_tex;
+		
+		}
+	}
+}
+
+============================================================
+/// ARCHIVO: .\SJ_3DModel.h ///
+============================================================
+
+// src/SJ_3DModel.h
+#pragma once
+#include <stdbool.h>
+
+/**	
+ * @brief Estructura para representar una malla (mesh) de un modelo 3D.
+ *
+ * Contiene los buffers de v�rtices e �ndices necesarios para el renderizado,
+ * as� como la informaci�n de la textura asociada.
+ */
+typedef struct Mesh {
+	gs_vertbuffer_t *vb;
+	gs_indexbuffer_t *ib;
+	uint32_t num_indices;
+	uint32_t num_vertex;
+	gs_texture_t *texture;
+	float center_x;
+	float center_y;
+	float center_z; 
+	float depth_z; 
+	float rot_offset_x;  // offset en pitch (X), en grados
+	float rot_offset_y;  // offset en yaw   (Y), en grados
+	float rot_offset_z;  // offset en roll  (Z), en grados
+	bool has_rot_offset; // true si se calcul� auto/manual
+
+
+
+	float pivot_x;
+	float pivot_y;
+	float pivot_z;
+
+} Mesh;
+	 // Declara tus funciones y tipos p�blicos:
+bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float **mesh_widths, float **mesh_heights);
+void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
+		    float *heights, float scale, const float rvec[3],
+		    bool detected, float offset_rot_x_deg,
+		    float offset_rot_y_deg, float offset_rot_z_deg);
+
+/**
+ * Renderiza un modelo 3D en modo reloj con IDs de malla configurables.
+ * @param clock_mode 0 = tres manecillas, 1 = una manecilla
+ * @param mesh_id_dial ID de la malla del dial (no se rota, -1 para ignorar)
+ * @param mesh_id_hour ID de la malla de la manecilla de horas
+ * @param mesh_id_minute ID de la malla de la manecilla de minutos
+ * @param mesh_id_second ID de la malla de la manecilla de segundos
+ * @param mesh_id_single ID de la malla para modo de una manecilla
+ * @param clock_hour_deg Ángulo de la manecilla de horas (puede ser NULL)
+ * @param clock_minute_deg Ángulo de la manecilla de minutos (puede ser NULL)
+ * @param clock_second_deg Ángulo de la manecilla de segundos (puede ser NULL)
+ * @param clock_single_deg Ángulo de la manecilla única (puede ser NULL)
+ */
+void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
+			 float *heights, float scale, const float rvec[3],
+			 bool detected, float offset_rot_x_deg,
+			 float offset_rot_y_deg, float offset_rot_z_deg,
+			 int clock_mode,
+			 int mesh_id_dial, int mesh_id_hour,
+			 int mesh_id_minute, int mesh_id_second,
+			 int mesh_id_single,
+			 const float *clock_hour_deg,
+			 const float *clock_minute_deg,
+			 const float *clock_second_deg,
+			 const float *clock_single_deg);
+
+
+void cleanup_global_meshes(struct Mesh **g_meshes, size_t *g_mesh_count,
+			   float **mesh_widths, float **mesh_heights,
+			   gs_texture_t *new_texture);
+void apply_texture_to_all_meshes(Mesh *g_meshes, size_t g_mesh_count, gs_texture_t *new_texture);
+void replace_mesh_textures(struct Mesh *meshes, size_t count, gs_texture_t *new_tex,  gs_texture_t *old_tex);
+
+============================================================
+/// ARCHIVO: .\test.cpp ///
+============================================================
+
+#include "test.hpp"
+#include "test2.hpp"
+TestWidget::TestWidget(QWidget* parent) :QDockWidget("Sheila and Jose plugin test",parent){
+    this->parent=parent;
+
+    QWidget *widget= new QWidget();
+    this->button->setText("Press me if you love Miami!!");
+    QHBoxLayout *layout= new QHBoxLayout();
+    layout->addWidget(this->button);
+
+    QLabel *label = new QLabel("Dock del plugin con cuadrado blanco", this);
+    layout->addWidget(label);
+
+
+    WhiteSquareWidget *square = new WhiteSquareWidget(this);
+    layout->addWidget(square);
+
+
+    setObjectName("WhiteSquareDock");  // Necesario para que OBS lo registre como dock
+
+
+    widget->setLayout(layout);
+
+    setWidget(widget);
+    setVisible(false);
+    setFloating(true);
+    resize(300,300);
+
+    QObject::connect(button,SIGNAL(clicked()),SLOT(ButtonClicked()));
+
+
+    
+    //QVBoxLayout *layout = new QVBoxLayout(this);
+
+  
+
+    
+
+};
+
+TestWidget::~TestWidget(){}
+
+void TestWidget::ButtonClicked(){
+    QMessageBox::information(this, "Information Box", "RACIST!");
+}
+
+============================================================
+/// ARCHIVO: .\test2.cpp ///
+============================================================
+
+#include "test2.hpp"
+#include <QPainter>
+
+WhiteSquareWidget::WhiteSquareWidget(QWidget *parent)
+    : QWidget(parent)
+{
+    setMinimumSize(150, 150);  // Tamaño mínimo para que el cuadrado se vea bien
+}
+
+void WhiteSquareWidget::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    painter.fillRect(rect(), Qt::black);  // Fondo negro (opcional)
+
+    int size = 100;
+    int x = (width() - size) / 2;
+    int y = (height() - size) / 2;
+
+    painter.setBrush(Qt::white);
+    painter.setPen(Qt::NoPen);
+    painter.drawRect(x, y, size, size);
+}
+
+
+============================================================
+/// ARCHIVO: .\web_sync.c ///
+============================================================
+
+/**
+ * @file web_sync.c
+ * @brief Implementación de la sincronización web con libcurl (hilo secundario) usando Windows threads.
+ */
+
+#include "web_sync.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <obs-module.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+#include <curl/curl.h>
+
+#define WEB_SYNC_BUFFER_SIZE 4096
+#define WEB_SYNC_MIN_INTERVAL 1.0f
+
+//EJEMPLO CURL https://curl.se/libcurl/c/getinmemory.html PARA LA MEMORIA
+struct web_sync {
+	char *api_url;
+	float interval_seconds; //cad cuanto se sincroniza, en segundos (mínimo 1s)
+	volatile bool enabled; //volatile como en consolas
+	volatile bool thread_stop;
+
+	HANDLE thread;
+	CRITICAL_SECTION mutex;
+
+	bool has_new_result;
+	uint32_t result_hours;
+	uint32_t result_minutes;
+	uint32_t result_seconds;
+};
+
+
+typedef struct {
+	char *data;
+	size_t size;
+} memory_buffer_t;
+
+static size_t write_callback(char *ptr, size_t size, size_t nmemb,void *userdata)
+{
+	memory_buffer_t *buf = (memory_buffer_t *)userdata;
+	size_t total = size * nmemb;
+	if (buf->size + total + 1 > WEB_SYNC_BUFFER_SIZE)
+		total = WEB_SYNC_BUFFER_SIZE - buf->size - 1;
+	if (total > 0) {
+		memcpy(buf->data + buf->size, ptr, total);
+		buf->size += total;
+		buf->data[buf->size] = '\0';
+	}
+	return size * nmemb;
+}
+// https://medium.com/@priyanshugrv/building-a-simple-json-parser-in-c-9ecd1c6b1b9e parseador de json en C
+/** Parsea un entero no negativo después de "key": en el JSON. */
+static bool parse_json_int(const char *json, const char *key,
+			   uint32_t *out_value)
+{
+	char search[64];
+	snprintf(search, sizeof(search), "\"%s\"", key);
+	const char *p = strstr(json, search);
+	if (!p)
+		return false;
+
+	p += strlen(search);
+
+	// Saltar espacios, tabs y saltos de línea
+	while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')
+		p++;
+
+	if (*p != ':')
+		return false;
+	p++;
+
+	while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')
+		p++;
+
+	if (*p < '0' || *p > '9')
+		return false;
+
+	*out_value = 0;
+	while (*p >= '0' && *p <= '9') {
+		*out_value = *out_value * 10 + (uint32_t)(*p - '0');
+		p++;
+	}
+
+	return true;
+}
+
+//https://en.cppreference.com/w/c/string/byte/strstr 
+// /** Parsea un entero dentro de un objeto hijo en el JSON: "parent_key": { ... "child_key": value ... } */
+
+// 
+static bool parse_json_int_nested(const char *json, const char *parent_key,
+				  const char *child_key, uint32_t *out_value)
+{
+	char search[128];
+	snprintf(search, sizeof(search), "\"%s\"", parent_key);
+	const char *p = strstr(json, search);
+	if (!p)
+		return false;
+
+	const char *start = strchr(p, '{'); 
+	if (!start)
+		return false;
+
+	return parse_json_int(start, child_key, out_value);
+}
+
+static DWORD WINAPI sync_thread_func(LPVOID arg)
+{
+	web_sync_t *sync = (web_sync_t *)arg;
+	memory_buffer_t buf;
+	buf.data = (char *)malloc(WEB_SYNC_BUFFER_SIZE);
+	if (!buf.data) {
+		blog(LOG_WARNING,
+		     "[WEB_SYNC] Error: no se pudo asignar memoria para el buffer");
+		return 0;
+	}
+	buf.size = 0;
+	buf.data[0] = '\0';
+
+	CURL *curl = curl_easy_init();
+	if (!curl) {
+		blog(LOG_WARNING, "[WEB_SYNC] Error: curl_easy_init falló");
+		free(buf.data);
+		return 0;
+	}
+
+	blog(LOG_INFO, "[WEB_SYNC] Thread iniciado");
+
+	while (!sync->thread_stop) {
+		float interval = sync->interval_seconds;
+		if (interval < WEB_SYNC_MIN_INTERVAL)
+			interval = WEB_SYNC_MIN_INTERVAL;
+
+		blog(LOG_DEBUG,
+		     "[WEB_SYNC] Esperando %.2f segundos antes de la siguiente petición",
+		     interval);
+		Sleep((DWORD)(interval * 1000));
+
+		if (sync->thread_stop) {
+			blog(LOG_INFO, "[WEB_SYNC] Thread detenido");
+			break;
+		}
+
+		if (!sync->enabled) {
+			blog(LOG_DEBUG,
+			     "[WEB_SYNC] Sincronización deshabilitada, saltando ciclo");
+			continue;
+		}
+
+		buf.size = 0;
+		buf.data[0] = '\0';
+
+		char url_copy[2048] = {0};
+		EnterCriticalSection(&sync->mutex);
+		if (sync->api_url)
+			strncpy(url_copy, sync->api_url, sizeof(url_copy) - 1);
+		LeaveCriticalSection(&sync->mutex);
+
+		if (!url_copy[0]) {
+			blog(LOG_WARNING,
+			     "[WEB_SYNC] URL vacía, saltando petición");
+			continue;
+		}
+
+		blog(LOG_INFO, "[WEB_SYNC] Realizando petición a URL: %s",
+		     url_copy);
+
+		curl_easy_setopt(curl, CURLOPT_URL, url_copy);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+		CURLcode res = curl_easy_perform(curl);
+		if (res != CURLE_OK) {
+			blog(LOG_WARNING,
+			     "[WEB_SYNC] curl_easy_perform falló: %s",
+			     curl_easy_strerror(res));
+			continue;
+		}
+
+		blog(LOG_INFO, "[WEB_SYNC] Respuesta recibida: %s", buf.data);
+
+		uint32_t h = 0, m = 0, s = 0;
+		
+		bool ok = parse_json_int(buf.data, "hours", &h) &&
+			  parse_json_int(buf.data, "minutes", &m) &&
+			  parse_json_int(buf.data, "seconds", &s);
+
+		if (ok) {
+			blog(LOG_INFO,
+			     "[WEB_SYNC] Valores parseados: %02u:%02u:%02u", h,
+			     m, s);
+			EnterCriticalSection(&sync->mutex);
+			sync->has_new_result = true;
+			sync->result_hours = h;
+			sync->result_minutes = m;
+			sync->result_seconds = s;
+			LeaveCriticalSection(&sync->mutex);
+		} else {
+			blog(LOG_WARNING,
+			     "[WEB_SYNC] Error al parsear JSON recibido");
+		}
+	}
+
+	blog(LOG_INFO, "[WEB_SYNC] Limpiando recursos del thread");
+	curl_easy_cleanup(curl);
+	free(buf.data);
+	return 0;
+}
+
+
+web_sync_t *web_sync_create(const char *api_url, float interval_seconds)
+{
+	if (!api_url || interval_seconds < WEB_SYNC_MIN_INTERVAL)
+		return NULL;
+
+	web_sync_t *sync = (web_sync_t *)malloc(sizeof(web_sync_t));
+	if (!sync)
+		return NULL;
+	memset(sync, 0, sizeof(web_sync_t));
+
+	sync->api_url = _strdup(api_url);
+	if (!sync->api_url) {
+		free(sync);
+		return NULL;
+	}
+	sync->interval_seconds = interval_seconds;
+	sync->enabled = true;
+	sync->thread_stop = false;
+
+	InitializeCriticalSection(&sync->mutex);
+
+	sync->thread = CreateThread(NULL, 0, sync_thread_func, sync, 0, NULL);
+	if (!sync->thread) {
+		DeleteCriticalSection(&sync->mutex);
+		free(sync->api_url);
+		free(sync);
+		return NULL;
+	}
+
+	return sync;
+}
+
+void web_sync_destroy(web_sync_t *sync)
+{
+	if (!sync)
+		return;
+	sync->thread_stop = true;
+	WaitForSingleObject(sync->thread, INFINITE);
+	CloseHandle(sync->thread);
+	DeleteCriticalSection(&sync->mutex);
+	free(sync->api_url);
+	free(sync);
+}
+
+void web_sync_set_url(web_sync_t *sync, const char *api_url)
+{
+	if (!sync || !api_url)
+		return;
+	EnterCriticalSection(&sync->mutex);
+	free(sync->api_url);
+	sync->api_url = _strdup(api_url);
+	LeaveCriticalSection(&sync->mutex);
+}
+
+void web_sync_set_interval(web_sync_t *sync, float interval_seconds)
+{
+	if (!sync)
+		return;
+	if (interval_seconds < WEB_SYNC_MIN_INTERVAL)
+		interval_seconds = WEB_SYNC_MIN_INTERVAL;
+	sync->interval_seconds = interval_seconds;
+}
+
+void web_sync_set_enabled(web_sync_t *sync, bool enabled)
+{
+	if (sync)
+		sync->enabled = enabled;
+}
+
+bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result)
+{
+	if (!sync || !result)
+		return false;
+	result->valid = false;
+	result->hours = 0;
+	result->minutes = 0;
+	result->seconds = 0;
+
+	EnterCriticalSection(&sync->mutex);
+	if (sync->has_new_result) {
+		result->valid = true;
+		result->hours = sync->result_hours;
+		result->minutes = sync->result_minutes;
+		result->seconds = sync->result_seconds;
+		sync->has_new_result = false;
+	}
+	LeaveCriticalSection(&sync->mutex);
+
+	return result->valid;
+}
+
+
+============================================================
+/// ARCHIVO: .\web_sync.h ///
+============================================================
+
+/**
+ * @file web_sync.h
+ * @brief Sincronización opcional del countdown desde una API REST.
+ *
+ * Consulta periódicamente una URL que devuelve JSON con { "hours", "minutes", "seconds" }
+ * (tiempo restante). Las peticiones HTTP se ejecutan en un hilo secundario;
+ * nunca se bloquea el hilo de render. El resultado se aplica como corrección
+ * del reloj local (countdown_clock_sync_remaining).
+ */
+
+#ifndef WEB_SYNC_H
+#define WEB_SYNC_H
+
+#include <stdbool.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/** Estructura opaca del sincronizador web */
+typedef struct web_sync web_sync_t;
+
+/**
+ * Resultado de la última sincronización (para uso en el hilo principal).
+ */
+typedef struct web_sync_result {
+	bool valid;           /**< true si hay datos nuevos y parseados correctamente */
+	uint32_t hours;
+	uint32_t minutes;
+	uint32_t seconds;
+} web_sync_result_t;
+
+/**
+ * Crea un sincronizador web.
+ * @param api_url URL de la API REST (GET) que devuelve JSON con hours, minutes, seconds.
+ * @param interval_seconds Intervalo entre peticiones en segundos (mínimo 1).
+ * @return Instancia nueva o NULL si falla.
+ */
+web_sync_t *web_sync_create(const char *api_url, float interval_seconds);
+
+/**
+ * Destruye el sincronizador y detiene el hilo de peticiones.
+ */
+void web_sync_destroy(web_sync_t *sync);
+
+/**
+ * Actualiza la URL de la API (toma efecto en la siguiente petición).
+ */
+void web_sync_set_url(web_sync_t *sync, const char *api_url);
+
+/**
+ * Actualiza el intervalo de peticiones (segundos).
+ */
+void web_sync_set_interval(web_sync_t *sync, float interval_seconds);
+
+/**
+ * Activa o desactiva las peticiones periódicas.
+ */
+void web_sync_set_enabled(web_sync_t *sync, bool enabled);
+
+/**
+ * Consulta si hay un resultado nuevo (no bloquea).
+ * Debe llamarse desde el hilo principal (p. ej. filter_tick).
+ * Si hay resultado válido, lo copia a @a result y marca como consumido.
+ * @return true si @a result contiene datos nuevos.
+ */
+bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* WEB_SYNC_H */
+
+
+============================================================
+/// ARCHIVO: .\yuv2bgra.cpp ///
+============================================================
+
+#include "yuv2bgra.h"
+
+// Funcin interna para convertir un pxel YUV a BGRA
+static void yuv_to_bgra(uint8_t y, uint8_t u, uint8_t v, uint8_t *b, uint8_t *g,uint8_t *r)
+{
+	int c = y - 16;
+	int d = u - 128;
+	int e = v - 128;
+
+	int r_ = (298 * c + 409 * e + 128) >> 8;
+	int g_ = (298 * c - 100 * d - 208 * e + 128) >> 8;
+	int b_ = (298 * c + 516 * d + 128) >> 8;
+
+	*r = (uint8_t)(r_ < 0 ? 0 : r_ > 255 ? 255 : r_);
+	*g = (uint8_t)(g_ < 0 ? 0 : g_ > 255 ? 255 : g_);
+	*b = (uint8_t)(b_ < 0 ? 0 : b_ > 255 ? 255 : b_);
+}
+
+// Implementaciones especficas para obtener U y V segn formato YUV
+
+void get_uv_i420(const struct obs_source_frame *frame, int x, int y, uint8_t *u,uint8_t *v)
+{
+	int u_pitch = frame->linesize[1];
+	int v_pitch = frame->linesize[2];
+	const uint8_t *U = frame->data[1];
+	const uint8_t *V = frame->data[2];
+	*u = U[(y / 2) * u_pitch + (x / 2)];
+	*v = V[(y / 2) * v_pitch + (x / 2)];
+}
+
+void get_uv_nv12(const struct obs_source_frame *frame, int x, int y, uint8_t *u,uint8_t *v)
+{
+	int uv_pitch = frame->linesize[1];
+	const uint8_t *UV = frame->data[1];
+	*u = UV[(y / 2) * uv_pitch + (x & ~1)];
+	*v = UV[(y / 2) * uv_pitch + (x | 1)];
+}
+
+void get_uv_i422(const struct obs_source_frame *frame, int x, int y, uint8_t *u,uint8_t *v)
+{
+	int u_pitch = frame->linesize[1];
+	int v_pitch = frame->linesize[2];
+	const uint8_t *U = frame->data[1];
+	const uint8_t *V = frame->data[2];
+	*u = U[y * u_pitch + x];
+	*v = V[y * v_pitch + x];
+}
+void convert_yuy2_to_bgra(const struct obs_source_frame *frame,
+			  uint8_t *dst_bgra)
+{
+	const int width = frame->width;
+	const int height = frame->height;
+	const uint8_t *yuy2 = frame->data[0];
+	const int pitch = frame->linesize[0];
+
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x += 2) {
+			const uint8_t *macropixel = yuy2 + y * pitch + x * 2;
+
+			uint8_t y0 = macropixel[0];
+			uint8_t u = macropixel[1];
+			uint8_t y1 = macropixel[2];
+			uint8_t v = macropixel[3];
+
+			uint8_t r, g, b;
+
+			yuv_to_bgra(y0, u, v, &b, &g, &r);
+			int dst_index0 = (y * width + x) * 4;
+			dst_bgra[dst_index0 + 0] = b;
+			dst_bgra[dst_index0 + 1] = g;
+			dst_bgra[dst_index0 + 2] = r;
+			dst_bgra[dst_index0 + 3] = 255;
+
+			if (x + 1 < width) {
+				yuv_to_bgra(y1, u, v, &b, &g, &r);
+				int dst_index1 = (y * width + x + 1) * 4;
+				dst_bgra[dst_index1 + 0] = b;
+				dst_bgra[dst_index1 + 1] = g;
+				dst_bgra[dst_index1 + 2] = r;
+				dst_bgra[dst_index1 + 3] = 255;
+			}
+		}
+	}
+}
+// Funcin genrica para convertir cualquier YUV a BGRA usando funcin get_uv
+void convert_yuv_to_bgra_generic(const struct obs_source_frame *frame,uint8_t *dst_bgra, get_uv_func get_uv)
+{
+	int width = frame->width;
+	int height = frame->height;
+	const uint8_t *Y = frame->data[0];
+	int y_pitch = frame->linesize[0];
+
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			uint8_t y_val = Y[y * y_pitch + x];
+			uint8_t u_val, v_val;
+			get_uv(frame, x, y, &u_val, &v_val);
+
+			uint8_t r, g, b;
+			yuv_to_bgra(y_val, u_val, v_val, &b, &g, &r);
+
+			int dst_index = (y * width + x) * 4;
+			dst_bgra[dst_index + 0] = b;
+			dst_bgra[dst_index + 1] = g;
+			dst_bgra[dst_index + 2] = r;
+			dst_bgra[dst_index + 3] = 255; 
+		}
+	}
+}
+
+
+============================================================
+/// ARCHIVO: .\yuv2bgra.h ///
+============================================================
+
+#ifndef YUV2BGRA_H
+#define YUV2BGRA_H
+
+#include <stdint.h>
+#include <obs.h>
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Funcin tipo para obtener U y V en la posicin x,y
+typedef void (*get_uv_func)(const struct obs_source_frame *frame, int x, int y,uint8_t *u, uint8_t *v);
+
+// Funciones para cada formato
+void get_uv_i420(const struct obs_source_frame *frame, int x, int y, uint8_t *u,uint8_t *v);
+void get_uv_nv12(const struct obs_source_frame *frame, int x, int y, uint8_t *u,uint8_t *v);
+void get_uv_i422(const struct obs_source_frame *frame, int x, int y, uint8_t *u,uint8_t *v);
+void convert_yuy2_to_bgra(const struct obs_source_frame *frame,
+			  uint8_t *dst_bgra);
+	// Funcin genrica para convertir YUV a BGRA
+void convert_yuv_to_bgra_generic(const struct obs_source_frame *frame, uint8_t *dst_bgra, get_uv_func get_uv);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // YUV2BGRA_H
+
