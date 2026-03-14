@@ -111,6 +111,13 @@ void web_sync_set_interval(web_sync_t *sync, float interval_seconds);
 void web_sync_set_enabled(web_sync_t *sync, bool enabled);
 
 /**
+ * Configura las credenciales para Autenticación Básica.
+ * @param username Nombre de usuario (o NULL para desactivar)
+ * @param password Contraseña
+ */
+void web_sync_set_auth(web_sync_t *sync, const char *username, const char *password);
+
+/**
  * Consulta si hay un resultado nuevo (no bloquea).
  * Debe llamarse desde el hilo principal (p. ej. filter_tick).
  * Si hay resultado válido, lo copia a @a result y marca como consumido.
@@ -122,9 +129,12 @@ bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result);
  * Hace una petición síncrona rápida para probar la conexión.
  * @param base_url URL base de la API
  * @param contest_id ID del torneo
+ * @param username Usuario (opcional)
+ * @param password Contraseña (opcional)
  * @return true si la conexión fue exitosa
  */
-bool web_sync_test_connection(const char *base_url, const char *contest_id);
+bool web_sync_test_connection(const char *base_url, const char *contest_id,
+			      const char *username, const char *password);
 
 #ifdef __cplusplus
 }

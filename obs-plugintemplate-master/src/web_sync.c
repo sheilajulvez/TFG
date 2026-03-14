@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <obs-module.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -51,6 +52,10 @@ struct web_sync {
 	/* Caché de equipos para nombres reales */
 	scoreboard_team_t cached_teams[100];
 	int cached_team_count;
+
+	/* Autenticación */
+	char *username;
+	char *password;
 
 	bool has_scoreboard_result;
 	scoreboard_team_t result_teams[MAX_SCOREBOARD_TEAMS];
@@ -110,6 +115,18 @@ static size_t header_callback(char *buffer, size_t size, size_t nitems,
 		hdr->found = true;
 	}
 	return total;
+}
+
+static char *trim_whitespace(char *str)
+{
+	if (!str) return NULL;
+	char *end;
+	while (isspace((unsigned char)*str)) str++;
+	if (*str == 0) return str;
+	end = str + strlen(str) - 1;
+	while (end > str && isspace((unsigned char)*end)) end--;
+	end[1] = '\0';
+	return str;
 }
 
 // https://medium.com/@priyanshugrv/building-a-simple-json-parser-in-c-9ecd1c6b1b9e parseador de json en C
@@ -494,240 +511,185 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 {
 	web_sync_t *sync = (web_sync_t *)arg;
 	memory_buffer_t buf;
+	CURL *curl = NULL;
+	struct curl_version_info_data *vinfo = NULL;
+	bool https_supported = false;
+	const char *const *proto = NULL;
+	
+	/* Variables de bucle y estado */
+	float interval;
+	bool is_domjudge;
+	char contest_url[2048];
+	char scoreboard_url[2048];
+	char url_copy[2048];
+	char t_url[2048];
+	char userpwd[256];
+	char *auth_user = NULL;
+	char *auth_pass = NULL;
+	CURLcode res;
+	long http_code;
+	header_date_t hdr;
+	
+	/* Variables para parseo de contest */
+	double server_time, start_epoch, end_epoch, elapsed, remaining;
+	char start_time_str[128];
+	char end_time_str[128];
+	bool got_start, got_end;
+	uint32_t rem_total, h, m, s;
+	
+	/* Variables para scoreboard */
+	scoreboard_team_t teams[MAX_SCOREBOARD_TEAMS];
+	int team_count;
+	int tc;
+	scoreboard_team_t t_cache[100];
+	static int teams_throttle = 0;
+	static int sync_teams_cycle = 0;
+
 	buf.data = (char *)malloc(WEB_SYNC_BUFFER_SIZE);
 	if (!buf.data) {
-		blog(LOG_WARNING,
-		     "[WEB_SYNC] Error: no se pudo asignar memoria para el buffer");
+		blog(LOG_WARNING, "[WEB_SYNC] Error: no se pudo asignar memoria");
 		return 0;
 	}
 	buf.size = 0;
 	buf.data[0] = '\0';
 
-	CURL *curl = curl_easy_init();
+	curl = curl_easy_init();
 	if (!curl) {
 		blog(LOG_WARNING, "[WEB_SYNC] Error: curl_easy_init falló");
 		free(buf.data);
 		return 0;
 	}
 
-	blog(LOG_INFO, "[WEB_SYNC] Thread iniciado");
+	vinfo = curl_version_info(CURLVERSION_NOW);
+	blog(LOG_INFO, "[WEB_SYNC] Thread iniciado. libcurl version: %s", vinfo->version);
+	blog(LOG_INFO, "[WEB_SYNC] SSL version: %s", vinfo->ssl_version ? vinfo->ssl_version : "NONE");
+	
+	for (proto = vinfo->protocols; *proto; proto++) {
+		if (_stricmp(*proto, "https") == 0) {
+			https_supported = true;
+			break;
+		}
+	}
+	if (!https_supported) {
+		blog(LOG_ERROR, "[WEB_SYNC] ¡CRÍTICO! libcurl NO soporta HTTPS. Error 'Unsupported protocol' esperado.");
+	}
 
 	while (!sync->thread_stop) {
-		float interval = sync->interval_seconds;
+		interval = sync->interval_seconds;
 		if (interval < WEB_SYNC_MIN_INTERVAL)
 			interval = WEB_SYNC_MIN_INTERVAL;
 
-		blog(LOG_DEBUG,
-		     "[WEB_SYNC] Esperando %.2f segundos antes de la siguiente petición",
-		     interval);
 		Sleep((DWORD)(interval * 1000));
 
-		if (sync->thread_stop) {
-			blog(LOG_INFO, "[WEB_SYNC] Thread detenido");
-			break;
-		}
+		if (sync->thread_stop) break;
+		if (!sync->enabled) continue;
 
-		if (!sync->enabled) {
-			blog(LOG_DEBUG,
-			     "[WEB_SYNC] Sincronización deshabilitada, saltando ciclo");
-			continue;
-		}
-
-		/* Determinar modo de operación */
-		bool is_domjudge = false;
-		char contest_url[2048] = {0};
-		char scoreboard_url[2048] = {0};
-		char url_copy[2048] = {0};
+		is_domjudge = false;
+		contest_url[0] = '\0';
+		scoreboard_url[0] = '\0';
+		url_copy[0] = '\0';
+		auth_user = NULL;
+		auth_pass = NULL;
 
 		EnterCriticalSection(&sync->mutex);
 		is_domjudge = sync->domjudge_mode;
 		if (is_domjudge && sync->base_url && sync->contest_id) {
-			snprintf(contest_url, sizeof(contest_url),
-				 "%s/contests/%s", sync->base_url,
-				 sync->contest_id);
-			snprintf(scoreboard_url, sizeof(scoreboard_url),
-				 "%s/contests/%s/scoreboard", sync->base_url,
-				 sync->contest_id);
-			static int teams_throttle = 0;
+			snprintf(contest_url, sizeof(contest_url), "%s/contests/%s", sync->base_url, sync->contest_id);
+			snprintf(scoreboard_url, sizeof(scoreboard_url), "%s/contests/%s/scoreboard", sync->base_url, sync->contest_id);
+			
 			if (sync->cached_team_count == 0 || teams_throttle++ % 10 == 0) {
-				char teams_url[2048];
-				snprintf(teams_url, sizeof(teams_url), "%s/contests/%s/teams", sync->base_url, sync->contest_id);
-				
-				/* Petición de equipos (fuera del mutex principal para no bloquear) */
-				/* Usamos curls manuales o reutilizamos el objeto curl después de las otras peticiones */
+				snprintf(t_url, sizeof(t_url), "%s/contests/%s/teams", sync->base_url, sync->contest_id);
+			} else {
+				t_url[0] = '\0';
 			}
 		} else if (sync->api_url) {
-			strncpy(url_copy, sync->api_url,
-				sizeof(url_copy) - 1);
+			strncpy(url_copy, sync->api_url, sizeof(url_copy) - 1);
+		}
+
+		if (sync->username && sync->username[0]) {
+			auth_user = bstrdup(sync->username);
+			if (sync->password) auth_pass = bstrdup(sync->password);
 		}
 		LeaveCriticalSection(&sync->mutex);
 
+		if (auth_user) {
+			snprintf(userpwd, sizeof(userpwd), "%s:%s", auth_user, auth_pass ? auth_pass : "");
+			curl_easy_setopt(curl, CURLOPT_HTTPAUTH, (long)CURLAUTH_BASIC);
+			curl_easy_setopt(curl, CURLOPT_USERPWD, userpwd);
+		} else {
+			curl_easy_setopt(curl, CURLOPT_USERPWD, NULL);
+		}
+
 		if (is_domjudge) {
-			/* ============================================
-			 * MODO DOMJUDGE: Petición al contest endpoint
-			 * GET /api/v4/contests/{cid}
-			 * ============================================ */
-			if (!contest_url[0]) {
-				blog(LOG_WARNING,
-				     "[WEB_SYNC] URL de contest vacía");
-				continue;
-			}
-
-			header_date_t hdr;
-			memset(&hdr, 0, sizeof(hdr));
-
-			buf.size = 0;
-			buf.data[0] = '\0';
-
-			blog(LOG_INFO,
-			     "[WEB_SYNC] DOMjudge: petición contest a %s",
-			     contest_url);
-
-			curl_easy_setopt(curl, CURLOPT_URL, contest_url);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
-					 write_callback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
-			curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION,
-					 header_callback);
-			curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hdr);
-			curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-			/* DOMjudge puede requerir SSL */
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-
-			CURLcode res = curl_easy_perform(curl);
-			if (res != CURLE_OK) {
-				blog(LOG_WARNING,
-				     "[WEB_SYNC] curl contest falló: %s",
-				     curl_easy_strerror(res));
-				continue;
-			}
-
-			blog(LOG_INFO,
-			     "[WEB_SYNC] Contest response: %.200s",
-			     buf.data);
-
-			/* Parsear hora del servidor desde la cabecera Date: */
-			double server_time = 0;
-			if (hdr.found) {
-				if (!parse_http_date(hdr.date_str,
-						     &server_time)) {
-					blog(LOG_WARNING,
-					     "[WEB_SYNC] No se pudo parsear Date: '%s'",
-					     hdr.date_str);
-					/* Fallback: usar hora local */
-					server_time = (double)time(NULL);
-				}
-			} else {
-				server_time = (double)time(NULL);
-				blog(LOG_WARNING,
-				     "[WEB_SYNC] No se encontró cabecera Date:, usando hora local");
-			}
-
-			/* Parsear start_time y end_time del JSON del contest */
-			char start_time_str[128] = {0};
-			char end_time_str[128] = {0};
-
-			bool got_start = parse_json_string(
-				buf.data, "start_time", start_time_str,
-				sizeof(start_time_str));
-			bool got_end = parse_json_string(
-				buf.data, "end_time", end_time_str,
-				sizeof(end_time_str));
-
-			if (got_start && start_time_str[0]) {
-				double start_epoch = 0, end_epoch = 0;
-				if (parse_iso8601(start_time_str,
-						  &start_epoch)) {
-					double elapsed =
-						server_time - start_epoch;
-					if (elapsed < 0)
-						elapsed = 0;
-
-					double remaining = 0;
-					if (got_end && end_time_str[0] &&
-					    parse_iso8601(end_time_str,
-							  &end_epoch)) {
-						remaining =
-							end_epoch - server_time;
-						if (remaining < 0)
-							remaining = 0;
-					}
-
-					/* Convertir remaining a H:M:S para compatibilidad con countdown_clock */
-					uint32_t rem_total =
-						(uint32_t)(remaining + 0.5);
-					uint32_t h = rem_total / 3600;
-					uint32_t m = (rem_total % 3600) / 60;
-					uint32_t s = rem_total % 60;
-
-					blog(LOG_INFO,
-					     "[WEB_SYNC] Contest: elapsed=%.0fs, remaining=%02u:%02u:%02u",
-					     elapsed, h, m, s);
-
-					EnterCriticalSection(&sync->mutex);
-					sync->has_new_result = true;
-					sync->has_contest_result = true;
-					sync->result_elapsed_seconds = elapsed;
-					sync->result_remaining_seconds =
-						remaining;
-					sync->result_hours = h;
-					sync->result_minutes = m;
-					sync->result_seconds = s;
-					LeaveCriticalSection(&sync->mutex);
-				} else {
-					blog(LOG_WARNING,
-					     "[WEB_SYNC] No se pudo parsear start_time: '%s'",
-					     start_time_str);
-				}
-			} else {
-				blog(LOG_WARNING,
-				     "[WEB_SYNC] No se encontró start_time en JSON del contest");
-			}
-
-			/* ============================================
-			 * Petición al scoreboard endpoint 
-			 * GET /api/v4/contests/{cid}/scoreboard
-			 * ============================================ */
-			if (scoreboard_url[0]) {
-				/* Reset cabecera para la nueva petición */
+			if (contest_url[0]) {
 				memset(&hdr, 0, sizeof(hdr));
-				buf.size = 0;
-				buf.data[0] = '\0';
-
-				blog(LOG_INFO,
-				     "[WEB_SYNC] DOMjudge: petición scoreboard a %s",
-				     scoreboard_url);
-
-				curl_easy_setopt(curl, CURLOPT_URL,
-						 scoreboard_url);
+				buf.size = 0; buf.data[0] = '\0';
+				
+				curl_easy_setopt(curl, CURLOPT_URL, contest_url);
+				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+				curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
+				curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, header_callback);
+				curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hdr);
+				curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+				curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+				curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+				curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
 				res = curl_easy_perform(curl);
-				if (res != CURLE_OK) {
-					blog(LOG_WARNING,
-					     "[WEB_SYNC] curl scoreboard falló: %s",
-					     curl_easy_strerror(res));
-				} else {
-					blog(LOG_INFO,
-					     "[WEB_SYNC] Scoreboard response: %.200s",
-					     buf.data);
+				http_code = 0;
+				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
 
-					scoreboard_team_t teams
-						[MAX_SCOREBOARD_TEAMS];
-					int team_count =
-						parse_scoreboard_json(
-							buf.data, teams,
-							MAX_SCOREBOARD_TEAMS);
+				if (res == CURLE_OK && http_code == 200) {
+					server_time = 0;
+					if (hdr.found) {
+						if (!parse_http_date(hdr.date_str, &server_time)) {
+							server_time = (double)time(NULL);
+						}
+					} else {
+						server_time = (double)time(NULL);
+					}
 
+					got_start = parse_json_string(buf.data, "start_time", start_time_str, sizeof(start_time_str));
+					got_end = parse_json_string(buf.data, "end_time", end_time_str, sizeof(end_time_str));
+
+					if (got_start && start_time_str[0]) {
+						if (parse_iso8601(start_time_str, &start_epoch)) {
+							elapsed = server_time - start_epoch;
+							if (elapsed < 0) elapsed = 0;
+							
+							remaining = 0;
+							if (got_end && end_time_str[0] && parse_iso8601(end_time_str, &end_epoch)) {
+								remaining = end_epoch - server_time;
+								if (remaining < 0) remaining = 0;
+							}
+
+							rem_total = (uint32_t)(remaining + 0.5);
+							h = rem_total / 3600;
+							m = (rem_total % 3600) / 60;
+							s = rem_total % 60;
+
+							EnterCriticalSection(&sync->mutex);
+							sync->has_new_result = true;
+							sync->has_contest_result = true;
+							sync->result_elapsed_seconds = elapsed;
+							sync->result_remaining_seconds = remaining;
+							sync->result_hours = h;
+							sync->result_minutes = m;
+							sync->result_seconds = s;
+							LeaveCriticalSection(&sync->mutex);
+						}
+					}
+				}
+			}
+
+			if (scoreboard_url[0]) {
+				buf.size = 0; buf.data[0] = '\0';
+				curl_easy_setopt(curl, CURLOPT_URL, scoreboard_url);
+				res = curl_easy_perform(curl);
+				if (res == CURLE_OK) {
+					team_count = parse_scoreboard_json(buf.data, teams, MAX_SCOREBOARD_TEAMS);
 					if (team_count > 0) {
-						blog(LOG_INFO,
-						     "[WEB_SYNC] Scoreboard: %d equipos parseados",
-						     team_count);
-
-						EnterCriticalSection(
-							&sync->mutex);
-						/* Enriquecer nombres desde la caché */
+						EnterCriticalSection(&sync->mutex);
 						for (int i = 0; i < team_count; i++) {
 							for (int j = 0; j < sync->cached_team_count; j++) {
 								if (strcmp(teams[i].team_id, sync->cached_teams[j].team_id) == 0) {
@@ -736,25 +698,14 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 								}
 							}
 						}
-						sync->has_scoreboard_result =
-							true;
-						sync->result_team_count =
-							team_count;
-						memcpy(sync->result_teams,
-						       teams,
-						       sizeof(scoreboard_team_t) *
-							       team_count);
-						LeaveCriticalSection(
-							&sync->mutex);
-					} else {
-						blog(LOG_WARNING,
-						     "[WEB_SYNC] No se parsearon equipos del scoreboard");
+						sync->has_scoreboard_result = true;
+						sync->result_team_count = team_count;
+						memcpy(sync->result_teams, teams, sizeof(scoreboard_team_t) * team_count);
+						LeaveCriticalSection(&sync->mutex);
 					}
 				}
 			}
 
-			/* Petición de nombres de equipos (cache) */
-			static int sync_teams_cycle = 0;
 			if (sync_teams_cycle++ % 10 == 0) {
 				char teams_url[2048] = {0};
 				EnterCriticalSection(&sync->mutex);
@@ -762,13 +713,12 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 					snprintf(teams_url, sizeof(teams_url), "%s/contests/%s/teams", sync->base_url, sync->contest_id);
 				}
 				LeaveCriticalSection(&sync->mutex);
-
+				
 				if (teams_url[0]) {
 					buf.size = 0; buf.data[0] = '\0';
 					curl_easy_setopt(curl, CURLOPT_URL, teams_url);
 					if (curl_easy_perform(curl) == CURLE_OK) {
-						scoreboard_team_t t_cache[100];
-						int tc = parse_teams_json(buf.data, t_cache, 100);
+						tc = parse_teams_json(buf.data, t_cache, 100);
 						if (tc > 0) {
 							EnterCriticalSection(&sync->mutex);
 							sync->cached_team_count = tc;
@@ -780,66 +730,29 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 			}
 
 		} else {
-			/* ============================================
-			 * MODO LEGACY: JSON con hours/minutes/seconds
-			 * ============================================ */
-			if (!url_copy[0]) {
-				blog(LOG_WARNING,
-				     "[WEB_SYNC] URL vacía, saltando petición");
-				continue;
-			}
-
-			buf.size = 0;
-			buf.data[0] = '\0';
-
-			blog(LOG_INFO,
-			     "[WEB_SYNC] Realizando petición a URL: %s",
-			     url_copy);
-
-			curl_easy_setopt(curl, CURLOPT_URL, url_copy);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
-					 write_callback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
-			curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, NULL);
-			curl_easy_setopt(curl, CURLOPT_HEADERDATA, NULL);
-			curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
-			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-
-			CURLcode res = curl_easy_perform(curl);
-			if (res != CURLE_OK) {
-				blog(LOG_WARNING,
-				     "[WEB_SYNC] curl_easy_perform falló: %s",
-				     curl_easy_strerror(res));
-				continue;
-			}
-
-			blog(LOG_INFO, "[WEB_SYNC] Respuesta recibida: %s",
-			     buf.data);
-
-			uint32_t h = 0, m = 0, s = 0;
-
-			bool ok = parse_json_int(buf.data, "hours", &h) &&
-				  parse_json_int(buf.data, "minutes", &m) &&
-				  parse_json_int(buf.data, "seconds", &s);
-
-			if (ok) {
-				blog(LOG_INFO,
-				     "[WEB_SYNC] Valores parseados: %02u:%02u:%02u",
-				     h, m, s);
-				EnterCriticalSection(&sync->mutex);
-				sync->has_new_result = true;
-				sync->result_hours = h;
-				sync->result_minutes = m;
-				sync->result_seconds = s;
-				LeaveCriticalSection(&sync->mutex);
-			} else {
-				blog(LOG_WARNING,
-				     "[WEB_SYNC] Error al parsear JSON recibido");
+			if (url_copy[0]) {
+				buf.size = 0; buf.data[0] = '\0';
+				curl_easy_setopt(curl, CURLOPT_URL, url_copy);
+				res = curl_easy_perform(curl);
+				if (res == CURLE_OK) {
+					h = 0; m = 0; s = 0;
+					if (parse_json_int(buf.data, "hours", &h) && parse_json_int(buf.data, "minutes", &m) && parse_json_int(buf.data, "seconds", &s)) {
+						EnterCriticalSection(&sync->mutex);
+						sync->has_new_result = true;
+						sync->result_hours = h;
+						sync->result_minutes = m;
+						sync->result_seconds = s;
+						LeaveCriticalSection(&sync->mutex);
+					}
+				}
 			}
 		}
+		
+		if (auth_user) bfree(auth_user);
+		if (auth_pass) bfree(auth_pass);
 	}
 
-	blog(LOG_INFO, "[WEB_SYNC] Limpiando recursos del thread");
+	blog(LOG_INFO, "[WEB_SYNC] Limpiando thread");
 	curl_easy_cleanup(curl);
 	free(buf.data);
 	return 0;
@@ -940,7 +853,9 @@ void web_sync_set_url(web_sync_t *sync, const char *api_url)
 		return;
 	EnterCriticalSection(&sync->mutex);
 	free(sync->api_url);
-	sync->api_url = _strdup(api_url);
+	char *tmp = _strdup(api_url);
+	sync->api_url = _strdup(trim_whitespace(tmp));
+	free(tmp);
 	LeaveCriticalSection(&sync->mutex);
 }
 
@@ -952,8 +867,12 @@ void web_sync_set_contest(web_sync_t *sync, const char *base_url,
 	EnterCriticalSection(&sync->mutex);
 	free(sync->base_url);
 	free(sync->contest_id);
-	sync->base_url = _strdup(base_url);
-	sync->contest_id = _strdup(contest_id);
+	char *tmp_base = _strdup(base_url);
+	char *tmp_cid = _strdup(contest_id);
+	sync->base_url = _strdup(trim_whitespace(tmp_base));
+	sync->contest_id = _strdup(trim_whitespace(tmp_cid));
+	free(tmp_base);
+	free(tmp_cid);
 	sync->domjudge_mode = true;
 	LeaveCriticalSection(&sync->mutex);
 }
@@ -1013,19 +932,36 @@ bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result)
 	return result->valid;
 }
 
-bool web_sync_test_connection(const char *base_url, const char *contest_id)
+void web_sync_set_auth(web_sync_t *sync, const char *username, const char *password)
 {
+	if (!sync) return;
+	EnterCriticalSection(&sync->mutex);
+	if (sync->username) free(sync->username);
+	if (sync->password) free(sync->password);
+	sync->username = (username && username[0]) ? _strdup(username) : NULL;
+	sync->password = (password && password[0]) ? _strdup(password) : NULL;
+	LeaveCriticalSection(&sync->mutex);
+}
+
+bool web_sync_test_connection(const char *base_url, const char *contest_id,
+			      const char *username, const char *password)
+{
+	long http_code = 0;
+	CURLcode res;
+	bool ok = false;
+	char url[2048];
+	CURL *curl;
+	memory_buffer_t buf;
+
 	if (!base_url || !contest_id || !base_url[0] || !contest_id[0])
 		return false;
 
-	char url[2048];
 	snprintf(url, sizeof(url), "%s/contests/%s", base_url, contest_id);
 
-	CURL *curl = curl_easy_init();
+	curl = curl_easy_init();
 	if (!curl)
 		return false;
 
-	memory_buffer_t buf;
 	buf.data = (char *)malloc(WEB_SYNC_BUFFER_SIZE);
 	if (!buf.data) {
 		curl_easy_cleanup(curl);
@@ -1042,24 +978,39 @@ bool web_sync_test_connection(const char *base_url, const char *contest_id)
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
-	CURLcode res = curl_easy_perform(curl);
-	bool ok = false;
+	if (username && username[0]) {
+		char auth[256];
+		snprintf(auth, sizeof(auth), "%s:%s", username, password ? password : "");
+		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, (long)CURLAUTH_BASIC);
+		curl_easy_setopt(curl, CURLOPT_USERPWD, auth);
+	}
+
+	res = curl_easy_perform(curl);
+	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+
 	if (res == CURLE_OK) {
 		/* Verificar que el JSON contiene el campo "id" del contest */
 		char id_str[64] = {0};
 		ok = parse_json_string(buf.data, "id", id_str, sizeof(id_str));
 		if (ok) {
 			blog(LOG_INFO,
-			     "[WEB_SYNC] Conexión OK: contest id='%s'",
-			     id_str);
+			     "[WEB_SYNC] Conexión OK: contest id='%s' (HTTP %ld)",
+			     id_str, http_code);
 		} else {
+			char preview[129] = {0};
+			if (buf.data) {
+				strncpy(preview, buf.data, 128);
+				preview[128] = '\0';
+			}
 			blog(LOG_WARNING,
-			     "[WEB_SYNC] Respuesta recibida pero no parece un contest válido");
+			     "[WEB_SYNC] Respuesta recibida (HTTP %ld) pero no parece un contest válido. "
+			     "Inicio de respuesta: %s",
+			     http_code, preview);
 		}
 	} else {
 		blog(LOG_WARNING,
-		     "[WEB_SYNC] Test conexión falló: %s",
-		     curl_easy_strerror(res));
+		     "[WEB_SYNC] Test conexión falló (CURL %d): %s",
+		     (int)res, curl_easy_strerror(res));
 	}
 
 	curl_easy_cleanup(curl);

@@ -614,11 +614,11 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 
 			gs_matrix_push();
 
-			// 1. Mover pivote al origen
+			//  Mover pivote al origen
 			gs_matrix_translate3f(-cx, -cy, -cz);
-			// 2. Escala
+			//  Escala
 			gs_matrix_scale3f(-scale, scale, -scale);
-			// 3. Corrección de coordenadas (Y-Abajo de OpenCV a Y-Arriba de OBS)
+			//  Corrección de coordenadas (Y-Abajo de OpenCV a Y-Arriba de OBS)
 			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
 			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,
@@ -628,12 +628,12 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 			gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,
 					  degrees_to_radians(offset_rot_z_deg));
 
-			// 5. Aplicar la rotación del tracker (rvec) SEGUNDO
+			//  Aplicar la rotación del tracker (rvec) SEGUNDO
 			if (detected) {
 				gs_matrix_rotaa4f(ax, ay, az, angle_rad);
 			}
 			
-			// 6. Dibujar
+			//  Dibujar
 			gs_load_vertexbuffer(m->vb);
 			gs_load_indexbuffer(m->ib);
 			gs_draw(GS_TRIS, 0, m->num_indices);
@@ -703,11 +703,11 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 
 		gs_matrix_push();
 
-		// 1. mover pivote al origen 3D
+		//  mover pivote al origen 3D
 		gs_matrix_translate3f(cx, cy, cz);
-		// 2. escala
+		//  escala
 		gs_matrix_scale3f(-scale, scale, -scale);
-		// 3. Corrección de coordenadas (Y-Abajo a Y-Arriba)
+		//  Corrección de coordenadas (Y-Abajo a Y-Arriba)
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
 	
