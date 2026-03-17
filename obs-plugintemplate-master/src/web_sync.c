@@ -3,7 +3,7 @@
  * @brief Implementación de la sincronización web con libcurl (hilo secundario).
  *
  * Soporta dos modos:
- * - Legacy: consulta una URL que devuelve { "hours", "minutes", "seconds" }
+ * -  consulta una URL que devuelve { "hours", "minutes", "seconds" }
  * - DOMjudge: consulta /contests/{cid} y /contests/{cid}/scoreboard
  *   según la documentación de https://www.domjudge.org/demoweb/api/doc
  */
@@ -13,7 +13,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <time.h>
 #include <obs-module.h>
+#include <util/bmem.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -25,32 +27,25 @@
 
 //EJEMPLO CURL https://curl.se/libcurl/c/getinmemory.html PARA LA MEMORIA
 struct web_sync {
-	char *api_url;
-	float interval_seconds; //cad cuanto se sincroniza, en segundos (mínimo 1s)
-	volatile bool enabled; //volatile como en consolas
+	char *base_url;
+	char *contest_id;
+	float interval_seconds;
+	volatile bool enabled;
 	volatile bool thread_stop;
 
 	HANDLE thread;
 	CRITICAL_SECTION mutex;
 
-	/* Modo legacy */
 	bool has_new_result;
-	uint32_t result_hours;
-	uint32_t result_minutes;
-	uint32_t result_seconds;
-
-	/* Modo DOMjudge */
-	bool domjudge_mode;
-	char *base_url;
-	char *contest_id;
 
 	/* Resultados DOMjudge */
 	bool has_contest_result;
 	double result_elapsed_seconds;
 	double result_remaining_seconds;
+	double result_total_duration;
+	double result_server_time;
 
-	/* Caché de equipos para nombres reales */
-	scoreboard_team_t cached_teams[100];
+	scoreboard_team_t team_names[100];
 	int cached_team_count;
 
 	/* Autenticación */
@@ -90,7 +85,7 @@ static size_t write_callback(char *ptr, size_t size, size_t nmemb,void *userdata
 
 /**
  * Callback para interceptar la cabecera HTTP Date: de la respuesta.
- * Formato esperado: "Date: Thu, 06 Mar 2025 16:30:00 GMT\r\n"
+ *  "Date: Thu, 06 Mar 2025 16:30:00 GMT\r\n"
  */
 static size_t header_callback(char *buffer, size_t size, size_t nitems,
 			      void *userdata)
@@ -98,14 +93,14 @@ static size_t header_callback(char *buffer, size_t size, size_t nitems,
 	header_date_t *hdr = (header_date_t *)userdata;
 	size_t total = size * nitems;
 
-	/* Buscar "Date:" al inicio de la línea (case-insensitive) */
+	/* Buscar "Date:" al inicio de la línea  */
 	if (total > 6 && (_strnicmp(buffer, "Date:", 5) == 0)) {
 		const char *p = buffer + 5;
 		while (*p == ' ' || *p == '\t')
 			p++;
 
 		size_t len = total - (size_t)(p - buffer);
-		/* Eliminar \r\n del final */
+
 		while (len > 0 && (p[len - 1] == '\r' || p[len - 1] == '\n'))
 			len--;
 		if (len >= sizeof(hdr->date_str))
@@ -230,8 +225,7 @@ static bool parse_json_string(const char *json, const char *key,
 }
 
 /**
- * Parsea un timestamp ISO 8601 (formato DOMjudge API) a time_t.
- * Formatos soportados:
+ * Parsea un time formato DOMjudg a time_t.
  *   "2025-03-06T10:00:00+01:00"
  *   "2025-03-06T10:00:00.000+01:00"
  *   "2025-03-06T10:00:00Z"
@@ -256,7 +250,6 @@ static bool parse_iso8601(const char *str, double *out_epoch)
 			return false;
 	}
 
-	/* Buscar zona horaria después de la T y los dígitos de tiempo */
 	const char *tz = str;
 	/* Avanzar hasta encontrar +, - o Z después de los segundos */
 	while (*tz && *tz != '+' && *tz != 'Z') {
@@ -301,8 +294,8 @@ static bool parse_iso8601(const char *str, double *out_epoch)
 }
 
 /**
- * Parsea la cabecera Date: HTTP (formato RFC 2822) a epoch UTC.
- * Formato: "Thu, 06 Mar 2025 16:30:00 GMT"
+ * Parsea la cabecera Date: HTTP  a  UTC.
+ *  "Thu, 06 Mar 2025 16:30:00 GMT"
  */
 static bool parse_http_date(const char *date_str, double *out_epoch)
 {
@@ -518,10 +511,8 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	
 	/* Variables de bucle y estado */
 	float interval;
-	bool is_domjudge;
 	char contest_url[2048];
 	char scoreboard_url[2048];
-	char url_copy[2048];
 	char t_url[2048];
 	char userpwd[256];
 	char *auth_user = NULL;
@@ -531,11 +522,10 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	header_date_t hdr;
 	
 	/* Variables para parseo de contest */
-	double server_time, start_epoch, end_epoch, elapsed, remaining;
+	double server_time, start_epoch, end_epoch, elapsed, remaining, total_dur;
 	char start_time_str[128];
 	char end_time_str[128];
 	bool got_start, got_end;
-	uint32_t rem_total, h, m, s;
 	
 	/* Variables para scoreboard */
 	scoreboard_team_t teams[MAX_SCOREBOARD_TEAMS];
@@ -584,16 +574,13 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 		if (sync->thread_stop) break;
 		if (!sync->enabled) continue;
 
-		is_domjudge = false;
 		contest_url[0] = '\0';
 		scoreboard_url[0] = '\0';
-		url_copy[0] = '\0';
 		auth_user = NULL;
 		auth_pass = NULL;
 
 		EnterCriticalSection(&sync->mutex);
-		is_domjudge = sync->domjudge_mode;
-		if (is_domjudge && sync->base_url && sync->contest_id) {
+		if (sync->base_url && sync->contest_id) {
 			snprintf(contest_url, sizeof(contest_url), "%s/contests/%s", sync->base_url, sync->contest_id);
 			snprintf(scoreboard_url, sizeof(scoreboard_url), "%s/contests/%s/scoreboard", sync->base_url, sync->contest_id);
 			
@@ -602,8 +589,6 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 			} else {
 				t_url[0] = '\0';
 			}
-		} else if (sync->api_url) {
-			strncpy(url_copy, sync->api_url, sizeof(url_copy) - 1);
 		}
 
 		if (sync->username && sync->username[0]) {
@@ -620,128 +605,104 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 			curl_easy_setopt(curl, CURLOPT_USERPWD, NULL);
 		}
 
-		if (is_domjudge) {
-			if (contest_url[0]) {
-				memset(&hdr, 0, sizeof(hdr));
-				buf.size = 0; buf.data[0] = '\0';
-				
-				curl_easy_setopt(curl, CURLOPT_URL, contest_url);
-				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-				curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
-				curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, header_callback);
-				curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hdr);
-				curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-				curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-				curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-				curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+		if (contest_url[0]) {
+			memset(&hdr, 0, sizeof(hdr));
+			buf.size = 0; buf.data[0] = '\0';
+			
+			curl_easy_setopt(curl, CURLOPT_URL, contest_url);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
+			curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, header_callback);
+			curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hdr);
+			curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
-				res = curl_easy_perform(curl);
-				http_code = 0;
-				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+			res = curl_easy_perform(curl);
+			http_code = 0;
+			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
 
-				if (res == CURLE_OK && http_code == 200) {
-					server_time = 0;
-					if (hdr.found) {
-						if (!parse_http_date(hdr.date_str, &server_time)) {
-							server_time = (double)time(NULL);
-						}
-					} else {
+			if (res == CURLE_OK && http_code == 200) {
+				server_time = 0;
+				if (hdr.found) {
+					if (!parse_http_date(hdr.date_str, &server_time)) {
 						server_time = (double)time(NULL);
 					}
-
-					got_start = parse_json_string(buf.data, "start_time", start_time_str, sizeof(start_time_str));
-					got_end = parse_json_string(buf.data, "end_time", end_time_str, sizeof(end_time_str));
-
-					if (got_start && start_time_str[0]) {
-						if (parse_iso8601(start_time_str, &start_epoch)) {
-							elapsed = server_time - start_epoch;
-							if (elapsed < 0) elapsed = 0;
-							
-							remaining = 0;
-							if (got_end && end_time_str[0] && parse_iso8601(end_time_str, &end_epoch)) {
-								remaining = end_epoch - server_time;
-								if (remaining < 0) remaining = 0;
-							}
-
-							rem_total = (uint32_t)(remaining + 0.5);
-							h = rem_total / 3600;
-							m = (rem_total % 3600) / 60;
-							s = rem_total % 60;
-
-							EnterCriticalSection(&sync->mutex);
-							sync->has_new_result = true;
-							sync->has_contest_result = true;
-							sync->result_elapsed_seconds = elapsed;
-							sync->result_remaining_seconds = remaining;
-							sync->result_hours = h;
-							sync->result_minutes = m;
-							sync->result_seconds = s;
-							LeaveCriticalSection(&sync->mutex);
-						}
-					}
+				} else {
+					server_time = (double)time(NULL);
 				}
-			}
 
-			if (scoreboard_url[0]) {
-				buf.size = 0; buf.data[0] = '\0';
-				curl_easy_setopt(curl, CURLOPT_URL, scoreboard_url);
-				res = curl_easy_perform(curl);
-				if (res == CURLE_OK) {
-					team_count = parse_scoreboard_json(buf.data, teams, MAX_SCOREBOARD_TEAMS);
-					if (team_count > 0) {
-						EnterCriticalSection(&sync->mutex);
-						for (int i = 0; i < team_count; i++) {
-							for (int j = 0; j < sync->cached_team_count; j++) {
-								if (strcmp(teams[i].team_id, sync->cached_teams[j].team_id) == 0) {
-									strncpy(teams[i].team_name, sync->cached_teams[j].team_name, sizeof(teams[i].team_name)-1);
-									break;
-								}
-							}
+				got_start = parse_json_string(buf.data, "start_time", start_time_str, sizeof(start_time_str));
+				got_end = parse_json_string(buf.data, "end_time", end_time_str, sizeof(end_time_str));
+
+				if (got_start && start_time_str[0]) {
+					if (parse_iso8601(start_time_str, &start_epoch)) {
+						elapsed = server_time - start_epoch;
+						if (elapsed < 0) elapsed = 0;
+						
+						remaining = 0;
+						total_dur = 0;
+						if (got_end && end_time_str[0] && parse_iso8601(end_time_str, &end_epoch)) {
+							remaining = end_epoch - server_time;
+							if (remaining < 0) remaining = 0;
+							total_dur = end_epoch - start_epoch;
 						}
-						sync->has_scoreboard_result = true;
-						sync->result_team_count = team_count;
-						memcpy(sync->result_teams, teams, sizeof(scoreboard_team_t) * team_count);
+
+						EnterCriticalSection(&sync->mutex);
+						sync->has_new_result = true;
+						sync->has_contest_result = true;
+						sync->result_elapsed_seconds = elapsed;
+						sync->result_remaining_seconds = remaining;
+						sync->result_total_duration = total_dur;
+						sync->result_server_time = server_time;
 						LeaveCriticalSection(&sync->mutex);
 					}
 				}
 			}
+		}
 
-			if (sync_teams_cycle++ % 10 == 0) {
-				char teams_url[2048] = {0};
-				EnterCriticalSection(&sync->mutex);
-				if (sync->base_url && sync->contest_id) {
-					snprintf(teams_url, sizeof(teams_url), "%s/contests/%s/teams", sync->base_url, sync->contest_id);
-				}
-				LeaveCriticalSection(&sync->mutex);
-				
-				if (teams_url[0]) {
-					buf.size = 0; buf.data[0] = '\0';
-					curl_easy_setopt(curl, CURLOPT_URL, teams_url);
-					if (curl_easy_perform(curl) == CURLE_OK) {
-						tc = parse_teams_json(buf.data, t_cache, 100);
-						if (tc > 0) {
-							EnterCriticalSection(&sync->mutex);
-							sync->cached_team_count = tc;
-							memcpy(sync->cached_teams, t_cache, sizeof(scoreboard_team_t) * tc);
-							LeaveCriticalSection(&sync->mutex);
+		if (scoreboard_url[0]) {
+			buf.size = 0; buf.data[0] = '\0';
+			curl_easy_setopt(curl, CURLOPT_URL, scoreboard_url);
+			res = curl_easy_perform(curl);
+			if (res == CURLE_OK) {
+				team_count = parse_scoreboard_json(buf.data, teams, MAX_SCOREBOARD_TEAMS);
+				if (team_count > 0) {
+					EnterCriticalSection(&sync->mutex);
+					for (int i = 0; i < team_count; i++) {
+						for (int j = 0; j < sync->cached_team_count; j++) {
+							if (strcmp(teams[i].team_id, sync->team_names[j].team_id) == 0) {
+								strncpy(teams[i].team_name, sync->team_names[j].team_name, sizeof(teams[i].team_name)-1);
+								break;
+							}
 						}
 					}
+					sync->has_scoreboard_result = true;
+					sync->result_team_count = team_count;
+					memcpy(sync->result_teams, teams, sizeof(scoreboard_team_t) * team_count);
+					LeaveCriticalSection(&sync->mutex);
 				}
 			}
+		}
 
-		} else {
-			if (url_copy[0]) {
+		if (sync_teams_cycle++ % 10 == 0) {
+			char teams_url[2048] = {0};
+			EnterCriticalSection(&sync->mutex);
+			if (sync->base_url && sync->contest_id) {
+				snprintf(teams_url, sizeof(teams_url), "%s/contests/%s/teams", sync->base_url, sync->contest_id);
+			}
+			LeaveCriticalSection(&sync->mutex);
+			
+			if (teams_url[0]) {
 				buf.size = 0; buf.data[0] = '\0';
-				curl_easy_setopt(curl, CURLOPT_URL, url_copy);
-				res = curl_easy_perform(curl);
-				if (res == CURLE_OK) {
-					h = 0; m = 0; s = 0;
-					if (parse_json_int(buf.data, "hours", &h) && parse_json_int(buf.data, "minutes", &m) && parse_json_int(buf.data, "seconds", &s)) {
+				curl_easy_setopt(curl, CURLOPT_URL, teams_url);
+				if (curl_easy_perform(curl) == CURLE_OK) {
+					tc = parse_teams_json(buf.data, t_cache, 100);
+					if (tc > 0) {
 						EnterCriticalSection(&sync->mutex);
-						sync->has_new_result = true;
-						sync->result_hours = h;
-						sync->result_minutes = m;
-						sync->result_seconds = s;
+						sync->cached_team_count = tc;
+						memcpy(sync->team_names, t_cache, sizeof(scoreboard_team_t) * tc);
 						LeaveCriticalSection(&sync->mutex);
 					}
 				}
@@ -752,44 +713,25 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 		if (auth_pass) bfree(auth_pass);
 	}
 
-	blog(LOG_INFO, "[WEB_SYNC] Limpiando thread");
 	curl_easy_cleanup(curl);
 	free(buf.data);
 	return 0;
 }
 
-
-web_sync_t *web_sync_create(const char *api_url, float interval_seconds)
+void web_sync_destroy(web_sync_t *sync)
 {
-	if (!api_url || interval_seconds < WEB_SYNC_MIN_INTERVAL)
-		return NULL;
-
-	web_sync_t *sync = (web_sync_t *)malloc(sizeof(web_sync_t));
-	if (!sync)
-		return NULL;
-	memset(sync, 0, sizeof(web_sync_t));
-
-	sync->api_url = _strdup(api_url);
-	if (!sync->api_url) {
-		free(sync);
-		return NULL;
+	if (!sync) return;
+	sync->thread_stop = true;
+	if (sync->thread) {
+		WaitForSingleObject(sync->thread, INFINITE);
+		CloseHandle(sync->thread);
 	}
-	sync->interval_seconds = interval_seconds;
-	sync->enabled = true;
-	sync->thread_stop = false;
-	sync->domjudge_mode = false;
-
-	InitializeCriticalSection(&sync->mutex);
-
-	sync->thread = CreateThread(NULL, 0, sync_thread_func, sync, 0, NULL);
-	if (!sync->thread) {
-		DeleteCriticalSection(&sync->mutex);
-		free(sync->api_url);
-		free(sync);
-		return NULL;
-	}
-
-	return sync;
+	DeleteCriticalSection(&sync->mutex);
+	free(sync->base_url);
+	free(sync->contest_id);
+	free(sync->username);
+	free(sync->password);
+	free(sync);
 }
 
 web_sync_t *web_sync_create_domjudge(const char *base_url,
@@ -804,8 +746,6 @@ web_sync_t *web_sync_create_domjudge(const char *base_url,
 	if (!sync)
 		return NULL;
 	memset(sync, 0, sizeof(web_sync_t));
-
-	sync->domjudge_mode = true;
 	sync->base_url = _strdup(base_url);
 	sync->contest_id = _strdup(contest_id);
 	if (!sync->base_url || !sync->contest_id) {
@@ -833,47 +773,17 @@ web_sync_t *web_sync_create_domjudge(const char *base_url,
 	return sync;
 }
 
-void web_sync_destroy(web_sync_t *sync)
-{
-	if (!sync)
-		return;
-	sync->thread_stop = true;
-	WaitForSingleObject(sync->thread, INFINITE);
-	CloseHandle(sync->thread);
-	DeleteCriticalSection(&sync->mutex);
-	free(sync->api_url);
-	free(sync->base_url);
-	free(sync->contest_id);
-	free(sync);
-}
-
-void web_sync_set_url(web_sync_t *sync, const char *api_url)
-{
-	if (!sync || !api_url)
-		return;
-	EnterCriticalSection(&sync->mutex);
-	free(sync->api_url);
-	char *tmp = _strdup(api_url);
-	sync->api_url = _strdup(trim_whitespace(tmp));
-	free(tmp);
-	LeaveCriticalSection(&sync->mutex);
-}
-
 void web_sync_set_contest(web_sync_t *sync, const char *base_url,
 			  const char *contest_id)
 {
 	if (!sync || !base_url || !contest_id)
 		return;
+
 	EnterCriticalSection(&sync->mutex);
-	free(sync->base_url);
-	free(sync->contest_id);
-	char *tmp_base = _strdup(base_url);
-	char *tmp_cid = _strdup(contest_id);
-	sync->base_url = _strdup(trim_whitespace(tmp_base));
-	sync->contest_id = _strdup(trim_whitespace(tmp_cid));
-	free(tmp_base);
-	free(tmp_cid);
-	sync->domjudge_mode = true;
+	if (sync->base_url) free(sync->base_url);
+	if (sync->contest_id) free(sync->contest_id);
+	sync->base_url = _strdup(base_url);
+	sync->contest_id = _strdup(contest_id);
 	LeaveCriticalSection(&sync->mutex);
 }
 
@@ -897,23 +807,20 @@ bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result)
 	if (!sync || !result)
 		return false;
 
-	/* Inicializar todo a cero/false */
-	memset(result, 0, sizeof(web_sync_result_t));
-
+	bool has_new = false;
 	EnterCriticalSection(&sync->mutex);
+
 	if (sync->has_new_result) {
+		memset(result, 0, sizeof(web_sync_result_t));
 		result->valid = true;
-		result->hours = sync->result_hours;
-		result->minutes = sync->result_minutes;
-		result->seconds = sync->result_seconds;
 
 		if (sync->has_contest_result) {
 			result->contest_valid = true;
-			result->elapsed_seconds =
-				sync->result_elapsed_seconds;
+			result->elapsed_seconds = sync->result_elapsed_seconds;
 			result->remaining_seconds =
 				sync->result_remaining_seconds;
-			sync->has_contest_result = false;
+			result->total_duration = sync->result_total_duration;
+			result->server_time = sync->result_server_time;
 		}
 
 		if (sync->has_scoreboard_result) {
@@ -922,14 +829,14 @@ bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result)
 			memcpy(result->teams, sync->result_teams,
 			       sizeof(scoreboard_team_t) *
 				       sync->result_team_count);
-			sync->has_scoreboard_result = false;
 		}
 
 		sync->has_new_result = false;
+		has_new = true;
 	}
-	LeaveCriticalSection(&sync->mutex);
 
-	return result->valid;
+	LeaveCriticalSection(&sync->mutex);
+	return has_new;
 }
 
 void web_sync_set_auth(web_sync_t *sync, const char *username, const char *password)

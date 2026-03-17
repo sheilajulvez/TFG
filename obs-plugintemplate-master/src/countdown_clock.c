@@ -98,11 +98,22 @@ void countdown_clock_tick(countdown_clock_t *clock, float delta_seconds)
 }
 
 void countdown_clock_sync_remaining(countdown_clock_t *clock,
-                                   uint32_t hours, uint32_t minutes, uint32_t seconds)
+				     uint32_t hours, uint32_t minutes,
+				     uint32_t seconds)
 {
 	if (!clock)
 		return;
 	clock->remaining_seconds = (double)(hours * 3600 + minutes * 60 + seconds);
+}
+
+void countdown_clock_sync_full(countdown_clock_t *clock, double remaining,
+			       double total_duration)
+{
+	if (!clock)
+		return;
+	clock->remaining_seconds = remaining;
+	if (total_duration > 0)
+		clock->duration_seconds = (uint32_t)(total_duration + 0.5);
 }
 
 countdown_state_t countdown_clock_get_state(const countdown_clock_t *clock)

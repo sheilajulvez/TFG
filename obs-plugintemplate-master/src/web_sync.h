@@ -8,9 +8,6 @@
  *
  * Las peticiones HTTP se ejecutan en un hilo secundario con libcurl;
  * nunca se bloquea el hilo de render de OBS.
- *
- * Modo legacy: si no se configura api_base_url, sigue funcionando
- * con la URL directa que devuelve { "hours", "minutes", "seconds" }.
  */
 
 #ifndef WEB_SYNC_H
@@ -45,29 +42,18 @@ typedef struct web_sync web_sync_t;
 typedef struct web_sync_result {
 	bool valid;              /**< true si hay datos nuevos y parseados correctamente */
 
-	/* Modo legacy (JSON con hours/minutes/seconds) */
-	uint32_t hours;
-	uint32_t minutes;
-	uint32_t seconds;
-
-	/* Modo DOMjudge: datos del torneo */
+	/* Datos del torneo */
 	bool     contest_valid;      /**< true si se parseó contest correctamente */
 	double   elapsed_seconds;    /**< Tiempo transcurrido desde start_time */
 	double   remaining_seconds;  /**< Tiempo restante hasta end_time */
+	double   total_duration;     /**< Duración total del torneo (end - start) */
+	double   server_time;        /**< Hora del servidor (epoch) */
 
 	/* Modo DOMjudge: datos del scoreboard */
 	bool     scoreboard_valid;   /**< true si se parseó scoreboard */
 	scoreboard_team_t teams[MAX_SCOREBOARD_TEAMS];
 	int      team_count;         /**< Equipos válidos en el array */
 } web_sync_result_t;
-
-/**
- * Crea un sincronizador web (modo legacy).
- * @param api_url URL de la API REST (GET) que devuelve JSON con hours, minutes, seconds.
- * @param interval_seconds Intervalo entre peticiones en segundos (mínimo 1).
- * @return Instancia nueva o NULL si falla.
- */
-web_sync_t *web_sync_create(const char *api_url, float interval_seconds);
 
 /**
  * Crea un sincronizador web en modo DOMjudge.
@@ -87,12 +73,6 @@ web_sync_t *web_sync_create_domjudge(const char *base_url,
  * Destruye el sincronizador y detiene el hilo de peticiones.
  */
 void web_sync_destroy(web_sync_t *sync);
-
-/**
- * Actualiza la URL de la API (toma efecto en la siguiente petición).
- * Solo para modo legacy.
- */
-void web_sync_set_url(web_sync_t *sync, const char *api_url);
 
 /**
  * Actualiza base_url y contest_id para modo DOMjudge.

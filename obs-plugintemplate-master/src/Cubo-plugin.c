@@ -80,7 +80,6 @@ struct cube_filter_data {
 	uint32_t countdown_duration_m;
 	uint32_t countdown_duration_s;
 	bool sync_enabled;
-	char *sync_url;
 	float sync_interval_sec;
 	char *api_username;
 	char *api_password;
@@ -261,7 +260,6 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->countdown_duration_m = 0;
 	data->countdown_duration_s = 0;
 	data->sync_enabled = false;
-	data->sync_url = NULL;
 	data->sync_interval_sec = 10.0f;
 
 	data->api_base_url = NULL;
@@ -319,7 +317,6 @@ static void filter_destroy(void *data)
 		obs_source_release(filter->scoreboard_text_source);
 		filter->scoreboard_text_source = NULL;
 	}
-	bfree(filter->sync_url);
 	bfree(filter->api_base_url);
 	bfree(filter->contest_id);
 	bfree(filter->api_username);
@@ -561,7 +558,6 @@ static bool render_mode_changed(obs_properties_t *props,
 	/* Shared Sync settings for Countdown or Scoreboard */
 	bool show_sync = show_countdown || show_scoreboard;
 	obs_property_set_visible(obs_properties_get(props, "sync_enabled"), show_sync);
-	obs_property_set_visible(obs_properties_get(props, "sync_url"), show_sync);
 	obs_property_set_visible(obs_properties_get(props, "sync_interval_sec"), show_sync);
 
 	/* DOMjudge API */
@@ -674,7 +670,6 @@ obs_properties_add_path(props, "calibration_file", "Archivo de Calibración",
 	obs_properties_add_bool(props, "countdown_running", "Cuenta Atrás a Mover");
 	obs_properties_add_bool(props, "countdown_reset", "Reiniciar Reloj");
 	obs_properties_add_bool(props, "sync_enabled", "Sincronización Web");
-	obs_properties_add_text(props, "sync_url", "URL (Legacy)", OBS_TEXT_DEFAULT);
 	obs_properties_add_float(props, "sync_interval_sec", "Intervalo API (seg)", 1.0f, 300.0f, 1.0f);
 
 	/* --- CONFIGURACIÓN RELOJ --- */
@@ -726,8 +721,6 @@ static void filter_update(void *data, obs_data_t *settings)
 	filter->countdown_duration_s = (uint32_t)obs_data_get_int(settings, "countdown_duration_s");
 	filter->sync_enabled = obs_data_get_bool(settings, "sync_enabled");
 	filter->sync_interval_sec = (float)obs_data_get_double(settings, "sync_interval_sec");
-	const char *new_sync_url = obs_data_get_string(settings, "sync_url");
-	if (!new_sync_url) new_sync_url = "";
 	
 	// Leer configuración de reloj
 	filter->clock_mode = (int)obs_data_get_int(settings, "clock_mode");
@@ -849,29 +842,13 @@ static void filter_update(void *data, obs_data_t *settings)
 			if (filter->web_sync) {
 				web_sync_set_auth(filter->web_sync, filter->api_username, filter->api_password);
 			}
-		} else if (new_sync_url && new_sync_url[0]) {
-			/* Modo legacy */
-			blog(LOG_INFO, "[CUBE] Modo legacy sync: %s", new_sync_url);
-			if (filter->web_sync) {
-				web_sync_set_url(filter->web_sync, new_sync_url);
-				web_sync_set_interval(filter->web_sync,
-						      filter->sync_interval_sec);
-				web_sync_set_enabled(filter->web_sync, true);
-			} else {
-				filter->web_sync = web_sync_create(
-					new_sync_url, filter->sync_interval_sec);
-			}
 		} else {
 			if (filter->web_sync)
 				web_sync_set_enabled(filter->web_sync, false);
 		}
-		bfree(filter->sync_url);
-		filter->sync_url = (new_sync_url && new_sync_url[0]) ? bstrdup(new_sync_url) : NULL;
 	} else {
 		if (filter->web_sync)
 			web_sync_set_enabled(filter->web_sync, false);
-		bfree(filter->sync_url);
-		filter->sync_url = (new_sync_url && new_sync_url[0]) ? bstrdup(new_sync_url) : NULL;
 	}
 	filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
 	filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
@@ -1030,8 +1007,10 @@ static void filter_tick(void *data, float seconds)
 		if (filter->web_sync) {
 			web_sync_result_t sync_result;
 			if (web_sync_poll(filter->web_sync, &sync_result) && sync_result.valid) {
-				countdown_clock_sync_remaining(filter->countdown_clock,
-					sync_result.hours, sync_result.minutes, sync_result.seconds);
+				if (sync_result.contest_valid) {
+					countdown_clock_sync_full(filter->countdown_clock,
+						sync_result.remaining_seconds, sync_result.total_duration);
+				}
 
 				/* Actualizar scoreboard si hay datos nuevos */
 				if (sync_result.scoreboard_valid && sync_result.team_count > 0) {
@@ -1107,7 +1086,6 @@ static void filter_save(void *data, obs_data_t *settings)
 	obs_data_set_bool(settings, "countdown_running", filter->countdown_running);
 	obs_data_set_bool(settings, "sync_enabled", filter->sync_enabled);
 	obs_data_set_double(settings, "sync_interval_sec", (double)filter->sync_interval_sec);
-	if (filter->sync_url) obs_data_set_string(settings, "sync_url", filter->sync_url);
 	if (filter->api_base_url) obs_data_set_string(settings, "api_base_url", filter->api_base_url);
 	if (filter->contest_id) obs_data_set_string(settings, "contest_id", filter->contest_id);
 	if (filter->api_username) obs_data_set_string(settings, "api_username", filter->api_username);
@@ -1170,9 +1148,6 @@ static void filter_load(void *data, obs_data_t *settings)
 	filter->countdown_running = obs_data_get_bool(settings, "countdown_running");
 	filter->sync_enabled = obs_data_get_bool(settings, "sync_enabled");
 	filter->sync_interval_sec = (float)obs_data_get_double(settings, "sync_interval_sec");
-	bfree(filter->sync_url);
-	const char *su = obs_data_get_string(settings, "sync_url");
-	filter->sync_url = (su && su[0]) ? bstrdup(su) : NULL;
 
 	bfree(filter->api_base_url);
 	const char *abu = obs_data_get_string(settings, "api_base_url");
@@ -1236,7 +1211,6 @@ static void filter_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "countdown_running", false);
 	obs_data_set_default_bool(settings, "countdown_reset", false);
 	obs_data_set_default_bool(settings, "sync_enabled", false);
-	obs_data_set_default_string(settings, "sync_url", "");
 	obs_data_set_default_double(settings, "sync_interval_sec", 10.0);
 	obs_data_set_default_string(settings, "api_base_url", "");
 	obs_data_set_default_string(settings, "contest_id", "");

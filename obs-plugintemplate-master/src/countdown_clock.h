@@ -85,7 +85,15 @@ void countdown_clock_tick(countdown_clock_t *clock, float delta_seconds);
  * Ajusta el countdown para que muestre exactamente h, m, s restantes.
  */
 void countdown_clock_sync_remaining(countdown_clock_t *clock,
-                                    uint32_t hours, uint32_t minutes, uint32_t seconds);
+				     uint32_t hours, uint32_t minutes,
+				     uint32_t seconds);
+
+/** 
+ * Sincroniza el reloj con tiempo restante y duración total. 
+ * Útil para mantener el porcentaje de la manecilla única tras una reconexión.
+ */
+void countdown_clock_sync_full(countdown_clock_t *clock, double remaining,
+			       double total_duration);
 
 /**
  * Obtiene el estado actual.
