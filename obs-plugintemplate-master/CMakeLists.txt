@@ -122,14 +122,15 @@ target_sources(${_name} PRIVATE
     src/yuv2bgra.cpp
     src/web_sync.c
     src/countdown_clock.c
+    src/json_utils.c
 )
 
-# Fix for LNK1107: CMake on Windows thinks .obj files in data/ are precompiled C/C++ objects and passes them to the linker.
+
 set_source_files_properties(data/reloj.obj PROPERTIES HEADER_FILE_ONLY TRUE)
 
 set_target_properties_plugin(${_name} PROPERTIES OUTPUT_NAME ${_name})
 
-# Forced local copy to avoid the Program Files LNK1104 error
+
 add_custom_command(TARGET ${_name} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${_name}> "${CMAKE_CURRENT_BINARY_DIR}/Release/$<TARGET_FILE_NAME:${_name}>"
     COMMAND ${CMAKE_COMMAND} -E copy "${CURL_ROOT}/bin/libcurl.dll" "${CMAKE_CURRENT_BINARY_DIR}/Release/libcurl.dll"

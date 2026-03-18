@@ -21,15 +21,14 @@ extern "C" {
 #endif
 
 /** Máximo de equipos que almacenamos del scoreboard */
-#define MAX_SCOREBOARD_TEAMS 16
+#define MAX_SCOREBOARD_TEAMS 16 //valor arbitrario, se puede ajustar según necesidades
 
-/** Datos de un equipo del scoreboard de DOMjudge */
 typedef struct scoreboard_team {
-	char team_id[64];       /**< ID del equipo (string en DOMjudge API) */
-	char team_name[128];    /**< Nombre del equipo (se rellena desde /teams si es necesario) */
-	int  num_solved;        /**< Problemas resueltos */
+	char team_id[64];       /*ID del equipo (string en DOMjudge API) */
+	char team_name[128];    /*Nombre del equipo (se rellena desde /teams si es necesario) */
+	int  num_solved;        /** Problemas resueltos */
 	int  total_time;        /**< Tiempo total de penalización */
-	int  rank;              /**< Posición en el ranking */
+	int  rank;              // Posición en el ranking 
 } scoreboard_team_t;
 
 /** Estructura opaca del sincronizador web */
@@ -115,6 +114,15 @@ bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result);
  */
 bool web_sync_test_connection(const char *base_url, const char *contest_id,
 			      const char *username, const char *password);
+
+/**
+ * Copia la cache interna de equipos al array proporcionado.
+ * @param sync Instancia del sincronizador
+ * @param out_teams Array donde copiar los datos de equipos
+ * @param max_teams Tamaño máximo del array
+ * @return Número de equipos copiados
+ */
+int web_sync_get_teams(web_sync_t *sync, scoreboard_team_t *out_teams, int max_teams);
 
 #ifdef __cplusplus
 }

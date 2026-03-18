@@ -12,13 +12,17 @@
 #include "SJ_3DModel.h"
 #include "countdown_clock.h"
 #include "web_sync.h"
+#include "aruco_detector.h"
 
 // For M_PI on Windows
 #define _USE_MATH_DEFINES
 #define DEGREES_TO_RADIANS(angle) ((angle) * (float)M_PI / 180.0f)
 #include <math.h>
 #include <curl/curl.h>
-#include "aruco_detector.h"
+
+
+/* Máximo de mappings ArUco marker → team_id para modo Team Info */
+#define MAX_TEAM_INF 16
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("cube", "en-US")
@@ -105,6 +109,14 @@ struct cube_filter_data {
 	int mesh_id_second_hand;     // I
 	int mesh_id_single_hand;     // ID
 	bool countdown_use_ar;       // true = usar AR para posicionar reloj, false = posición manual
+
+	/* --- Team Info mode (mode=4) --- */
+	int team_info_marker_ids[MAX_TEAM_INF];   // ArUco marker IDs
+	char team_info_team_ids[MAX_TEAM_INF][64]; // DOMjudge team IDs
+	int team_info_num_mappings;
+	int team_info_detected_marker;    // Marker ID actualmente detectado (-1 = ninguno)
+	scoreboard_team_t team_info_cache[100];  // Cache local de equipos
+	int team_info_cache_count;
 };
 
 static struct obs_source_frame *filter_video(void *data,
@@ -118,6 +130,24 @@ static struct obs_source_frame *filter_video(void *data,
 	}
 
 	if (filter->mode == 0 || (filter->mode == 2 && !filter->countdown_use_ar)) {
+		filter->current_scale = filter->scale;
+		filter->last_result.detected = false;
+		return frame;
+	}
+
+	
+	if (filter->mode == 4) {
+		ArucoResult ar_result;
+		bool detected = process_frame_rgba(filter->detector, frame,
+					      filter->width_screen,
+					      filter->height_screen, frame->width,
+					      frame->height, &ar_result);
+		if (detected && ar_result.detected) {
+			int marker_id = get_marker_id(filter->detector);
+			filter->team_info_detected_marker = marker_id;
+		} else {
+			filter->team_info_detected_marker = -1;
+		}
 		filter->current_scale = filter->scale;
 		filter->last_result.detected = false;
 		return frame;
@@ -339,7 +369,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 	uint32_t height = obs_source_get_height(filter->source);
 
 	
-	if (width == 0 || height == 0 || (filter->mode != 3 && !filter->g_meshes)) {
+	if (width == 0 || height == 0 || (filter->mode != 3 && filter->mode != 4 && !filter->g_meshes)) {
 		obs_source_skip_video_filter(filter->source);
 		return;
 	}
@@ -351,8 +381,8 @@ static void filter_render(void *data, gs_effect_t *effect)
 		obs_source_skip_video_filter(filter->source);
 		return;
 	}
-	// Scoreboard mode doesn't necessarily need meshes, but it needs text source
-	if (filter->mode == 3 && !filter->scoreboard_text_source) {
+	// Scoreboard/TeamInfo mode needs text source
+	if ((filter->mode == 3 || filter->mode == 4) && !filter->scoreboard_text_source) {
 		obs_source_skip_video_filter(filter->source);
 		return;
 	}
@@ -371,7 +401,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 	}
 
 
-	if (filter->mode != 3) {
+	if (filter->mode != 3 && filter->g_meshes) {
 		gs_texture_t *prev_render_target = gs_get_render_target();
 		gs_zstencil_t *prev_zstencil_target = gs_get_zstencil_target();
 
@@ -447,7 +477,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 	obs_source_video_render(target);
 
 
-	if (filter->mode != 3) {
+	if (filter->mode != 3 && filter->g_meshes) {
 		gs_blend_state_push();
 		gs_enable_blending(true);
 		gs_blend_function(GS_BLEND_SRCALPHA,
@@ -461,8 +491,8 @@ static void filter_render(void *data, gs_effect_t *effect)
 		gs_blend_state_pop();
 	}
 
-	/* Renderizar overlay de scoreboard si hay datos */
-	if (filter->mode == 3 && filter->scoreboard_text_source) {
+	/* Renderizar overlay de scoreboard/teaminfo si hay datos */
+	if ((filter->mode == 3 || filter->mode == 4) && filter->scoreboard_text_source) {
 		uint32_t tw = obs_source_get_width(filter->scoreboard_text_source);
 		uint32_t th = obs_source_get_height(filter->scoreboard_text_source);
 		
@@ -470,13 +500,23 @@ static void filter_render(void *data, gs_effect_t *effect)
 		float y = filter->scoreboard_offset_y;
 		float final_x, final_y;
 
-		if (filter->scoreboard_centered && tw > 0) {
+		if (filter->mode == 4) {
+			/* Modo Team Info: centrado fijo en pantalla a petición del usuario */
+			if (tw > 0 && th > 0) {
+				final_x = (filter->width_screen - (float)tw) / 2.0f;
+				final_y = (filter->height_screen - (float)th) / 2.0f;
+			} else {
+				final_x = filter->width_screen / 2.0f;
+				final_y = filter->height_screen / 2.0f;
+			}
+		} else if (filter->scoreboard_centered && tw > 0) {
 			final_x = (filter->width_screen - (float)tw) / 2.0f;
 			final_y = (filter->height_screen - (float)th) / 2.0f;
 		} else {
 			final_x = x;
+			float safe_th = (th > 0) ? (float)th : 100.0f;
 			/* Invertir Y manualmente: user Y=0 -> final_y = h - th (parte superior en proyección estándar) */
-			final_y = filter->height_screen - y - (float)th;
+			final_y = filter->height_screen - y - safe_th;
 		}
 
 		/* Configurar estado 2D */
@@ -503,6 +543,13 @@ static void filter_render(void *data, gs_effect_t *effect)
 		gs_blend_state_pop();
 		gs_enable_depth_test(true);
 
+		if (filter->mode == 4) {
+			static int log_throttle_render = 0;
+			if (log_throttle_render++ % 60 == 0) {
+				blog(LOG_INFO, "[CUBE-TEAM-INFO-RENDER] Dibujando en X: %.1f, Y: %.1f", final_x, final_y);
+			}
+		}
+
 		if (tw == 0 || th == 0) {
 			static int log_throttle = 0;
 			if (log_throttle++ % 120 == 0) {
@@ -521,6 +568,7 @@ static bool render_mode_changed(obs_properties_t *props,
 	bool show_ar = (mode == 1);
 	bool show_countdown = (mode == 2);
 	bool show_scoreboard = (mode == 3);
+	bool show_team_info = (mode == 4);
 
 	// Leer configuración de countdown
 	bool countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
@@ -556,7 +604,7 @@ static bool render_mode_changed(obs_properties_t *props,
 	obs_property_set_visible(obs_properties_get(props, "countdown_reset"), show_countdown);
 	
 	/* Shared Sync settings for Countdown or Scoreboard */
-	bool show_sync = show_countdown || show_scoreboard;
+	bool show_sync = show_countdown || show_scoreboard || show_team_info;
 	obs_property_set_visible(obs_properties_get(props, "sync_enabled"), show_sync);
 	obs_property_set_visible(obs_properties_get(props, "sync_interval_sec"), show_sync);
 
@@ -573,6 +621,24 @@ static bool render_mode_changed(obs_properties_t *props,
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_centered"), show_scoreboard);
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_font_size"), show_scoreboard);
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_font_face"), show_scoreboard);
+
+	/* Team Info mode: mostrar controles AR + mappings */
+	obs_property_set_visible(obs_properties_get(props, "team_info_num_mappings"), show_team_info);
+	for (int i = 0; i < MAX_TEAM_INF; i++) {
+		char mk_key[32], tk_key[32];
+		snprintf(mk_key, sizeof(mk_key), "ti_marker_%d", i);
+		snprintf(tk_key, sizeof(tk_key), "ti_team_%d", i);
+		obs_property_t *mk_prop = obs_properties_get(props, mk_key);
+		obs_property_t *tk_prop = obs_properties_get(props, tk_key);
+		if (mk_prop) obs_property_set_visible(mk_prop, show_team_info && i < 16);
+		if (tk_prop) obs_property_set_visible(tk_prop, show_team_info && i < 16);
+	}
+	/* En Team Info, reutilizar controles AR para configurar la detección */
+	if (show_team_info) {
+		obs_property_set_visible(obs_properties_get(props, "marker_dict"), true);
+		obs_property_set_visible(obs_properties_get(props, "marker_size"), true);
+		obs_property_set_visible(obs_properties_get(props, "calibration_path"), true);
+	}
 
 	
 	obs_property_set_visible(obs_properties_get(props, "clock_mode"), show_countdown);
@@ -629,6 +695,7 @@ static obs_properties_t *filter_properties(void *data)
 	obs_property_list_add_int(combo, "AR", 1);
 	obs_property_list_add_int(combo, "Countdown (reloj)", 2);
 	obs_property_list_add_int(combo, "Scoreboard (texto)", 3);
+	obs_property_list_add_int(combo, "Team Info", 4);
 	obs_property_set_modified_callback(combo, render_mode_changed);
 
 	// Propiedades 3D
@@ -699,6 +766,18 @@ obs_properties_add_path(props, "calibration_file", "Archivo de Calibración",
 	obs_properties_add_float_slider(props, "scoreboard_offset_y", "Offset Manual Y", 0.0f, 3000.0f, 5.0f);
 	obs_properties_add_int(props, "scoreboard_font_size", "Tamaño de Fuente", 5, 150, 1);
 	obs_properties_add_text(props, "scoreboard_font_face", "Nombre de Fuente (Arial, Consolas...)", OBS_TEXT_DEFAULT);
+
+	/* --- TEAM INFO MAPPINGS --- */
+	obs_properties_add_int(props, "team_info_num_mappings", "Nº Mappings ArUco→Team", 0, MAX_TEAM_INF, 1);
+	for (int i = 0; i < MAX_TEAM_INF; i++) {
+		char mk_key[32], mk_label[64], tk_key[32], tk_label[64];
+		snprintf(mk_key, sizeof(mk_key), "ti_marker_%d", i);
+		snprintf(mk_label, sizeof(mk_label), "Marker ID [%d]", i);
+		snprintf(tk_key, sizeof(tk_key), "ti_team_%d", i);
+		snprintf(tk_label, sizeof(tk_label), "Team ID [%d]", i);
+		obs_properties_add_int(props, mk_key, mk_label, 0, 100, 1);
+		obs_properties_add_text(props, tk_key, tk_label, OBS_TEXT_DEFAULT);
+	}
 
 	obs_data_t *temp_settings = obs_data_create();
 	render_mode_changed(props, combo, temp_settings);
@@ -772,10 +851,25 @@ static void filter_update(void *data, obs_data_t *settings)
 	const char *ff_update = obs_data_get_string(settings, "scoreboard_font_face");
 	filter->scoreboard_font_face = (ff_update && ff_update[0]) ? bstrdup(ff_update) : NULL;
 
-	/* Crear fuente de texto siempre que estemos en modo Scoreboard (modo 3) para el overlay */
-	if (filter->mode == 3 && !filter->scoreboard_text_source) {
+	/* Team Info Settings */
+	filter->team_info_num_mappings = (int)obs_data_get_int(settings, "team_info_num_mappings");
+	for (int i = 0; i < MAX_TEAM_INF; i++) {
+		char mk_key[32], tk_key[32];
+		snprintf(mk_key, sizeof(mk_key), "ti_marker_%d", i);
+		snprintf(tk_key, sizeof(tk_key), "ti_team_%d", i);
+		filter->team_info_marker_ids[i] = (int)obs_data_get_int(settings, mk_key);
+		const char *tid = obs_data_get_string(settings, tk_key);
+		if (tid) strncpy(filter->team_info_team_ids[i], tid, 63);
+		else filter->team_info_team_ids[i][0] = '\0';
+	}
+
+	/* Crear fuente de texto siempre que estemos en modo Scoreboard (3) o Team Info (4) para el overlay */
+	if ((filter->mode == 3 || filter->mode == 4) && !filter->scoreboard_text_source) {
 		obs_data_t *txt_settings = obs_data_create();
-		obs_data_set_string(txt_settings, "text", "[[ MODO SCOREBOARD ACTIVO ]]\nEsperando datos...");
+		if (filter->mode == 3)
+			obs_data_set_string(txt_settings, "text", "[[ MODO SCOREBOARD ACTIVO ]]\nEsperando datos...");
+		else
+			obs_data_set_string(txt_settings, "text", "[[ MODO TEAM INFO ACTIVO ]]\nEsperando Detección de ArUco...");
 		obs_data_set_int(txt_settings, "color", 0xFF00FF00); // Verde suave
 		obs_data_set_int(txt_settings, "font_size", 25);
 		obs_data_set_string(txt_settings, "font_face", "Arial");
@@ -790,7 +884,7 @@ static void filter_update(void *data, obs_data_t *settings)
 		}
 
 		if (filter->scoreboard_text_source) {
-			blog(LOG_INFO, "[CUBE] Fuente de texto overlay (reloj/scoreboard) creada");
+			blog(LOG_INFO, "[CUBE] Fuente de texto overlay (reloj/scoreboard/teaminfo) creada");
 			obs_source_add_active_child(filter->source, filter->scoreboard_text_source);
 		}
 		obs_data_release(txt_settings);
@@ -996,7 +1090,7 @@ static void filter_tick(void *data, float seconds)
 	}
 
 	/* Modo Countdown o Scoreboard: actualizar reloj y sincronización web */
-	if ((filter->mode == 2 || filter->mode == 3) && (filter->countdown_clock || filter->web_sync)) {
+	if ((filter->mode == 2 || filter->mode == 3 || filter->mode == 4) && (filter->countdown_clock || filter->web_sync)) {
 		if (filter->mode == 2 && filter->countdown_clock) {
 			if (filter->countdown_reset_requested) {
 				countdown_clock_reset(filter->countdown_clock);
@@ -1005,15 +1099,20 @@ static void filter_tick(void *data, float seconds)
 			countdown_clock_tick(filter->countdown_clock, seconds);
 		}
 		if (filter->web_sync) {
+			/* Actualizar info equipos cada vez para ambos modos  */
+			if (filter->mode == 4 || filter->mode == 3) {
+				filter->team_info_cache_count = web_sync_get_teams(filter->web_sync, filter->team_info_cache, 100);
+			}
+
 			web_sync_result_t sync_result;
 			if (web_sync_poll(filter->web_sync, &sync_result) && sync_result.valid) {
-				if (sync_result.contest_valid) {
+				if (sync_result.contest_valid && filter->mode == 2) {
 					countdown_clock_sync_full(filter->countdown_clock,
 						sync_result.remaining_seconds, sync_result.total_duration);
 				}
 
 				/* Actualizar scoreboard si hay datos nuevos */
-				if (sync_result.scoreboard_valid && sync_result.team_count > 0) {
+				if (filter->mode == 3 && sync_result.scoreboard_valid && sync_result.team_count > 0) {
 					filter->scoreboard_team_count = sync_result.team_count;
 					memcpy(filter->scoreboard_teams, sync_result.teams,
 					       sizeof(scoreboard_team_t) * sync_result.team_count);
@@ -1053,6 +1152,68 @@ static void filter_tick(void *data, float seconds)
 						obs_data_release(txt_settings);
 					}
 				}
+			}
+
+			/* MODO 4: Team Info. Renderiza la info del equipo mapeado al marker actual */
+			if (filter->mode == 4 && filter->scoreboard_text_source) {
+				char ti_text[1024] = {0};
+				int det_id = filter->team_info_detected_marker;
+
+				static int log_throttle_ti = 0;
+				bool do_log = (log_throttle_ti++ % 60 == 0);
+
+				if (det_id >= 0) {
+					/* Buscar el team ID configurado para este marker */
+					const char *mapped_team_id = NULL;
+					for (int i = 0; i < filter->team_info_num_mappings; i++) {
+						if (filter->team_info_marker_ids[i] == det_id) {
+							mapped_team_id = filter->team_info_team_ids[i];
+							break;
+						}
+					}
+
+					if (mapped_team_id && mapped_team_id[0] != '\0') {
+						/* Buscar team en la caché de equipos */
+						scoreboard_team_t *found_team = NULL;
+						for (int i = 0; i < filter->team_info_cache_count; i++) {
+							if (strcmp(filter->team_info_cache[i].team_id, mapped_team_id) == 0) {
+								found_team = &filter->team_info_cache[i];
+								break;
+							}
+						}
+
+						if (found_team) {
+							snprintf(ti_text, sizeof(ti_text),
+								"Equipo: %s\nRank: %d\nResueltos: %d",
+								found_team->team_name,
+								found_team->rank,
+								found_team->num_solved);
+							if (do_log) {
+								blog(LOG_INFO, "[CUBE-TEAM-INFO] ArUco %d -> T_ID %s -> Equipo %s (Rk:%d)",
+									det_id, mapped_team_id, found_team->team_name, found_team->rank);
+							}
+						} else {
+							snprintf(ti_text, sizeof(ti_text), "Equipo %s no encontrado\nen la caché (¿conectado?)", mapped_team_id);
+							if (do_log) {
+								blog(LOG_WARNING, "[CUBE-TEAM-INFO] ArUco %d -> T_ID %s (PERO NO ESTÁ EN CACHÉ)", det_id, mapped_team_id);
+							}
+						}
+					} else {
+						snprintf(ti_text, sizeof(ti_text), "Marker %d detectado\n(Sin equipo asignado)", det_id);
+						if (do_log) blog(LOG_INFO, "[CUBE-TEAM-INFO] ArUco %d SIN MAPEO", det_id);
+					}
+				} else {
+					snprintf(ti_text, sizeof(ti_text), "Buscando ArUco marker...");
+					if (do_log) blog(LOG_INFO, "[CUBE-TEAM-INFO] Sin marker en cámara");
+				}
+
+				obs_data_t *txt_settings = obs_source_get_settings(filter->scoreboard_text_source);
+				const char *old_text = obs_data_get_string(txt_settings, "text");
+				if (!old_text || strcmp(old_text, ti_text) != 0) {
+					obs_data_set_string(txt_settings, "text", ti_text);
+					obs_source_update(filter->scoreboard_text_source, txt_settings);
+				}
+				obs_data_release(txt_settings);
 			}
 		}
 	}
@@ -1095,6 +1256,16 @@ static void filter_save(void *data, obs_data_t *settings)
 	obs_data_set_bool(settings, "scoreboard_centered", filter->scoreboard_centered);
 	obs_data_set_int(settings, "scoreboard_font_size", filter->scoreboard_font_size);
 	if (filter->scoreboard_font_face) obs_data_set_string(settings, "scoreboard_font_face", filter->scoreboard_font_face);
+
+	/* Team Info save */
+	obs_data_set_int(settings, "team_info_num_mappings", filter->team_info_num_mappings);
+	for (int i = 0; i < MAX_TEAM_INF; i++) {
+		char mk_key[32], tk_key[32];
+		snprintf(mk_key, sizeof(mk_key), "ti_marker_%d", i);
+		snprintf(tk_key, sizeof(tk_key), "ti_team_%d", i);
+		obs_data_set_int(settings, mk_key, filter->team_info_marker_ids[i]);
+		obs_data_set_string(settings, tk_key, filter->team_info_team_ids[i]);
+	}
 
 	// Guardar configuración de reloj
 	obs_data_set_int(settings, "clock_mode", filter->clock_mode);
@@ -1228,6 +1399,16 @@ static void filter_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "mesh_id_second_hand", 3);
 	obs_data_set_default_int(settings, "mesh_id_single_hand", 1);
 	obs_data_set_default_bool(settings, "countdown_use_ar", false);
+
+	/* Defaults for Team Info */
+	obs_data_set_default_int(settings, "team_info_num_mappings", 0);
+	for (int i = 0; i < MAX_TEAM_INF; i++) {
+		char mk_key[32], tk_key[32];
+		snprintf(mk_key, sizeof(mk_key), "ti_marker_%d", i);
+		snprintf(tk_key, sizeof(tk_key), "ti_team_%d", i);
+		obs_data_set_default_int(settings, mk_key, 0);
+		obs_data_set_default_string(settings, tk_key, "");
+	}
 }
 static struct obs_source_info cube_filter = {
 	.id = "cube_filter",
