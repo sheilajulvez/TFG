@@ -101,6 +101,9 @@ struct cube_filter_data {
 	bool scoreboard_centered;
 	int scoreboard_font_size;
 	char *scoreboard_font_face;
+	uint32_t scoreboard_text_color;
+	uint32_t scoreboard_outline_color;
+	int scoreboard_outline_size;
 
 	int clock_mode;              // 0 = tres manecillas, 1 = una manecilla
 	int mesh_id_dial;            //
@@ -301,6 +304,11 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->scoreboard_offset_x = 10.0f;
 	data->scoreboard_offset_y = 10.0f;
 	data->scoreboard_centered = false;
+	data->scoreboard_font_size = 25;
+	data->scoreboard_font_face = bstrdup("Arial");
+	data->scoreboard_text_color = 0xFFFFFFFF;    // Blanco por defecto
+	data->scoreboard_outline_color = 0xFF000000; // Negro por defecto
+	data->scoreboard_outline_size = 2;
 
 	data->clock_mode = 0;              // Tres manecillas por defecto
 	data->mesh_id_dial = 0;
@@ -619,8 +627,11 @@ static bool render_mode_changed(obs_properties_t *props,
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_offset_x"), show_scoreboard);
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_offset_y"), show_scoreboard);
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_centered"), show_scoreboard);
-	obs_property_set_visible(obs_properties_get(props, "scoreboard_font_size"), show_scoreboard);
-	obs_property_set_visible(obs_properties_get(props, "scoreboard_font_face"), show_scoreboard);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_font_size"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_font_face"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_text_color"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_outline_color"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_outline_size"), show_scoreboard || show_team_info);
 
 	/* Team Info mode: mostrar controles AR + mappings */
 	obs_property_set_visible(obs_properties_get(props, "team_info_num_mappings"), show_team_info);
@@ -765,7 +776,10 @@ obs_properties_add_path(props, "calibration_file", "Archivo de Calibración",
 	obs_properties_add_float_slider(props, "scoreboard_offset_x", "Offset Manual X", 0.0f, 3000.0f, 5.0f);
 	obs_properties_add_float_slider(props, "scoreboard_offset_y", "Offset Manual Y", 0.0f, 3000.0f, 5.0f);
 	obs_properties_add_int(props, "scoreboard_font_size", "Tamaño de Fuente", 5, 150, 1);
-	obs_properties_add_text(props, "scoreboard_font_face", "Nombre de Fuente (Arial, Consolas...)", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(props, "scoreboard_font_face", "Fuente (Arial, Consolas...)", OBS_TEXT_DEFAULT);
+	obs_properties_add_color(props, "scoreboard_text_color", "Color del Texto");
+	obs_properties_add_color(props, "scoreboard_outline_color", "Color del Borde");
+	obs_properties_add_int(props, "scoreboard_outline_size", "Grosor del Borde", 0, 20, 1);
 
 	/* --- TEAM INFO MAPPINGS --- */
 	obs_properties_add_int(props, "team_info_num_mappings", "Nº Mappings ArUco→Team", 0, MAX_TEAM_INF, 1);
@@ -850,6 +864,9 @@ static void filter_update(void *data, obs_data_t *settings)
 	bfree(filter->scoreboard_font_face);
 	const char *ff_update = obs_data_get_string(settings, "scoreboard_font_face");
 	filter->scoreboard_font_face = (ff_update && ff_update[0]) ? bstrdup(ff_update) : NULL;
+	filter->scoreboard_text_color = (uint32_t)obs_data_get_int(settings, "scoreboard_text_color");
+	filter->scoreboard_outline_color = (uint32_t)obs_data_get_int(settings, "scoreboard_outline_color");
+	filter->scoreboard_outline_size = (int)obs_data_get_int(settings, "scoreboard_outline_size");
 
 	/* Team Info Settings */
 	filter->team_info_num_mappings = (int)obs_data_get_int(settings, "team_info_num_mappings");
@@ -870,13 +887,13 @@ static void filter_update(void *data, obs_data_t *settings)
 			obs_data_set_string(txt_settings, "text", "[[ MODO SCOREBOARD ACTIVO ]]\nEsperando datos...");
 		else
 			obs_data_set_string(txt_settings, "text", "[[ MODO TEAM INFO ACTIVO ]]\nEsperando Detección de ArUco...");
-		obs_data_set_int(txt_settings, "color", 0xFF00FF00); // Verde suave
-		obs_data_set_int(txt_settings, "font_size", 25);
-		obs_data_set_string(txt_settings, "font_face", "Arial");
+		obs_data_set_int(txt_settings, "color", filter->scoreboard_text_color);
+		obs_data_set_int(txt_settings, "font_size", filter->scoreboard_font_size);
+		obs_data_set_string(txt_settings, "font_face", filter->scoreboard_font_face ? filter->scoreboard_font_face : "Arial");
 		obs_data_set_int(txt_settings, "opacity", 100);
 		obs_data_set_bool(txt_settings, "outline", true);
-		obs_data_set_int(txt_settings, "outline_size", 4);
-		obs_data_set_int(txt_settings, "outline_color", 0xFF000000);
+		obs_data_set_int(txt_settings, "outline_size", filter->scoreboard_outline_size);
+		obs_data_set_int(txt_settings, "outline_color", filter->scoreboard_outline_color);
 		
 		filter->scoreboard_text_source = obs_source_create_private("text_gdiplus_v2", "scoreboard_text", txt_settings);
 		if (!filter->scoreboard_text_source) {
@@ -906,6 +923,10 @@ static void filter_update(void *data, obs_data_t *settings)
 			obs_data_set_string(font_obj, "face", "Arial");
 		
 		obs_data_set_obj(t_set, "font", font_obj);
+		obs_data_set_int(t_set, "color", filter->scoreboard_text_color);
+		obs_data_set_int(t_set, "outline_color", filter->scoreboard_outline_color);
+		obs_data_set_int(t_set, "outline_size", filter->scoreboard_outline_size);
+		
 		obs_source_update(filter->scoreboard_text_source, t_set);
 
 		obs_data_release(font_obj);
@@ -1121,11 +1142,11 @@ static void filter_tick(void *data, float seconds)
 					char sb_text[2048] = {0};
 					int offset = 0;
 					
-					/* Cabecera estética */
+					/* Cabecera estética mejorada */
 					offset += snprintf(sb_text + offset, sizeof(sb_text) - offset,
-						"RK | %-20s | OK\n", "EQUIPO");
+						"🏆 POS | %-20s | ⚙️ SOLVED\n", "EQUIPO");
 					offset += snprintf(sb_text + offset, sizeof(sb_text) - offset,
-						"----------------------------------\n");
+						"══════════════════════════════════\n");
 
 					for (int i = 0; i < filter->scoreboard_team_count && i < 10; i++) {
 						char name_trunc[21] = {0};
@@ -1184,7 +1205,10 @@ static void filter_tick(void *data, float seconds)
 
 						if (found_team) {
 							snprintf(ti_text, sizeof(ti_text),
-								"Equipo: %s\nRank: %d\nResueltos: %d",
+								"🚩 EQUIPO: %s\n"
+								"───────────────────\n"
+								"🥇 PUESTO:    %d\n"
+								"✅ RESUELTOS:  %d",
 								found_team->team_name,
 								found_team->rank,
 								found_team->num_solved);
@@ -1256,6 +1280,9 @@ static void filter_save(void *data, obs_data_t *settings)
 	obs_data_set_bool(settings, "scoreboard_centered", filter->scoreboard_centered);
 	obs_data_set_int(settings, "scoreboard_font_size", filter->scoreboard_font_size);
 	if (filter->scoreboard_font_face) obs_data_set_string(settings, "scoreboard_font_face", filter->scoreboard_font_face);
+	obs_data_set_int(settings, "scoreboard_text_color", (int)filter->scoreboard_text_color);
+	obs_data_set_int(settings, "scoreboard_outline_color", (int)filter->scoreboard_outline_color);
+	obs_data_set_int(settings, "scoreboard_outline_size", filter->scoreboard_outline_size);
 
 	/* Team Info save */
 	obs_data_set_int(settings, "team_info_num_mappings", filter->team_info_num_mappings);
@@ -1340,6 +1367,9 @@ static void filter_load(void *data, obs_data_t *settings)
 	bfree(filter->scoreboard_font_face);
 	const char *ff = obs_data_get_string(settings, "scoreboard_font_face");
 	filter->scoreboard_font_face = (ff && ff[0]) ? bstrdup(ff) : NULL;
+	filter->scoreboard_text_color = (uint32_t)obs_data_get_int(settings, "scoreboard_text_color");
+	filter->scoreboard_outline_color = (uint32_t)obs_data_get_int(settings, "scoreboard_outline_color");
+	filter->scoreboard_outline_size = (int)obs_data_get_int(settings, "scoreboard_outline_size");
 
 	// Cargar configuración de reloj
 	filter->clock_mode = (int)obs_data_get_int(settings, "clock_mode");
@@ -1390,6 +1420,9 @@ static void filter_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "scoreboard_centered", false);
 	obs_data_set_default_int(settings, "scoreboard_font_size", 24);
 	obs_data_set_default_string(settings, "scoreboard_font_face", "Arial");
+	obs_data_set_default_int(settings, "scoreboard_text_color", 0xFFFFFFFF);
+	obs_data_set_default_int(settings, "scoreboard_outline_color", 0xFF000000);
+	obs_data_set_default_int(settings, "scoreboard_outline_size", 2);
 
 	// Valores por defecto de configuración de reloj
 	obs_data_set_default_int(settings, "clock_mode", 0);  // Tres manecillas por defecto
