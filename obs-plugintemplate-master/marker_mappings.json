@@ -1,0 +1,22 @@
+[
+  {
+    "marker_id": 1,
+    "team_id": "T001"
+  },
+  {
+    "marker_id": 2,
+    "team_id": "T002"
+  },
+  {
+    "marker_id": 5,
+    "team_id": "T005"
+  },
+  {
+    "marker_id": 10,
+    "team_id": "T010"
+  },
+  {
+    "marker_id": 42,
+    "team_id": "T042"
+  }
+]
