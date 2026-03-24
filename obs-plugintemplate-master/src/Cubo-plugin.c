@@ -140,19 +140,18 @@ static struct obs_source_frame *filter_video(void *data,
 
 	
 	if (filter->mode == 4) {
-		ArucoResult ar_result;
 		bool detected = process_frame_rgba(filter->detector, frame,
 					      filter->width_screen,
 					      filter->height_screen, frame->width,
-					      frame->height, &ar_result);
-		if (detected && ar_result.detected) {
-			int marker_id = get_marker_id(filter->detector);
-			filter->team_info_detected_marker = marker_id;
+					      frame->height, &filter->last_result);
+		if (detected && filter->last_result.detected) {
+			/* No necesitamos el marker_id global del detector si ya está en last_result */
+			filter->team_info_detected_marker = filter->last_result.id;
 		} else {
 			filter->team_info_detected_marker = -1;
+			filter->last_result.detected = false;
 		}
 		filter->current_scale = filter->scale;
-		filter->last_result.detected = false;
 		return frame;
 	}
 
@@ -509,13 +508,25 @@ static void filter_render(void *data, gs_effect_t *effect)
 		float final_x, final_y;
 
 		if (filter->mode == 4) {
-			/* Modo Team Info: centrado fijo en pantalla a petición del usuario */
-			if (tw > 0 && th > 0) {
+			/* Modo Team Info: Seguir al marker detectado */
+			if (filter->last_result.detected) {
+				/* Calcular centro real en píxeles de la base (width_screen / height_screen) */
+				float cx = 0.0f;
+				float cy = 0.0f;
+				for (int i = 0; i < 4; i++) {
+					cx += filter->last_result.corners[i][0];
+					cy += filter->last_result.corners[i][1];
+				}
+				cx /= 4.0f;
+				cy /= 4.0f;
+
+				/* ArUco (0=top) -> Ortho (0=bottom) flip */
+				final_x = cx - ((float)tw / 2.0f);
+				final_y = (filter->height_screen - cy) - ((float)th / 2.0f);
+			} else {
+				/* Fallback al centro si no hay detección */
 				final_x = (filter->width_screen - (float)tw) / 2.0f;
 				final_y = (filter->height_screen - (float)th) / 2.0f;
-			} else {
-				final_x = filter->width_screen / 2.0f;
-				final_y = filter->height_screen / 2.0f;
 			}
 		} else if (filter->scoreboard_centered && tw > 0) {
 			final_x = (filter->width_screen - (float)tw) / 2.0f;
