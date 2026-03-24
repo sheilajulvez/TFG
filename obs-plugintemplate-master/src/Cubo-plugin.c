@@ -595,14 +595,19 @@ static bool render_mode_changed(obs_properties_t *props,
 	bool show_ar_controls = show_ar || (show_countdown && countdown_use_ar);
 	obs_property_set_visible(obs_properties_get(props, "marker_id"), show_ar_controls);
 	obs_property_set_visible(obs_properties_get(props, "marker_size"), show_ar_controls);
-	obs_property_set_visible(obs_properties_get(props, "marker_dict"), show_ar_controls);
-	obs_property_set_visible(obs_properties_get(props, "calibration_path"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "marker_dict"), show_ar_controls || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "calibration_file"), show_ar_controls || show_team_info);
 	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_x"), show_ar_controls);
 	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_y"), show_ar_controls);
 	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_z"), show_ar_controls);
 	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_x"), show_ar_controls);
 	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_y"), show_ar_controls);
 	obs_property_set_visible(obs_properties_get(props, "ar_offset_rot_z"), show_ar_controls);
+
+	bool show_3d_common = show_3d || show_ar || show_countdown;
+	obs_property_set_visible(obs_properties_get(props, "scale"), show_3d_common);
+	obs_property_set_visible(obs_properties_get(props, "texture_path"), show_3d_common);
+	obs_property_set_visible(obs_properties_get(props, "model_path"), show_3d_common);
 
 	/* Countdown: duración, ejecución, sincronización web */
 	obs_property_set_visible(obs_properties_get(props, "countdown_duration_h"), show_countdown);
@@ -628,7 +633,7 @@ static bool render_mode_changed(obs_properties_t *props,
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_offset_y"), show_scoreboard);
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_centered"), show_scoreboard);
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_font_size"), show_scoreboard || show_team_info);
-	obs_property_set_visible(obs_properties_get(props, "scoreboard_font_face"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_font_face"), false); // Eliminado a petición del usuario
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_text_color"), show_scoreboard || show_team_info);
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_outline_color"), show_scoreboard || show_team_info);
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_outline_size"), show_scoreboard || show_team_info);
@@ -648,7 +653,7 @@ static bool render_mode_changed(obs_properties_t *props,
 	if (show_team_info) {
 		obs_property_set_visible(obs_properties_get(props, "marker_dict"), true);
 		obs_property_set_visible(obs_properties_get(props, "marker_size"), true);
-		obs_property_set_visible(obs_properties_get(props, "calibration_path"), true);
+		obs_property_set_visible(obs_properties_get(props, "calibration_file"), true);
 	}
 
 	
@@ -1337,7 +1342,7 @@ static void filter_load(void *data, obs_data_t *settings)
 	const char *tp = obs_data_get_string(settings, "texture_path");
 	if (filter->texture_path_str) bfree(filter->texture_path_str);
 	filter->texture_path_str = (tp && *tp) ? bstrdup(tp) : NULL;
-	const char *cp = obs_data_get_string(settings, "calibration_path");
+	const char *cp = obs_data_get_string(settings, "calibration_file");
 	if (cp && *cp) set_calibration_path(filter->detector, cp);
 
 	filter->countdown_duration_h = (uint32_t)obs_data_get_int(settings, "countdown_duration_h");
