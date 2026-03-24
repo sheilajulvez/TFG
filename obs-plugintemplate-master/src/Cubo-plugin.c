@@ -114,8 +114,9 @@ struct cube_filter_data {
 	bool countdown_use_ar;       // true = usar AR para posicionar reloj, false = posición manual
 
 	/* --- Team Info mode (mode=4) --- */
-	int team_info_marker_ids[MAX_TEAM_INF];   // ArUco marker IDs
-	char team_info_team_ids[MAX_TEAM_INF][64]; // DOMjudge team IDs
+	char *marker_mappings_path;
+	int team_info_marker_ids[100];   // Marker IDs (aumentado a 100)
+	char team_info_team_ids[100][64]; // Team IDs (aumentado a 100)
 	int team_info_num_mappings;
 	int team_info_detected_marker;    // Marker ID actualmente detectado (-1 = ninguno)
 	scoreboard_team_t team_info_cache[100];  // Cache local de equipos
@@ -298,6 +299,8 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->contest_id = NULL;
 	data->api_username = NULL;
 	data->api_password = NULL;
+	data->marker_mappings_path = NULL;
+	data->team_info_num_mappings = 0;
 	data->scoreboard_team_count = 0;
 	data->scoreboard_text_source = NULL;
 	data->scoreboard_offset_x = 10.0f;
@@ -358,6 +361,7 @@ static void filter_destroy(void *data)
 	bfree(filter->contest_id);
 	bfree(filter->api_username);
 	bfree(filter->api_password);
+	bfree(filter->marker_mappings_path);
 	bfree(filter->model_path_str);
 	bfree(filter->texture_path_str);
 	bfree(filter->scoreboard_font_face);
@@ -649,17 +653,9 @@ static bool render_mode_changed(obs_properties_t *props,
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_outline_color"), show_scoreboard || show_team_info);
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_outline_size"), show_scoreboard || show_team_info);
 
-	/* Team Info mode: mostrar controles AR + mappings */
-	obs_property_set_visible(obs_properties_get(props, "team_info_num_mappings"), show_team_info);
-	for (int i = 0; i < MAX_TEAM_INF; i++) {
-		char mk_key[32], tk_key[32];
-		snprintf(mk_key, sizeof(mk_key), "ti_marker_%d", i);
-		snprintf(tk_key, sizeof(tk_key), "ti_team_%d", i);
-		obs_property_t *mk_prop = obs_properties_get(props, mk_key);
-		obs_property_t *tk_prop = obs_properties_get(props, tk_key);
-		if (mk_prop) obs_property_set_visible(mk_prop, show_team_info && i < 16);
-		if (tk_prop) obs_property_set_visible(tk_prop, show_team_info && i < 16);
-	}
+	/* Team Info mode: mostrar selector de JSON */
+	obs_property_set_visible(obs_properties_get(props, "marker_mappings_path"), show_team_info);
+	
 	/* En Team Info, reutilizar controles AR para configurar la detección */
 	if (show_team_info) {
 		obs_property_set_visible(obs_properties_get(props, "marker_dict"), true);
@@ -796,21 +792,62 @@ obs_properties_add_path(props, "calibration_file", "Archivo de Calibración",
 	obs_properties_add_int(props, "scoreboard_outline_size", "Grosor del Borde", 0, 20, 1);
 
 	/* --- TEAM INFO MAPPINGS --- */
-	obs_properties_add_int(props, "team_info_num_mappings", "Nº Mappings ArUco→Team", 0, MAX_TEAM_INF, 1);
-	for (int i = 0; i < MAX_TEAM_INF; i++) {
-		char mk_key[32], mk_label[64], tk_key[32], tk_label[64];
-		snprintf(mk_key, sizeof(mk_key), "ti_marker_%d", i);
-		snprintf(mk_label, sizeof(mk_label), "Marker ID [%d]", i);
-		snprintf(tk_key, sizeof(tk_key), "ti_team_%d", i);
-		snprintf(tk_label, sizeof(tk_label), "Team ID [%d]", i);
-		obs_properties_add_int(props, mk_key, mk_label, 0, 100, 1);
-		obs_properties_add_text(props, tk_key, tk_label, OBS_TEXT_DEFAULT);
-	}
+	obs_properties_add_path(props, "marker_mappings_path", "Archivo de Mapeos (JSON)", OBS_PATH_FILE, "JSON (*.json);;Todos (*.*)", NULL);
 
 	obs_data_t *temp_settings = obs_data_create();
 	render_mode_changed(props, combo, temp_settings);
 	obs_data_release(temp_settings);
 	return props;
+}
+
+static void load_marker_mappings_from_json(struct cube_filter_data *filter, const char *path)
+{
+	if (!path || !*path) return;
+
+	char *json_content = os_quick_read_utf8_file(path);
+	if (!json_content) {
+		blog(LOG_WARNING, "[CUBE] No se pudo leer el archivo JSON: %s", path);
+		return;
+	}
+
+	// Envolver el array en un objeto para que obs_data_create_from_json lo acepte si es un array puro
+	// original: [...]  ->  nuevo: {"root": [...]}
+	size_t len = strlen(json_content);
+	char *wrapped_json = bmalloc(len + 32);
+	snprintf(wrapped_json, len + 32, "{\"root\":%s}", json_content);
+	bfree(json_content);
+
+	obs_data_t *data = obs_data_create_from_json(wrapped_json);
+	bfree(wrapped_json);
+
+	if (!data) {
+		blog(LOG_WARNING, "[CUBE] Error al parsear el JSON de mappings (formato incorrecto): %s", path);
+		return;
+	}
+
+	obs_data_array_t *array = obs_data_get_array(data, "root");
+	if (array) {
+		size_t count = obs_data_array_count(array);
+		filter->team_info_num_mappings = 0;
+
+		for (size_t i = 0; i < count && i < 100; i++) {
+			obs_data_t *item = obs_data_array_item(array, i);
+			int marker_id = (int)obs_data_get_int(item, "marker_id");
+			const char *team_id = obs_data_get_string(item, "team_id");
+
+			if (team_id && *team_id) {
+				filter->team_info_marker_ids[filter->team_info_num_mappings] = marker_id;
+				strncpy(filter->team_info_team_ids[filter->team_info_num_mappings], team_id, 63);
+				filter->team_info_team_ids[filter->team_info_num_mappings][63] = '\0';
+				filter->team_info_num_mappings++;
+			}
+			obs_data_release(item);
+		}
+		obs_data_array_release(array);
+	}
+
+	obs_data_release(data);
+	blog(LOG_INFO, "[CUBE] Mappings cargados desde JSON: %d entradas", filter->team_info_num_mappings);
 }
 
 static void filter_update(void *data, obs_data_t *settings)
@@ -883,15 +920,17 @@ static void filter_update(void *data, obs_data_t *settings)
 	filter->scoreboard_outline_size = (int)obs_data_get_int(settings, "scoreboard_outline_size");
 
 	/* Team Info Settings */
-	filter->team_info_num_mappings = (int)obs_data_get_int(settings, "team_info_num_mappings");
-	for (int i = 0; i < MAX_TEAM_INF; i++) {
-		char mk_key[32], tk_key[32];
-		snprintf(mk_key, sizeof(mk_key), "ti_marker_%d", i);
-		snprintf(tk_key, sizeof(tk_key), "ti_team_%d", i);
-		filter->team_info_marker_ids[i] = (int)obs_data_get_int(settings, mk_key);
-		const char *tid = obs_data_get_string(settings, tk_key);
-		if (tid) strncpy(filter->team_info_team_ids[i], tid, 63);
-		else filter->team_info_team_ids[i][0] = '\0';
+	const char *new_mappings_path = obs_data_get_string(settings, "marker_mappings_path");
+	if (!new_mappings_path) new_mappings_path = "";
+
+	if (!filter->marker_mappings_path || strcmp(filter->marker_mappings_path, new_mappings_path) != 0) {
+		bfree(filter->marker_mappings_path);
+		filter->marker_mappings_path = (*new_mappings_path) ? bstrdup(new_mappings_path) : NULL;
+		if (filter->marker_mappings_path) {
+			load_marker_mappings_from_json(filter, filter->marker_mappings_path);
+		} else {
+			filter->team_info_num_mappings = 0;
+		}
 	}
 
 	/* Crear fuente de texto siempre que estemos en modo Scoreboard (3) o Team Info (4) para el overlay */
@@ -1299,13 +1338,8 @@ static void filter_save(void *data, obs_data_t *settings)
 	obs_data_set_int(settings, "scoreboard_outline_size", filter->scoreboard_outline_size);
 
 	/* Team Info save */
-	obs_data_set_int(settings, "team_info_num_mappings", filter->team_info_num_mappings);
-	for (int i = 0; i < MAX_TEAM_INF; i++) {
-		char mk_key[32], tk_key[32];
-		snprintf(mk_key, sizeof(mk_key), "ti_marker_%d", i);
-		snprintf(tk_key, sizeof(tk_key), "ti_team_%d", i);
-		obs_data_set_int(settings, mk_key, filter->team_info_marker_ids[i]);
-		obs_data_set_string(settings, tk_key, filter->team_info_team_ids[i]);
+	if (filter->marker_mappings_path) {
+		obs_data_set_string(settings, "marker_mappings_path", filter->marker_mappings_path);
 	}
 
 	// Guardar configuración de reloj
@@ -1385,6 +1419,10 @@ static void filter_load(void *data, obs_data_t *settings)
 	filter->scoreboard_outline_color = (uint32_t)obs_data_get_int(settings, "scoreboard_outline_color");
 	filter->scoreboard_outline_size = (int)obs_data_get_int(settings, "scoreboard_outline_size");
 
+	const char *mmp = obs_data_get_string(settings, "marker_mappings_path");
+	if (filter->marker_mappings_path) bfree(filter->marker_mappings_path);
+	filter->marker_mappings_path = (mmp && *mmp) ? bstrdup(mmp) : NULL;
+
 	// Cargar configuración de reloj
 	filter->clock_mode = (int)obs_data_get_int(settings, "clock_mode");
 	//filter->mesh_id_dial = (int)obs_data_get_int(settings, "mesh_id_dial");
@@ -1448,14 +1486,7 @@ static void filter_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "countdown_use_ar", false);
 
 	/* Defaults for Team Info */
-	obs_data_set_default_int(settings, "team_info_num_mappings", 0);
-	for (int i = 0; i < MAX_TEAM_INF; i++) {
-		char mk_key[32], tk_key[32];
-		snprintf(mk_key, sizeof(mk_key), "ti_marker_%d", i);
-		snprintf(tk_key, sizeof(tk_key), "ti_team_%d", i);
-		obs_data_set_default_int(settings, mk_key, 0);
-		obs_data_set_default_string(settings, tk_key, "");
-	}
+	obs_data_set_default_string(settings, "marker_mappings_path", "");
 }
 static struct obs_source_info cube_filter = {
 	.id = "cube_filter",
