@@ -214,8 +214,14 @@ static int parse_teams_json(const char *json, scoreboard_team_t *teams, int max_
 			parse_json_string(temp, "name", name, sizeof(name));
 		}
 		if (tid[0] && name[0]) {
+			/* Copia segura: garantiza terminador NUL para evitar basura en pantalla/logs. */
 			strncpy(teams[count].team_id, tid, sizeof(teams[count].team_id) - 1);
-			strncpy(teams[count].team_name, name, sizeof(teams[count].team_name) - 1);
+			teams[count].team_id[sizeof(teams[count].team_id) - 1] = '\0';
+
+			strncpy(teams[count].team_name, name,
+				sizeof(teams[count].team_name) - 1);
+			teams[count].team_name[sizeof(teams[count].team_name) - 1] =
+				'\0';
 			count++;
 		}
 		p = obj_end + 1;
@@ -260,8 +266,8 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	int team_count;
 	int tc;
 	scoreboard_team_t t_cache[100];
-	static int teams_throttle = 0;
-	static int sync_teams_cycle = 0;
+	 int teams_ = 0;
+	 int teams_cycle_ = 0;
 
 	buf.data = (char *)malloc(WEB_SYNC_BUFFER_SIZE);
 	if (!buf.data) {
@@ -310,7 +316,7 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 			snprintf(contest_url, sizeof(contest_url), "%s/contests/%s", sync->base_url, sync->contest_id);
 			snprintf(scoreboard_url, sizeof(scoreboard_url), "%s/contests/%s/scoreboard", sync->base_url, sync->contest_id);
 			
-			if (sync->cached_team_count == 0 || teams_throttle++ % 10 == 0) {
+			if (sync->cached_team_count == 0 || teams_++ % 10 == 0) {
 				snprintf(t_url, sizeof(t_url), "%s/contests/%s/teams", sync->base_url, sync->contest_id);
 			} else {
 				t_url[0] = '\0';
@@ -412,7 +418,7 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 			}
 		}
 
-		if (sync_teams_cycle++ % 10 == 0) {
+		if (teams_cycle_++ % 10 == 0) {
 			char teams_url[2048] = {0};
 			EnterCriticalSection(&sync->mutex);
 			if (sync->base_url && sync->contest_id) {

@@ -2,6 +2,7 @@
 #include <opencv2/aruco.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/calib3d.hpp>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <opencv2/core.hpp>
@@ -33,10 +34,10 @@ void set_default_camera_params(ArucoDetector *det)
 	det->camera_matrix = (cv::Mat_<double>(3, 3) << 2000.0, 0.0, 1233.0,
 			      0.0, 2000.0, 718.0, 0.0, 0.0, 1.0);
 
-	// Distorsión por defecto: cero en todos los coeficientes
+	// Distorsion por defecto: cero en todos los coeficientes
 	det->dist_coeffs = cv::Mat::zeros(1, 5, CV_64F);
 
-	blog(LOG_WARNING, "[CUBE] Usando parámetros de cámara por defecto (fx=fy=2000, cx=1233, cy=718).");
+	blog(LOG_WARNING, "[CUBE] Usando parametros de camara por defecto (fx=fy=2000, cx=1233, cy=718).");
 }
 
 // obs_frame_to_bgra (sin cambios)
@@ -130,14 +131,14 @@ cv::Mat obs_frame_to_bgra(struct obs_source_frame *frame)
 	}
 	default:
 		blog(LOG_WARNING,
-		     "[Aruco] Formato de video no soportado para conversión a BGRA: %s (%d)",
+		     "[Aruco] Formato de video no soportado para conversion a BGRA: %s (%d)",
 		     get_video_format_name(frame->format), frame->format);
 		break;
 	}
 
 	if (bgra.empty()) {
 		blog(LOG_WARNING,
-		     "[Aruco] La conversión del frame a BGRA falló para el formato %s.",
+		     "[Aruco] La conversion del frame a BGRA fallo para el formato %s.",
 		     get_video_format_name(frame->format));
 	}
 
@@ -154,7 +155,7 @@ bool load_camera_calibration(const std::string &filename,
 	cv::FileStorage fs(filename, cv::FileStorage::READ);
 	if (!fs.isOpened()) {
 		blog(LOG_ERROR,
-		     "[CUBE] No se pudo abrir el archivo de calibración: %s",
+		     "[CUBE] No se pudo abrir el archivo de calibracion: %s",
 		     filename.c_str());
 		return false;
 	}
@@ -164,11 +165,11 @@ bool load_camera_calibration(const std::string &filename,
 
 	if (camera_matrix.empty() || dist_coeffs.empty()) {
 		blog(LOG_ERROR,
-		     "[CUBE] Parámetros inválidos en el archivo de calibración.");
+		     "[CUBE] Parametros invalidos en el archivo de calibracion.");
 		return false;
 	}
 
-	blog(LOG_INFO, "[CUBE] Archivo de calibración cargado con éxito.");
+	blog(LOG_INFO, "[CUBE] Archivo de calibracion cargado con exito.");
 	return true;
 }
 
@@ -181,12 +182,12 @@ bool set_camera_calibration(ArucoDetector *det, const char *filename)
 	if (!load_camera_calibration(filename, det->camera_matrix,
 				     det->dist_coeffs)) {
 		blog(LOG_WARNING,
-		     "[CUBE] Usando parámetros de cámara por defecto.");
+		     "[CUBE] Usando parametros de camara por defecto.");
 		set_default_camera_params(det);
 	} else {
 		det->calibration_path = filename;
 		blog(LOG_INFO,
-		     "[CUBE] Calibración cargada y establecida desde %s",
+		     "[CUBE] Calibracion cargada y establecida desde %s",
 		     filename);
 	}
 
@@ -205,7 +206,7 @@ ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,
 	blog(LOG_WARNING, "[CUBE] catgar cpsitas");
 	if (!set_camera_calibration(det, calibration_file)) {
 		blog(LOG_WARNING,
-		     "[CUBE] Usando parámetros de cámara por defecto.");
+		     "[CUBE] Usando parametros de camara por defecto.");
 		det->camera_matrix = (cv::Mat_<double>(3, 3) << 2000.0, 0.0,
 				      1233.0, 0.0, 2000.0, 718.0, 0.0, 0.0,
 				      1.0);
@@ -265,7 +266,7 @@ bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 	cv::Mat bgra = obs_frame_to_bgra(frame);
 	if (bgra.empty()) {
 		blog(LOG_WARNING,
-		     "process_frame_rgba_scaled: conversión a BGRA falló");
+		     "process_frame_rgba_scaled: conversion a BGRA fallo");
 		return false;
 	}
 
@@ -284,7 +285,7 @@ bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 		return false;
 	}
 
-	// Buscar marcador de interés
+	// Buscar marcador de interes
 	int marker_index = -1;
 	for (int i = 0; i < (int)ids.size(); ++i) {
 		if (ids[i] == det->id) {
@@ -332,7 +333,7 @@ bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 	im_cx /= 4.0f;
 	im_cy /= 4.0f;
 
-	// Escalar al tamaño de salida OBS
+	// Escalar al tamano de salida OBS
 	double scale_x = double(fw) / double(base_w);
 	double scale_y = double(fh) / double(base_h);
 
@@ -351,6 +352,150 @@ bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 	res->euler_y = yaw;
 	res->euler_z =-roll; // Mantenemos el -roll por si es un ajuste de ejes (OpenCV vs OBS)
 	
+
+	return true;
+}
+
+static inline bool id_permitido(int id, const int *allowed_ids, size_t allowed_count)
+{
+	if (!allowed_ids || allowed_count == 0)
+		return false;
+
+	for (size_t i = 0; i < allowed_count; i++) {
+		if (allowed_ids[i] == id)
+			return true;
+	}
+	return false;
+}
+
+static inline float area_cuadrilatero(const std::vector<cv::Point2f> &c)
+{
+	/* Area por formula del "shoelace" (en coordenadas de imagen).
+	 * Se usa para elegir el marcador mas grande en pantalla.
+	 */
+	if (c.size() < 4)
+		return 0.0f;
+
+	float a = 0.0f;
+	for (int i = 0; i < 4; i++) {
+		const int j = (i + 1) & 3;
+		a += c[i].x * c[j].y - c[j].x * c[i].y;
+	}
+	return std::fabs(a) * 0.5f;
+}
+
+bool process_frame_rgba_select_ids(ArucoDetector *det, struct obs_source_frame *frame,
+				  int base_w, int base_h, int fw, int fh,
+				  const int *allowed_ids, size_t allowed_count,
+				  ArucoResult *res)
+{
+	if (!det || !frame || !res)
+		return false;
+
+	if (!allowed_ids || allowed_count == 0) {
+		res->detected = false;
+		return false;
+	}
+
+	int w = base_w; // ancho base de referencia
+	int h = base_h; // alto base de referencia
+
+	// Convertir frame a BGRA
+	cv::Mat bgra = obs_frame_to_bgra(frame);
+	if (bgra.empty()) {
+		blog(LOG_WARNING,
+		     "[Aruco] process_frame_rgba_select_ids: conversion a BGRA fallo");
+		return false;
+	}
+
+	// Convertir a gris
+	cv::Mat gray;
+	cv::cvtColor(bgra, gray, cv::COLOR_BGRA2GRAY);
+
+	// Detectar marcadores
+	std::vector<std::vector<cv::Point2f>> corners;
+	std::vector<int> ids;
+	cv::aruco::detectMarkers(gray, det->dictionary, corners, ids,
+				 det->detector_params);
+
+	if (ids.empty()) {
+		res->detected = false;
+		return false;
+	}
+
+	// Elegir el marcador permitido mas grande en pantalla
+	int marker_index = -1;
+	float best_area = 0.0f;
+	for (int i = 0; i < (int)ids.size(); ++i) {
+		if (!id_permitido(ids[i], allowed_ids, allowed_count))
+			continue;
+
+		const float a = area_cuadrilatero(corners[i]);
+		if (a > best_area) {
+			best_area = a;
+			marker_index = i;
+		}
+	}
+
+	if (marker_index == -1) {
+		res->detected = false;
+		return false;
+	}
+
+	// Estimar pose (para todos) y seleccionar el indice elegido
+	std::vector<cv::Vec3d> rvecs, tvecs;
+	cv::aruco::estimatePoseSingleMarkers(corners, det->marker_size,
+					     det->camera_matrix,
+					     det->dist_coeffs, rvecs, tvecs);
+	if (rvecs.empty() || tvecs.empty() || (int)rvecs.size() <= marker_index ||
+	    (int)tvecs.size() <= marker_index) {
+		res->detected = false;
+		return false;
+	}
+
+	res->detected = true;
+	res->id = ids[marker_index];
+	for (int i = 0; i < 3; ++i) {
+		res->tvec[i] = float(tvecs[marker_index][i]);
+		res->rvec[i] = float(rvecs[marker_index][i]);
+	}
+
+	// Centro del marcador en coords base
+	float im_cx = 0.0f, im_cy = 0.0f;
+	for (int i = 0; i < 4; ++i) {
+		float vx = corners[marker_index][i].x * ((float)base_w / frame->width);
+		float vy = corners[marker_index][i].y * ((float)base_h / frame->height);
+
+		vx = std::clamp(vx, 0.0f, float(w - 1));
+		vy = std::clamp(vy, 0.0f, float(h - 1));
+
+		res->corners[i][0] = vx;
+		res->corners[i][1] = vy;
+
+		im_cx += vx;
+		im_cy += vy;
+	}
+	im_cx /= 4.0f;
+	im_cy /= 4.0f;
+
+	// Escalar al tamano de salida OBS
+	double scale_x = double(fw) / double(base_w);
+	double scale_y = double(fh) / double(base_h);
+
+	res->screen_pos_x = float(im_cx * scale_x);
+	res->screen_pos_y = float(im_cy * scale_y);
+
+	res->screen_pos_x = std::clamp(res->screen_pos_x, 0.0f, float(fw));
+	res->screen_pos_y = std::clamp(res->screen_pos_y, 0.0f, float(fh));
+
+	cv::Mat R;
+	cv::Rodrigues(rvecs[marker_index], R);
+	float pitch, yaw, roll;
+	rotation_to_euler(R, pitch, yaw, roll);
+
+	res->euler_x = pitch;
+	res->euler_y = yaw;
+	res->euler_z = -roll; // Mantenemos el -roll por si es un ajuste de ejes (OpenCV vs OBS)
 
 	return true;
 }
@@ -384,7 +529,7 @@ void set_marker_dictionary(ArucoDetector *det, int dict_id)
 		cv_dict = cv::aruco::DICT_ARUCO_ORIGINAL;
 		break;
 	default:
-		// Fallback seguro si el ID no es válido
+		// Fallback seguro si el ID no es valido
 		blog(LOG_WARNING,
 		     "[Aruco] ID de diccionario desconocido: %d. Usando 4X4_100.",
 		     dict_id);

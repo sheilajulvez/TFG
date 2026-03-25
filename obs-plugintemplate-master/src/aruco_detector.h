@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,6 +47,21 @@ void cleanup_aruco_detector(ArucoDetector *det);
  * @return true si detect al menos un marcador.
  */
 bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame, int base_w, int base_h, int fw, int fh, ArucoResult *res);
+
+/**
+ * @brief Procesa un frame y selecciona un marcador entre una lista permitida.
+ *
+ * Se usa para el modo Team Info, donde el JSON define qué IDs de marcador son válidos.
+ * No bloquea el hilo de render: esta función debe llamarse desde el camino de vídeo (filter_video).
+ *
+ * @param allowed_ids     Lista de IDs de marcador a buscar (por ejemplo, los del JSON).
+ * @param allowed_count   Número de IDs en la lista.
+ * @return true si se detecta al menos un marcador permitido.
+ */
+bool process_frame_rgba_select_ids(ArucoDetector *det, struct obs_source_frame *frame,
+				  int base_w, int base_h, int fw, int fh,
+				  const int *allowed_ids, size_t allowed_count,
+				  ArucoResult *res);
 
 void set_marker_dictionary(ArucoDetector *const det, int dict_id);
 void set_marker_size(ArucoDetector *const det, float size);

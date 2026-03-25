@@ -1,14 +1,3 @@
-/**
- * @file web_sync.h
- * @brief Sincronización del plugin con la API REST de DOMjudge.
- *
- * Consulta periódicamente la API de un servidor DOMjudge para obtener:
- * 1. Datos del torneo (start_time, end_time) y la hora del servidor (cabecera Date:)
- * 2. El scoreboard con los equipos y problemas resueltos
- *
- * Las peticiones HTTP se ejecutan en un hilo secundario con libcurl;
- * nunca se bloquea el hilo de render de OBS.
- */
 
 #ifndef WEB_SYNC_H
 #define WEB_SYNC_H
@@ -54,16 +43,7 @@ typedef struct web_sync_result {
 	int      team_count;         /**< Equipos válidos en el array */
 } web_sync_result_t;
 
-/**
- * Crea un sincronizador web en modo DOMjudge.
- * Construye automáticamente las URLs:
- *   {base_url}/contests/{contest_id}
- *   {base_url}/contests/{contest_id}/scoreboard
- * @param base_url URL base de la API (ej. "https://servidor.com/api/v4")
- * @param contest_id ID del torneo (ej. "2" o "demo")
- * @param interval_seconds Intervalo entre peticiones (mínimo 1s)
- * @return Instancia nueva o NULL si falla.
- */
+
 web_sync_t *web_sync_create_domjudge(const char *base_url,
 				     const char *contest_id,
 				     float interval_seconds);
