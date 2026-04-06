@@ -10,6 +10,12 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCO
 project(${_name} VERSION ${_version})
 add_library(${_name} MODULE)
 
+# Forzar UTF-8 en MSVC para que los literales de texto y los logs/strings (OBS usa UTF-8)
+# no salgan corruptos (mojibake) al mostrarse en OBS.
+if(MSVC)
+    target_compile_options(${_name} PRIVATE /utf-8)
+endif()
+
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" ON)
 option(ENABLE_QT            "Use Qt functionality"          ON)
 

@@ -55,6 +55,217 @@ static inline float clampf(float v, float lo, float hi)
 	return v;
 }
 
+static inline int clampi(int v, int lo, int hi)
+{
+	if (v < lo)
+		return lo;
+	if (v > hi)
+		return hi;
+	return v;
+}
+
+/* Helpers UTF-8 (simples) para truncar sin cortar bytes a mitad de caracter.
+ * NOTA: OBS usa UTF-8 en cadenas, pero aqui evitamos depender de librerias externas. */
+static size_t utf8_next_char_len(const char *s)
+{
+	if (!s || !s[0])
+		return 0;
+
+	const unsigned char c = (unsigned char)s[0];
+	if (c < 0x80)
+		return 1;
+	if ((c & 0xE0) == 0xC0)
+		return (s[1] ? 2 : 1);
+	if ((c & 0xF0) == 0xE0)
+		return (s[1] && s[2]) ? 3 : 1;
+	if ((c & 0xF8) == 0xF0)
+		return (s[1] && s[2] && s[3]) ? 4 : 1;
+	return 1;
+}
+
+static int utf8_count_codepoints_limit(const char *s, int max_codepoints)
+{
+	if (!s || max_codepoints <= 0)
+		return 0;
+
+	int count = 0;
+	const char *p = s;
+	while (*p && count < max_codepoints) {
+		size_t n = utf8_next_char_len(p);
+		if (n == 0)
+			break;
+		p += n;
+		count++;
+	}
+	return count;
+}
+
+static int utf8_copy_trunc_ellipsis(const char *in, char *out, size_t out_size,
+				   int max_chars)
+{
+	/* Devuelve 1 si ha truncado, 0 si no. */
+	if (!out || out_size == 0)
+		return 0;
+	out[0] = '\0';
+
+	if (!in || !in[0] || max_chars <= 0)
+		return 0;
+
+	/* Copiar hasta max_chars codepoints. */
+	int copied = 0;
+	size_t oi = 0;
+	const char *p = in;
+	while (*p && copied < max_chars) {
+		size_t n = utf8_next_char_len(p);
+		if (n == 0)
+			break;
+		if (oi + n + 1 >= out_size)
+			break;
+		memcpy(out + oi, p, n);
+		oi += n;
+		p += n;
+		copied++;
+	}
+	out[oi] = '\0';
+
+	/* Si queda texto sin copiar, anadir "..." si cabe. */
+	if (*p) {
+		const char *dots = "...";
+		size_t dots_len = 3;
+		if (out_size >= dots_len + 1) {
+			/* Si no hay espacio, recortar para meter puntos. */
+			while (oi + dots_len + 1 >= out_size && oi > 0) {
+				/* Retroceder un caracter UTF-8 completo. */
+				oi--;
+				while (oi > 0 && ((unsigned char)out[oi] & 0xC0) == 0x80)
+					oi--;
+			}
+			if (oi + dots_len + 1 < out_size) {
+				memcpy(out + oi, dots, dots_len);
+				oi += dots_len;
+				out[oi] = '\0';
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+static void overlay_pick_contrast_rgb(float r, float g, float b, float *out_r,
+				      float *out_g, float *out_b)
+{
+	/* Elige blanco o negro segun luminancia para que las bandas se vean bien. */
+	const float l = 0.2126f * r + 0.7152f * g + 0.0722f * b;
+	if (l < 0.5f) {
+		*out_r = 1.0f;
+		*out_g = 1.0f;
+		*out_b = 1.0f;
+	} else {
+		*out_r = 0.0f;
+		*out_g = 0.0f;
+		*out_b = 0.0f;
+	}
+}
+
+static size_t utf8_copy_n_codepoints(const char *in, char *out, size_t out_size,
+				     size_t max_codepoints, bool *out_truncated)
+{
+	/* Copia hasta max_codepoints respetando limites de UTF-8 (no corta multibyte).
+	 * Devuelve bytes escritos (sin incluir '\0').
+	 */
+	if (!out || out_size == 0) {
+		if (out_truncated)
+			*out_truncated = false;
+		return 0;
+	}
+	out[0] = '\0';
+
+	if (!in || !in[0] || max_codepoints == 0) {
+		if (out_truncated)
+			*out_truncated = false;
+		return 0;
+	}
+
+	size_t written = 0;
+	size_t cp = 0;
+	const unsigned char *p = (const unsigned char *)in;
+
+	while (*p && cp < max_codepoints) {
+		size_t seq = 1;
+		if ((*p & 0x80) == 0x00) {
+			seq = 1;
+		} else if ((*p & 0xE0) == 0xC0) {
+			seq = 2;
+		} else if ((*p & 0xF0) == 0xE0) {
+			seq = 3;
+		} else if ((*p & 0xF8) == 0xF0) {
+			seq = 4;
+		} else {
+			/* Byte invalido: consumir 1 para evitar bucle infinito */
+			seq = 1;
+		}
+
+		/* Comprobar capacidad: dejamos 1 byte para '\0' */
+		if (written + seq >= out_size)
+			break;
+
+		for (size_t i = 0; i < seq; i++) {
+			if (!p[i])
+				break;
+			out[written++] = (char)p[i];
+		}
+		out[written] = '\0';
+
+		p += seq;
+		cp++;
+	}
+
+	const bool truncated = (*p != '\0');
+	if (out_truncated)
+		*out_truncated = truncated;
+	return written;
+}
+
+static void utf8_truncate_with_ellipsis(const char *in, char *out, size_t out_size,
+				       size_t max_codepoints)
+{
+	/* Trunca con "..." ASCII si hace falta. */
+	bool truncated = false;
+	utf8_copy_n_codepoints(in, out, out_size, max_codepoints, &truncated);
+	if (!truncated)
+		return;
+
+	const char *ellipsis = "...";
+	const size_t el_len = 3;
+	const size_t cur = strlen(out);
+	if (out_size <= 1)
+		return;
+
+	if (cur + el_len < out_size) {
+		memcpy(out + cur, ellipsis, el_len);
+		out[cur + el_len] = '\0';
+		return;
+	}
+
+	size_t new_len = (out_size > el_len + 1) ? (out_size - el_len - 1) : 0;
+	out[new_len] = '\0';
+	memcpy(out + new_len, ellipsis, el_len);
+	out[new_len + el_len] = '\0';
+}
+
+static int count_lines_lf(const char *text)
+{
+	if (!text || !text[0])
+		return 0;
+	int lines = 1;
+	for (const char *p = text; *p; p++) {
+		if (*p == '\n')
+			lines++;
+	}
+	return lines;
+}
+
 /* Convierte rvec (eje-Ã¡ngulo) de OpenCV a matriz 3x3 usando Rodrigues. */
 static void aruco_rvec_to_rotmat3x3(const float rvec[3], float R[3][3])
 {
@@ -165,6 +376,11 @@ struct cube_filter_data {
 
 	/* Vertex buffer de un quad unidad (0..1) para dibujar fondos 2D sin recrear geometria por frame */
 	gs_vertbuffer_t *overlay_bg_vb;
+	/* Vertex buffer del fondo redondeado ya triangulado en pixeles (se regenera si cambia w/h/radio) */
+	gs_vertbuffer_t *overlay_bg_round_vb;
+	float overlay_bg_round_last_w;
+	float overlay_bg_round_last_h;
+	int overlay_bg_round_last_radius;
 
 	float *model_width;
 	float *model_height;
@@ -234,6 +450,30 @@ struct cube_filter_data {
 	uint32_t overlay_bg_color; /* 0xRRGGBB */
 	int overlay_bg_opacity;    /* 0..100 */
 	int overlay_bg_padding;    /* px (en el espacio del texto; se escala junto con el overlay AR) */
+	int overlay_bg_radius;     /* px (esquinas redondeadas) */
+	bool overlay_bg_shadow_enabled;
+	int overlay_bg_shadow_opacity; /* 0..100 */
+	int overlay_bg_shadow_offset_x; /* px */
+	int overlay_bg_shadow_offset_y; /* px */
+	int overlay_bg_shadow_softness; /* 1..8 capas */
+
+	/* Suavizado AR del overlay (modo 3 y 4) para reducir jitter */
+	bool overlay_ar_smooth_enabled;
+	float overlay_ar_smooth_alpha; /* 0..1 */
+	bool overlay_ar_smooth_valid;
+	int overlay_ar_smooth_marker_id;
+	float overlay_ar_smooth_x;
+	float overlay_ar_smooth_y;
+	float overlay_ar_smooth_scale;
+	float overlay_ar_smooth_angle;
+
+	/* Tabla Scoreboard (modo 3): formato profesional */
+	int scoreboard_name_max_chars;     /* Truncado visual con ... (UTF-8 safe) */
+	bool scoreboard_row_stripes;       /* Bandas por fila */
+	int scoreboard_row_stripe_opacity; /* 0..80 */
+	int scoreboard_line_count;         /* Numero de lineas del texto */
+	int scoreboard_header_lines;       /* Lineas de cabecera */
+	int scoreboard_row_count;          /* Filas renderizadas */
 
 	int clock_mode;              // 0 = tres manecillas, 1 = una manecilla
 	int mesh_id_dial;            //
@@ -297,16 +537,155 @@ static void overlay_bg_init_graphics(struct cube_filter_data *filter)
 	obs_leave_graphics();
 }
 
-static void overlay_bg_free_graphics(struct cube_filter_data *filter)
+static void overlay_bg_free_round_graphics(struct cube_filter_data *filter)
 {
-	if (!filter || !filter->overlay_bg_vb)
+	if (!filter || !filter->overlay_bg_round_vb)
 		return;
 
 	obs_enter_graphics();
-	gs_vertexbuffer_destroy(filter->overlay_bg_vb);
+	gs_vertexbuffer_destroy(filter->overlay_bg_round_vb);
 	obs_leave_graphics();
 
-	filter->overlay_bg_vb = NULL;
+	filter->overlay_bg_round_vb = NULL;
+}
+
+static void overlay_bg_free_graphics(struct cube_filter_data *filter)
+{
+	if (!filter)
+		return;
+
+	overlay_bg_free_round_graphics(filter);
+
+	if (filter->overlay_bg_vb) {
+		obs_enter_graphics();
+		gs_vertexbuffer_destroy(filter->overlay_bg_vb);
+		obs_leave_graphics();
+
+		filter->overlay_bg_vb = NULL;
+	}
+
+	filter->overlay_bg_round_last_w = 0.0f;
+	filter->overlay_bg_round_last_h = 0.0f;
+	filter->overlay_bg_round_last_radius = 0;
+}
+
+static float wrap_angle_delta(float current, float target)
+{
+	/* Devuelve el delta mas corto en radianes, en el rango [-pi, pi]. */
+	float d = target - current;
+	while (d > (float)M_PI) d -= 2.0f * (float)M_PI;
+	while (d < -(float)M_PI) d += 2.0f * (float)M_PI;
+	return d;
+}
+
+static void overlay_bg_update_rounded_geometry(struct cube_filter_data *filter,
+					      float w, float h, int radius_px)
+{
+	if (!filter)
+		return;
+
+	/* Si el radio es 0, no necesitamos geometria redondeada. */
+	if (radius_px <= 0) {
+		overlay_bg_free_round_graphics(filter);
+		filter->overlay_bg_round_last_w = 0.0f;
+		filter->overlay_bg_round_last_h = 0.0f;
+		filter->overlay_bg_round_last_radius = 0;
+		return;
+	}
+
+	/* Evitar regenerar continuamente por cambios minimos (por ejemplo, oscilaciones de 0.001). */
+	const float dw = fabsf(w - filter->overlay_bg_round_last_w);
+	const float dh = fabsf(h - filter->overlay_bg_round_last_h);
+	if (filter->overlay_bg_round_vb && dw < 0.5f && dh < 0.5f &&
+	    radius_px == filter->overlay_bg_round_last_radius) {
+		return;
+	}
+
+	/* Clamp defensivo del radio. */
+	int r = radius_px;
+	const float max_r = fminf(w, h) * 0.5f;
+	if ((float)r > max_r)
+		r = (int)max_r;
+	if (r < 1)
+		r = 1;
+
+	/* Regenerar geometria: poligono convexo con esquinas redondeadas triangulado como fan.
+	 * Nota: se usa un numero fijo de segmentos para no cargar el hilo de render.
+	 */
+	enum { OVERLAY_BG_ROUND_SEGMENTS = 8 };
+	const int arc_pts = OVERLAY_BG_ROUND_SEGMENTS + 1; /* incluye extremos */
+	struct pt2 { float x, y; } pts[64];
+	int n = 0;
+
+	const float rf = (float)r;
+
+	/* Construir contorno en sentido horario, asumiendo coord 2D de pantalla (y hacia abajo). */
+	#define ADD_PT(_x, _y) do { \
+		const float __x = (_x); \
+		const float __y = (_y); \
+		if (n > 0) { \
+			if (fabsf(pts[n - 1].x - __x) < 0.001f && fabsf(pts[n - 1].y - __y) < 0.001f) \
+				break; \
+		} \
+		if (n < (int)(sizeof(pts) / sizeof(pts[0]))) { \
+			pts[n].x = __x; \
+			pts[n].y = __y; \
+			n++; \
+		} \
+	} while (0)
+
+	ADD_PT(rf, 0.0f);
+	ADD_PT(w - rf, 0.0f);
+	/* Esquina sup-der (centro = w-r, r), angulos -90..0 */
+	for (int i = 0; i < arc_pts; i++) {
+		const float a = (-0.5f * (float)M_PI) + (0.5f * (float)M_PI) * ((float)i / (float)(arc_pts - 1));
+		ADD_PT((w - rf) + cosf(a) * rf, (rf) + sinf(a) * rf);
+	}
+	ADD_PT(w, rf);
+	ADD_PT(w, h - rf);
+	/* Esquina inf-der (centro = w-r, h-r), angulos 0..90 */
+	for (int i = 0; i < arc_pts; i++) {
+		const float a = 0.0f + (0.5f * (float)M_PI) * ((float)i / (float)(arc_pts - 1));
+		ADD_PT((w - rf) + cosf(a) * rf, (h - rf) + sinf(a) * rf);
+	}
+	ADD_PT(w - rf, h);
+	ADD_PT(rf, h);
+	/* Esquina inf-izq (centro = r, h-r), angulos 90..180 */
+	for (int i = 0; i < arc_pts; i++) {
+		const float a = (0.5f * (float)M_PI) + (0.5f * (float)M_PI) * ((float)i / (float)(arc_pts - 1));
+		ADD_PT((rf) + cosf(a) * rf, (h - rf) + sinf(a) * rf);
+	}
+	ADD_PT(0.0f, h - rf);
+	ADD_PT(0.0f, rf);
+	/* Esquina sup-izq (centro = r, r), angulos 180..270 */
+	for (int i = 0; i < arc_pts; i++) {
+		const float a = (float)M_PI + (0.5f * (float)M_PI) * ((float)i / (float)(arc_pts - 1));
+		ADD_PT((rf) + cosf(a) * rf, (rf) + sinf(a) * rf);
+	}
+	#undef ADD_PT
+
+	if (n < 3)
+		return;
+
+	/* Destruir anterior y crear nuevo */
+	overlay_bg_free_round_graphics(filter);
+
+	obs_enter_graphics();
+	gs_render_start(true);
+	const float cx = w * 0.5f;
+	const float cy = h * 0.5f;
+	for (int i = 0; i < n; i++) {
+		const int j = (i + 1) % n;
+		gs_vertex3f(cx, cy, 0.0f);
+		gs_vertex3f(pts[i].x, pts[i].y, 0.0f);
+		gs_vertex3f(pts[j].x, pts[j].y, 0.0f);
+	}
+	filter->overlay_bg_round_vb = gs_render_save();
+	obs_leave_graphics();
+
+	filter->overlay_bg_round_last_w = w;
+	filter->overlay_bg_round_last_h = h;
+	filter->overlay_bg_round_last_radius = radius_px;
 }
 
 static const char *team_info_lookup_team_id(struct cube_filter_data *filter,
@@ -837,6 +1216,10 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->model_height = NULL; //
 	data->loaded_texture = NULL;
 	data->overlay_bg_vb = NULL;
+	data->overlay_bg_round_vb = NULL;
+	data->overlay_bg_round_last_w = 0.0f;
+	data->overlay_bg_round_last_h = 0.0f;
+	data->overlay_bg_round_last_radius = 0;
 
 	data->detector =
 		initialize_aruco_detector(0.1f, ARUCO_DICT_ORIGINAL, NULL);
@@ -871,6 +1254,29 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->overlay_bg_color = 0x101010;
 	data->overlay_bg_opacity = 70;
 	data->overlay_bg_padding = 12;
+	data->overlay_bg_radius = 14;
+	data->overlay_bg_shadow_enabled = true;
+	data->overlay_bg_shadow_opacity = 35;
+	data->overlay_bg_shadow_offset_x = 4;
+	data->overlay_bg_shadow_offset_y = 4;
+	data->overlay_bg_shadow_softness = 4;
+
+	data->overlay_ar_smooth_enabled = true;
+	data->overlay_ar_smooth_alpha = 0.20f;
+	data->overlay_ar_smooth_valid = false;
+	data->overlay_ar_smooth_marker_id = -1;
+	data->overlay_ar_smooth_x = 0.0f;
+	data->overlay_ar_smooth_y = 0.0f;
+	data->overlay_ar_smooth_scale = 1.0f;
+	data->overlay_ar_smooth_angle = 0.0f;
+
+	/* Scoreboard tabla: defaults */
+	data->scoreboard_name_max_chars = 20;
+	data->scoreboard_row_stripes = true;
+	data->scoreboard_row_stripe_opacity = 18;
+	data->scoreboard_line_count = 0;
+	data->scoreboard_header_lines = 2;
+	data->scoreboard_row_count = 0;
 
 	data->clock_mode = 0;              // Tres manecillas por defecto
 	data->mesh_id_dial = 0;
@@ -912,6 +1318,12 @@ static void filter_destroy(void *data)
 
 	/* Liberar recursos de GPU del fondo del overlay (no anidar obs_enter_graphics) */
 	overlay_bg_free_graphics(filter);
+
+	/* Liberar el detector ArUco (evita fugas de memoria y recursos OpenCV) */
+	if (filter->detector) {
+		cleanup_aruco_detector(filter->detector);
+		filter->detector = NULL;
+	}
 	obs_enter_graphics();
 	if (filter->texture) {
 		gs_texture_destroy(filter->texture);
@@ -1163,6 +1575,39 @@ static void filter_render(void *data, gs_effect_t *effect)
 				overlay_scale = clampf(distance_scale, 0.2f, 3.0f);
 			}
 
+			/* Suavizado AR (solo para modos 3 y 4): reduce jitter en posicion/escala/angulo. */
+			if (filter->overlay_ar_smooth_enabled) {
+				const float a = clampf(filter->overlay_ar_smooth_alpha, 0.01f, 1.0f);
+
+				if (!filter->overlay_ar_smooth_valid ||
+				    filter->overlay_ar_smooth_marker_id != filter->last_result.id) {
+					filter->overlay_ar_smooth_valid = true;
+					filter->overlay_ar_smooth_marker_id = filter->last_result.id;
+					filter->overlay_ar_smooth_x = final_x;
+					filter->overlay_ar_smooth_y = final_y;
+					filter->overlay_ar_smooth_scale = overlay_scale;
+					filter->overlay_ar_smooth_angle = angle_screen;
+				} else {
+					filter->overlay_ar_smooth_x =
+						(1.0f - a) * filter->overlay_ar_smooth_x + a * final_x;
+					filter->overlay_ar_smooth_y =
+						(1.0f - a) * filter->overlay_ar_smooth_y + a * final_y;
+					filter->overlay_ar_smooth_scale =
+						(1.0f - a) * filter->overlay_ar_smooth_scale + a * overlay_scale;
+
+					const float d =
+						wrap_angle_delta(filter->overlay_ar_smooth_angle, angle_screen);
+					filter->overlay_ar_smooth_angle += a * d;
+				}
+
+				/* Ajuste de centro ya que el gs_matrix_translate anterior usaba final_x/y sin suavizar. */
+				gs_matrix_translate3f(filter->overlay_ar_smooth_x - final_x,
+						      filter->overlay_ar_smooth_y - final_y,
+						      0.0f);
+				overlay_scale = filter->overlay_ar_smooth_scale;
+				angle_screen = filter->overlay_ar_smooth_angle;
+			}
+
 			gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, angle_screen);
 			gs_matrix_scale3f(overlay_scale, overlay_scale, 1.0f);
 
@@ -1179,6 +1624,11 @@ static void filter_render(void *data, gs_effect_t *effect)
 				     safe_tw, safe_th, overlay_scale, angle_screen);
 			}
 		}
+		else {
+			/* Si no hay marcador, invalidar suavizado para evitar arrastres. */
+			filter->overlay_ar_smooth_valid = false;
+			filter->overlay_ar_smooth_marker_id = -1;
+		}
 
 		/* Fondo estetico: se dibuja antes del texto y con el mismo transform (incluye AR si aplica). */
 		if (filter->overlay_bg_enabled && filter->overlay_bg_vb) {
@@ -1187,10 +1637,11 @@ static void filter_render(void *data, gs_effect_t *effect)
 			const float pad = (float)filter->overlay_bg_padding;
 			const float bg_w = safe_tw + pad * 2.0f;
 			const float bg_h = safe_th + pad * 2.0f;
+			const int radius = filter->overlay_bg_radius;
 
 			/* Color: UI devuelve 0xRRGGBB; opacity se aplica como alpha. */
 			const uint32_t rgb = filter->overlay_bg_color;
-			struct vec4 col = {
+			struct vec4 col_bg = {
 				((float)((rgb >> 16) & 0xFF)) / 255.0f,
 				((float)((rgb >> 8) & 0xFF)) / 255.0f,
 				((float)(rgb & 0xFF)) / 255.0f,
@@ -1201,19 +1652,120 @@ static void filter_render(void *data, gs_effect_t *effect)
 			gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
 			gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
 
+			/* Preparar geometria redondeada si el radio > 0. */
+			overlay_bg_update_rounded_geometry(filter, bg_w, bg_h, radius);
+			const bool use_round = (radius > 0 && filter->overlay_bg_round_vb);
+			gs_vertbuffer_t *vb = use_round ? filter->overlay_bg_round_vb : filter->overlay_bg_vb;
+			const uint32_t draw_count = use_round ? 0 : 6;
+
+			/* Sombra "suave" por capas (sin shader de blur). */
+			if (filter->overlay_bg_shadow_enabled) {
+				const int layers = clampi(filter->overlay_bg_shadow_softness, 1, 8);
+				const float base_a = clampf(((float)filter->overlay_bg_shadow_opacity) / 100.0f, 0.0f, 1.0f);
+				const float offx = (float)filter->overlay_bg_shadow_offset_x;
+				const float offy = (float)filter->overlay_bg_shadow_offset_y;
+				const float denom = (layers > 1) ? (float)(layers - 1) : 1.0f;
+
+				for (int i = 0; i < layers; i++) {
+					const float t = (layers > 1) ? ((float)i / denom) : 0.0f; /* 0..1 */
+					const float a = base_a * (1.0f - t) * (1.0f - t);
+					if (!(a > 0.001f))
+						continue;
+
+					struct vec4 col_shadow = {0.0f, 0.0f, 0.0f, a};
+					gs_matrix_push();
+					gs_matrix_translate3f(-pad + offx * (0.5f + t),
+							      -pad + offy * (0.5f + t),
+							      0.0f);
+					if (!use_round)
+						gs_matrix_scale3f(bg_w, bg_h, 1.0f);
+
+					gs_technique_begin(tech);
+					gs_technique_begin_pass(tech, 0);
+					gs_effect_set_vec4(color_param, &col_shadow);
+					gs_load_vertexbuffer(vb);
+					gs_draw(GS_TRIS, 0, draw_count);
+					gs_technique_end_pass(tech);
+					gs_technique_end(tech);
+					gs_matrix_pop();
+				}
+			}
+
+			/* Fondo principal */
 			gs_matrix_push();
 			gs_matrix_translate3f(-pad, -pad, 0.0f);
-			gs_matrix_scale3f(bg_w, bg_h, 1.0f);
+			if (!use_round)
+				gs_matrix_scale3f(bg_w, bg_h, 1.0f);
 
 			gs_technique_begin(tech);
 			gs_technique_begin_pass(tech, 0);
-			gs_effect_set_vec4(color_param, &col);
-			gs_load_vertexbuffer(filter->overlay_bg_vb);
-			gs_draw(GS_TRIS, 0, 6);
+			gs_effect_set_vec4(color_param, &col_bg);
+			gs_load_vertexbuffer(vb);
+			gs_draw(GS_TRIS, 0, draw_count);
 			gs_technique_end_pass(tech);
 			gs_technique_end(tech);
 
 			gs_matrix_pop();
+
+			/* Modo Scoreboard (3): dibujar tabla con cabecera y bandas por fila.
+			 * Esto evita que se vea como "texto pegado" y no depende de caracteres tipo '---'. */
+			if (filter->mode == 3 && filter->scoreboard_row_stripes &&
+			    filter->scoreboard_line_count > 0 &&
+			    filter->scoreboard_row_count > 0) {
+				const int lines = filter->scoreboard_line_count;
+				const int header_lines =
+					(filter->scoreboard_header_lines > 0)
+						? filter->scoreboard_header_lines
+						: 1;
+				const float line_h = (safe_th > 1.0f)
+							     ? (safe_th / (float)lines)
+							     : 1.0f;
+				const float header_h = line_h * (float)header_lines;
+
+				float cr = 1.0f, cg = 1.0f, cb = 1.0f;
+				overlay_pick_contrast_rgb(col_bg.x, col_bg.y, col_bg.z,
+							  &cr, &cg, &cb);
+
+				float stripe_a = clampf(((float)filter->scoreboard_row_stripe_opacity) / 100.0f,
+							0.0f, 0.8f);
+				/* Ajuste para que el valor de UI sea util sin tapar el texto. */
+				stripe_a = clampf(stripe_a * 0.65f, 0.0f, 0.65f);
+
+				struct vec4 col_header = {cr, cg, cb, clampf(stripe_a * 1.6f, 0.0f, 0.75f)};
+				struct vec4 col_stripe = {cr, cg, cb, stripe_a};
+
+				/* Barra de cabecera: cubre padding superior + 1a linea. */
+				gs_matrix_push();
+				gs_matrix_translate3f(-pad, -pad, 0.0f);
+				gs_matrix_scale3f(bg_w, header_h + pad, 1.0f);
+				gs_technique_begin(tech);
+				gs_technique_begin_pass(tech, 0);
+				gs_effect_set_vec4(color_param, &col_header);
+				gs_load_vertexbuffer(filter->overlay_bg_vb);
+				gs_draw(GS_TRIS, 0, 6);
+				gs_technique_end_pass(tech);
+				gs_technique_end(tech);
+				gs_matrix_pop();
+
+				/* Bandas alternas: solo filas de datos (no cabecera). */
+				for (int r = 0; r < filter->scoreboard_row_count; r++) {
+					if ((r % 2) == 0)
+						continue;
+
+					const float y = header_h + (float)r * line_h;
+					gs_matrix_push();
+					gs_matrix_translate3f(-pad, y, 0.0f);
+					gs_matrix_scale3f(bg_w, line_h, 1.0f);
+					gs_technique_begin(tech);
+					gs_technique_begin_pass(tech, 0);
+					gs_effect_set_vec4(color_param, &col_stripe);
+					gs_load_vertexbuffer(filter->overlay_bg_vb);
+					gs_draw(GS_TRIS, 0, 6);
+					gs_technique_end_pass(tech);
+					gs_technique_end(tech);
+					gs_matrix_pop();
+				}
+			}
 		}
 
 		obs_source_video_render(filter->scoreboard_text_source);
@@ -1227,7 +1779,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 		if (filter->mode == 4) {
 			 int log_throttle_render = 0;
 			if (log_throttle_render++ % 60 == 0) {
-				blog(LOG_INFO, "[CUBE-TEAM-INFO-RENDER] Dibujando en X: %.1f, Y: %.1f", final_x, final_y);
+				blog(LOG_INFO, "[CUBE-TEAM-INFO-RENDER] Dibujando en X: %d.1f, Y: %d.1f", final_x, final_y);
 			}
 		}
 
@@ -1310,10 +1862,21 @@ static bool render_mode_changed(obs_properties_t *props,
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_text_color"), show_scoreboard || show_team_info);
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_outline_color"), show_scoreboard || show_team_info);
 	obs_property_set_visible(obs_properties_get(props, "scoreboard_outline_size"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_name_max_chars"), show_scoreboard);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_row_stripes"), show_scoreboard);
+	obs_property_set_visible(obs_properties_get(props, "scoreboard_row_stripe_opacity"), show_scoreboard);
 	obs_property_set_visible(obs_properties_get(props, "overlay_bg_enabled"), show_scoreboard || show_team_info);
 	obs_property_set_visible(obs_properties_get(props, "overlay_bg_color"), show_scoreboard || show_team_info);
 	obs_property_set_visible(obs_properties_get(props, "overlay_bg_opacity"), show_scoreboard || show_team_info);
 	obs_property_set_visible(obs_properties_get(props, "overlay_bg_padding"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "overlay_bg_radius"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "overlay_bg_shadow_enabled"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "overlay_bg_shadow_opacity"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "overlay_bg_shadow_offset_x"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "overlay_bg_shadow_offset_y"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "overlay_bg_shadow_softness"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "overlay_ar_smooth_enabled"), show_scoreboard || show_team_info);
+	obs_property_set_visible(obs_properties_get(props, "overlay_ar_smooth_alpha"), show_scoreboard || show_team_info);
 
 	/* Team Info mode: selector JSON local + controles AR */
 	obs_property_set_visible(obs_properties_get(props, "team_info_json_path"), show_team_info);
@@ -1489,12 +2052,25 @@ obs_properties_add_path(props, "calibration_file", "Archivo de Calibracion",
 	obs_properties_add_color(props, "scoreboard_text_color", "Color del Texto");
 	obs_properties_add_color(props, "scoreboard_outline_color", "Color del Borde");
 	obs_properties_add_int(props, "scoreboard_outline_size", "Grosor del Borde", 0, 20, 1);
+	obs_properties_add_int_slider(props, "scoreboard_name_max_chars", "Max caracteres equipo", 5, 40, 1);
+	obs_properties_add_bool(props, "scoreboard_row_stripes", "Bandas por fila");
+	obs_properties_add_int_slider(props, "scoreboard_row_stripe_opacity", "Opacidad bandas (%)", 0, 80, 1);
 
 	/* Fondo del overlay de texto (Scoreboard/Team Info) */
 	obs_properties_add_bool(props, "overlay_bg_enabled", "Activar fondo del texto");
 	obs_properties_add_color(props, "overlay_bg_color", "Color de fondo");
 	obs_properties_add_int_slider(props, "overlay_bg_opacity", "Opacidad fondo (%)", 0, 100, 1);
 	obs_properties_add_int_slider(props, "overlay_bg_padding", "Margen interno (px)", 0, 80, 1);
+	obs_properties_add_int_slider(props, "overlay_bg_radius", "Radio esquinas (px)", 0, 80, 1);
+
+	obs_properties_add_bool(props, "overlay_bg_shadow_enabled", "Activar sombra");
+	obs_properties_add_int_slider(props, "overlay_bg_shadow_opacity", "Opacidad sombra (%)", 0, 100, 1);
+	obs_properties_add_int_slider(props, "overlay_bg_shadow_offset_x", "Sombra offset X (px)", -50, 50, 1);
+	obs_properties_add_int_slider(props, "overlay_bg_shadow_offset_y", "Sombra offset Y (px)", -50, 50, 1);
+	obs_properties_add_int_slider(props, "overlay_bg_shadow_softness", "Sombra suavidad (capas)", 1, 8, 1);
+
+	obs_properties_add_bool(props, "overlay_ar_smooth_enabled", "Suavizado AR (overlay)");
+	obs_properties_add_float_slider(props, "overlay_ar_smooth_alpha", "Suavizado AR (alpha)", 0.01f, 1.0f, 0.01f);
 
 	/* --- TEAM INFO (JSON LOCAL) --- */
 	obs_properties_add_path(props, "team_info_json_path",
@@ -1579,15 +2155,36 @@ static void filter_update(void *data, obs_data_t *settings)
 	filter->scoreboard_text_color = (uint32_t)obs_data_get_int(settings, "scoreboard_text_color");
 	filter->scoreboard_outline_color = (uint32_t)obs_data_get_int(settings, "scoreboard_outline_color");
 	filter->scoreboard_outline_size = (int)obs_data_get_int(settings, "scoreboard_outline_size");
-	filter->overlay_bg_enabled = obs_data_get_bool(settings, "overlay_bg_enabled");
-	filter->overlay_bg_color = (uint32_t)obs_data_get_int(settings, "overlay_bg_color");
-	filter->overlay_bg_opacity = (int)obs_data_get_int(settings, "overlay_bg_opacity");
-	filter->overlay_bg_padding = (int)obs_data_get_int(settings, "overlay_bg_padding");
 
+	/* Scoreboard tabla (modo 3): opciones de presentacion */
+	filter->scoreboard_name_max_chars =
+		(int)obs_data_get_int(settings, "scoreboard_name_max_chars");
+	filter->scoreboard_name_max_chars =
+		clampi(filter->scoreboard_name_max_chars, 5, 40);
+	filter->scoreboard_row_stripes =
+		obs_data_get_bool(settings, "scoreboard_row_stripes");
+	filter->scoreboard_row_stripe_opacity =
+		(int)obs_data_get_int(settings, "scoreboard_row_stripe_opacity");
+	filter->scoreboard_row_stripe_opacity =
+		clampi(filter->scoreboard_row_stripe_opacity, 0, 80);
 	filter->overlay_bg_enabled = obs_data_get_bool(settings, "overlay_bg_enabled");
 	filter->overlay_bg_color = (uint32_t)obs_data_get_int(settings, "overlay_bg_color");
 	filter->overlay_bg_opacity = (int)obs_data_get_int(settings, "overlay_bg_opacity");
 	filter->overlay_bg_padding = (int)obs_data_get_int(settings, "overlay_bg_padding");
+	filter->overlay_bg_radius = (int)obs_data_get_int(settings, "overlay_bg_radius");
+	filter->overlay_bg_shadow_enabled = obs_data_get_bool(settings, "overlay_bg_shadow_enabled");
+	filter->overlay_bg_shadow_opacity = (int)obs_data_get_int(settings, "overlay_bg_shadow_opacity");
+	filter->overlay_bg_shadow_offset_x = (int)obs_data_get_int(settings, "overlay_bg_shadow_offset_x");
+	filter->overlay_bg_shadow_offset_y = (int)obs_data_get_int(settings, "overlay_bg_shadow_offset_y");
+	filter->overlay_bg_shadow_softness = (int)obs_data_get_int(settings, "overlay_bg_shadow_softness");
+	filter->overlay_ar_smooth_enabled = obs_data_get_bool(settings, "overlay_ar_smooth_enabled");
+	filter->overlay_ar_smooth_alpha = (float)obs_data_get_double(settings, "overlay_ar_smooth_alpha");
+
+	/* Si se desactiva el suavizado, invalidar el estado para evitar "saltos" al reactivar. */
+	if (!filter->overlay_ar_smooth_enabled) {
+		filter->overlay_ar_smooth_valid = false;
+		filter->overlay_ar_smooth_marker_id = -1;
+	}
 
 	/* Team Info (JSON local): ruta y carga (evita trabajo en hilo de render) */
 	const char *new_json_path =
@@ -1884,23 +2481,100 @@ static void filter_tick(void *data, float seconds)
 					/* Construir texto del scoreboard para overlay */
 					char sb_text[2048] = {0};
 					int offset = 0;
-					
-					/* Cabecera del scoreboard (ASCII para evitar problemas de codificación/fuentes) */
-					offset += snprintf(sb_text + offset, sizeof(sb_text) - offset,
-						"POS | %-20s | SOLVED\n", "EQUIPO");
-					offset += snprintf(sb_text + offset, sizeof(sb_text) - offset,
-						"----------------------------------------\n");
 
-					for (int i = 0; i < filter->scoreboard_team_count && i < 10; i++) {
-						char name_trunc[21] = {0};
-						strncpy(name_trunc, filter->scoreboard_teams[i].team_name, 20);
-						
-						offset += snprintf(sb_text + offset,
-								   sizeof(sb_text) - offset,
-								   "%2d | %-20s | %2d\n",
-								   filter->scoreboard_teams[i].rank,
-								   name_trunc,
-								   filter->scoreboard_teams[i].num_solved);
+					/* Tabla "limpia": sin separadores tipo '---' para que se vea profesional. */
+					const int name_width =
+						clampi(filter->scoreboard_name_max_chars, 5, 40);
+					const int max_rows = 10;
+					const int row_count =
+						(filter->scoreboard_team_count < max_rows)
+							? filter->scoreboard_team_count
+							: max_rows;
+
+					filter->scoreboard_header_lines = 1;
+					filter->scoreboard_row_count = row_count;
+					filter->scoreboard_line_count =
+						filter->scoreboard_header_lines + row_count;
+
+					{
+						size_t rem = (offset >= 0 && (size_t)offset < sizeof(sb_text))
+								     ? (sizeof(sb_text) - (size_t)offset)
+								     : 0;
+						if (rem > 0) {
+							int w = snprintf(sb_text + offset, rem,
+									 "POS  %-*s  RES\n",
+									 name_width, "EQUIPO");
+							if (w > 0) {
+								if ((size_t)w >= rem)
+									offset = (int)(sizeof(sb_text) - 1);
+								else
+									offset += w;
+							}
+						}
+					}
+
+					for (int i = 0; i < row_count; i++) {
+						char name_trunc[256] = {0};
+						const char *team_name =
+							filter->scoreboard_teams[i].team_name;
+						if (!team_name)
+							team_name = "";
+
+						/* Reservar 3 chars para "..." si hay truncado y el ancho lo permite. */
+						int base_chars = name_width;
+						if (base_chars > 6)
+							base_chars = name_width - 3;
+
+						utf8_copy_trunc_ellipsis(team_name, name_trunc,
+									 sizeof(name_trunc),
+									 base_chars);
+
+						const int disp_len =
+							utf8_count_codepoints_limit(name_trunc, 512);
+						int pad_spaces = name_width - disp_len;
+						if (pad_spaces < 0)
+							pad_spaces = 0;
+
+						{
+							size_t rem =
+								(offset >= 0 && (size_t)offset < sizeof(sb_text))
+									? (sizeof(sb_text) - (size_t)offset)
+									: 0;
+							if (rem > 0) {
+								int w = snprintf(sb_text + offset, rem,
+										 "%3d  %s",
+										 filter->scoreboard_teams[i].rank,
+										 name_trunc);
+								if (w > 0) {
+									if ((size_t)w >= rem)
+										offset = (int)(sizeof(sb_text) - 1);
+									else
+										offset += w;
+								}
+							}
+						}
+						while (pad_spaces-- > 0 &&
+						       (size_t)offset + 1 < sizeof(sb_text)) {
+							sb_text[offset++] = ' ';
+							sb_text[offset] = '\0';
+						}
+						{
+							size_t rem =
+								(offset >= 0 && (size_t)offset < sizeof(sb_text))
+									? (sizeof(sb_text) - (size_t)offset)
+									: 0;
+							if (rem > 0) {
+								int w = snprintf(sb_text + offset, rem,
+										 "  %3d\n",
+										 filter->scoreboard_teams[i].num_solved);
+								if (w > 0) {
+									if ((size_t)w >= rem)
+										offset = (int)(sizeof(sb_text) - 1);
+									else
+										offset += w;
+								}
+							}
+						}
 					}
 
 					/* Crear o actualizar fuente de texto GDI+ */
@@ -1944,9 +2618,8 @@ static void filter_tick(void *data, float seconds)
 						if (found_team) {
 							snprintf(ti_text, sizeof(ti_text),
 								"EQUIPO: %s\n"
-								"-------------------\n"
-								"PUESTO:    %d\n"
-								"RESUELTOS:  %d",
+								"PUESTO: %d\n"
+								"RESUELTOS: %d",
 								found_team->team_name,
 								found_team->rank,
 								found_team->num_solved);
@@ -2024,10 +2697,21 @@ static void filter_save(void *data, obs_data_t *settings)
 	obs_data_set_int(settings, "scoreboard_text_color", (int)filter->scoreboard_text_color);
 	obs_data_set_int(settings, "scoreboard_outline_color", (int)filter->scoreboard_outline_color);
 	obs_data_set_int(settings, "scoreboard_outline_size", filter->scoreboard_outline_size);
+	obs_data_set_int(settings, "scoreboard_name_max_chars", filter->scoreboard_name_max_chars);
+	obs_data_set_bool(settings, "scoreboard_row_stripes", filter->scoreboard_row_stripes);
+	obs_data_set_int(settings, "scoreboard_row_stripe_opacity", filter->scoreboard_row_stripe_opacity);
 	obs_data_set_bool(settings, "overlay_bg_enabled", filter->overlay_bg_enabled);
 	obs_data_set_int(settings, "overlay_bg_color", (int)filter->overlay_bg_color);
 	obs_data_set_int(settings, "overlay_bg_opacity", filter->overlay_bg_opacity);
 	obs_data_set_int(settings, "overlay_bg_padding", filter->overlay_bg_padding);
+	obs_data_set_int(settings, "overlay_bg_radius", filter->overlay_bg_radius);
+	obs_data_set_bool(settings, "overlay_bg_shadow_enabled", filter->overlay_bg_shadow_enabled);
+	obs_data_set_int(settings, "overlay_bg_shadow_opacity", filter->overlay_bg_shadow_opacity);
+	obs_data_set_int(settings, "overlay_bg_shadow_offset_x", filter->overlay_bg_shadow_offset_x);
+	obs_data_set_int(settings, "overlay_bg_shadow_offset_y", filter->overlay_bg_shadow_offset_y);
+	obs_data_set_int(settings, "overlay_bg_shadow_softness", filter->overlay_bg_shadow_softness);
+	obs_data_set_bool(settings, "overlay_ar_smooth_enabled", filter->overlay_ar_smooth_enabled);
+	obs_data_set_double(settings, "overlay_ar_smooth_alpha", (double)filter->overlay_ar_smooth_alpha);
 
 	/* Team Info: JSON local */
 	obs_data_set_string(settings, "team_info_json_path",
@@ -2163,10 +2847,21 @@ static void filter_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "scoreboard_text_color", 0xFFFFFFFF);
 	obs_data_set_default_int(settings, "scoreboard_outline_color", 0xFF000000);
 	obs_data_set_default_int(settings, "scoreboard_outline_size", 2);
+	obs_data_set_default_int(settings, "scoreboard_name_max_chars", 20);
+	obs_data_set_default_bool(settings, "scoreboard_row_stripes", true);
+	obs_data_set_default_int(settings, "scoreboard_row_stripe_opacity", 18);
 	obs_data_set_default_bool(settings, "overlay_bg_enabled", true);
 	obs_data_set_default_int(settings, "overlay_bg_color", 0x101010);
 	obs_data_set_default_int(settings, "overlay_bg_opacity", 70);
 	obs_data_set_default_int(settings, "overlay_bg_padding", 12);
+	obs_data_set_default_int(settings, "overlay_bg_radius", 14);
+	obs_data_set_default_bool(settings, "overlay_bg_shadow_enabled", true);
+	obs_data_set_default_int(settings, "overlay_bg_shadow_opacity", 35);
+	obs_data_set_default_int(settings, "overlay_bg_shadow_offset_x", 4);
+	obs_data_set_default_int(settings, "overlay_bg_shadow_offset_y", 4);
+	obs_data_set_default_int(settings, "overlay_bg_shadow_softness", 4);
+	obs_data_set_default_bool(settings, "overlay_ar_smooth_enabled", true);
+	obs_data_set_default_double(settings, "overlay_ar_smooth_alpha", 0.20);
 
 	// Valores por defecto de configuraciÃ³n de reloj
 	obs_data_set_default_int(settings, "clock_mode", 0);  // Tres manecillas por defecto
