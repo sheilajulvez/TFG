@@ -105,6 +105,44 @@ static size_t header_callback(char *buffer, size_t size, size_t nitems,
 	return total;
 }
 
+static bool fetch_team_name_by_url(CURL *curl, memory_buffer_t *buf,
+				   const char *team_url, char *out_name,
+				   size_t out_name_size)
+{
+	if (!curl || !buf || !buf->data || !team_url || !team_url[0] ||
+	    !out_name || out_name_size == 0)
+		return false;
+
+	out_name[0] = '\0';
+	buf->size = 0;
+	buf->data[0] = '\0';
+
+	curl_easy_setopt(curl, CURLOPT_URL, team_url);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, buf);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
+	CURLcode res = curl_easy_perform(curl);
+	long http_code = 0;
+	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+	if (res != CURLE_OK || http_code != 200)
+		return false;
+
+	if (parse_json_string(buf->data, "display_name", out_name,
+			      out_name_size) &&
+	    out_name[0]) {
+		return true;
+	}
+	if (parse_json_string(buf->data, "name", out_name, out_name_size) &&
+	    out_name[0]) {
+		return true;
+	}
+	return false;
+}
+
 /**
  * Parsea el JSON del scoreboard de DOMjudge.
  * Según la API: GET /api/v4/contests/{cid}/scoreboard
@@ -147,12 +185,19 @@ static int parse_scoreboard_json(const char *json,
 		/* Extraer campos según la API DOMjudge */
 		uint32_t rank_val = 0;
 		char team_id_str[64] = {0};
+		uint32_t team_id_num = 0;
 		uint32_t num_solved = 0;
 		uint32_t total_time_val = 0;
 
 		parse_json_int(temp, "rank", &rank_val);
-		parse_json_string(temp, "team_id", team_id_str,
-				  sizeof(team_id_str));
+		if (!parse_json_string(temp, "team_id", team_id_str,
+				       sizeof(team_id_str)) ||
+		    !team_id_str[0]) {
+			if (parse_json_int(temp, "team_id", &team_id_num)) {
+				snprintf(team_id_str, sizeof(team_id_str), "%u",
+					 team_id_num);
+			}
+		}
 
 		/* score es un objeto anidado: "score": { "num_solved": X, "total_time": Y } */
 		parse_json_int_nested(temp, "score", "num_solved",
@@ -208,8 +253,13 @@ static int parse_teams_json(const char *json, scoreboard_team_t *teams, int max_
 		memcpy(temp, obj, obj_len);
 		temp[obj_len] = '\0';
 		char tid[64] = {0};
+		uint32_t tid_num = 0;
 		char name[128] = {0};
-		parse_json_string(temp, "id", tid, sizeof(tid));
+		if (!parse_json_string(temp, "id", tid, sizeof(tid)) || !tid[0]) {
+			if (parse_json_int(temp, "id", &tid_num)) {
+				snprintf(tid, sizeof(tid), "%u", tid_num);
+			}
+		}
 		if (!parse_json_string(temp, "display_name", name, sizeof(name)) || !name[0]) {
 			parse_json_string(temp, "name", name, sizeof(name));
 		}
@@ -401,15 +451,66 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 			if (res == CURLE_OK) {
 				team_count = parse_scoreboard_json(buf.data, teams, MAX_SCOREBOARD_TEAMS);
 				if (team_count > 0) {
+					/* Resolver nombres desde cache local primero */
 					EnterCriticalSection(&sync->mutex);
 					for (int i = 0; i < team_count; i++) {
 						for (int j = 0; j < sync->cached_team_count; j++) {
 							if (strcmp(teams[i].team_id, sync->team_names[j].team_id) == 0) {
 								strncpy(teams[i].team_name, sync->team_names[j].team_name, sizeof(teams[i].team_name)-1);
+								teams[i].team_name[sizeof(teams[i].team_name) - 1] = '\0';
 								break;
 							}
 						}
 					}
+					LeaveCriticalSection(&sync->mutex);
+
+					/* Resolver nombres faltantes mediante /teams/{id} (top N mostrado). */
+					char team_url[2048];
+					char fetched_name[128];
+					for (int i = 0; i < team_count; i++) {
+						if (strncmp(teams[i].team_name, "Team ", 5) != 0)
+							continue;
+						if (!contest_url[0] || !teams[i].team_id[0])
+							continue;
+
+						snprintf(team_url, sizeof(team_url), "%s/teams/%s",
+							 contest_url, teams[i].team_id);
+						if (fetch_team_name_by_url(curl, &buf, team_url,
+									 fetched_name, sizeof(fetched_name))) {
+							strncpy(teams[i].team_name, fetched_name,
+								sizeof(teams[i].team_name) - 1);
+							teams[i].team_name[sizeof(teams[i].team_name) - 1] = '\0';
+
+							/* Guardar en cache para no volver a pedirlo todo el rato. */
+							EnterCriticalSection(&sync->mutex);
+							bool found = false;
+							for (int j = 0; j < sync->cached_team_count; j++) {
+								if (strcmp(sync->team_names[j].team_id,
+									   teams[i].team_id) == 0) {
+									strncpy(sync->team_names[j].team_name,
+										teams[i].team_name,
+										sizeof(sync->team_names[j].team_name) - 1);
+									sync->team_names[j].team_name[sizeof(sync->team_names[j].team_name) - 1] = '\0';
+									found = true;
+									break;
+								}
+							}
+							if (!found && sync->cached_team_count < 100) {
+								strncpy(sync->team_names[sync->cached_team_count].team_id,
+									teams[i].team_id,
+									sizeof(sync->team_names[sync->cached_team_count].team_id) - 1);
+								sync->team_names[sync->cached_team_count].team_id[sizeof(sync->team_names[sync->cached_team_count].team_id) - 1] = '\0';
+								strncpy(sync->team_names[sync->cached_team_count].team_name,
+									teams[i].team_name,
+									sizeof(sync->team_names[sync->cached_team_count].team_name) - 1);
+								sync->team_names[sync->cached_team_count].team_name[sizeof(sync->team_names[sync->cached_team_count].team_name) - 1] = '\0';
+								sync->cached_team_count++;
+							}
+							LeaveCriticalSection(&sync->mutex);
+						}
+					}
+
+					EnterCriticalSection(&sync->mutex);
 					sync->has_scoreboard_result = true;
 					sync->result_team_count = team_count;
 					memcpy(sync->result_teams, teams, sizeof(scoreboard_team_t) * team_count);

@@ -152,6 +152,33 @@ static int utf8_copy_trunc_ellipsis(const char *in, char *out, size_t out_size,
 	return 0;
 }
 
+static void scoreboard_sanitize_name(const char *in, char *out, size_t out_size)
+{
+	/* Evita que nombres con saltos/control rompan filas/columnas. */
+	if (!out || out_size == 0) {
+		return;
+	}
+	out[0] = '\0';
+	if (!in || !in[0]) {
+		return;
+	}
+
+	size_t oi = 0;
+	for (size_t i = 0; in[i] && oi + 1 < out_size; i++) {
+		unsigned char c = (unsigned char)in[i];
+		if (c == '\r' || c == '\n' || c == '\t') {
+			out[oi++] = ' ';
+			continue;
+		}
+		if (c < 32) {
+			out[oi++] = ' ';
+			continue;
+		}
+		out[oi++] = (char)c;
+	}
+	out[oi] = '\0';
+}
+
 static void overlay_pick_contrast_rgb(float r, float g, float b, float *out_r,
 				      float *out_g, float *out_b)
 {
@@ -436,6 +463,11 @@ struct cube_filter_data {
 	scoreboard_team_t scoreboard_teams[MAX_SCOREBOARD_TEAMS];
 	int scoreboard_team_count;
 	obs_source_t *scoreboard_text_source;  
+	/* Modo 3 (Scoreboard): columnas separadas en sources distintos para mayor control visual */
+	obs_source_t *sb_pos_source;
+	obs_source_t *sb_name_source;
+	obs_source_t *sb_solved_source;
+	obs_source_t *sb_time_source;
 	float scoreboard_offset_x;
 	float scoreboard_offset_y;
 	bool scoreboard_centered;
@@ -1240,6 +1272,10 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->api_password = NULL;
 	data->scoreboard_team_count = 0;
 	data->scoreboard_text_source = NULL;
+	data->sb_pos_source = NULL;
+	data->sb_name_source = NULL;
+	data->sb_solved_source = NULL;
+	data->sb_time_source = NULL;
 	data->scoreboard_offset_x = 10.0f;
 	data->scoreboard_offset_y = 10.0f;
 	data->scoreboard_centered = false;
@@ -1342,6 +1378,22 @@ static void filter_destroy(void *data)
 		obs_source_release(filter->scoreboard_text_source);
 		filter->scoreboard_text_source = NULL;
 	}
+	if (filter->sb_pos_source) {
+		obs_source_release(filter->sb_pos_source);
+		filter->sb_pos_source = NULL;
+	}
+	if (filter->sb_name_source) {
+		obs_source_release(filter->sb_name_source);
+		filter->sb_name_source = NULL;
+	}
+	if (filter->sb_solved_source) {
+		obs_source_release(filter->sb_solved_source);
+		filter->sb_solved_source = NULL;
+	}
+	if (filter->sb_time_source) {
+		obs_source_release(filter->sb_time_source);
+		filter->sb_time_source = NULL;
+	}
 	bfree(filter->api_base_url);
 	bfree(filter->contest_id);
 	bfree(filter->api_username);
@@ -1379,7 +1431,13 @@ static void filter_render(void *data, gs_effect_t *effect)
 		return;
 	}
 	
-	if ((filter->mode == 3 || filter->mode == 4) && !filter->scoreboard_text_source) {
+	if (filter->mode == 4 && !filter->scoreboard_text_source) {
+		obs_source_skip_video_filter(filter->source);
+		return;
+	}
+	if (filter->mode == 3 &&
+	    (!filter->sb_pos_source || !filter->sb_name_source ||
+	     !filter->sb_solved_source || !filter->sb_time_source)) {
 		obs_source_skip_video_filter(filter->source);
 		return;
 	}
@@ -1489,9 +1547,35 @@ static void filter_render(void *data, gs_effect_t *effect)
 	}
 
 	/* Renderizar overlay de scoreboard/teaminfo si hay datos */
-	if ((filter->mode == 3 || filter->mode == 4) && filter->scoreboard_text_source) {
-		uint32_t tw = obs_source_get_width(filter->scoreboard_text_source);
-		uint32_t th = obs_source_get_height(filter->scoreboard_text_source);
+	if ((filter->mode == 3 &&
+	     filter->sb_pos_source && filter->sb_name_source &&
+	     filter->sb_solved_source && filter->sb_time_source) ||
+	    (filter->mode == 4 && filter->scoreboard_text_source)) {
+		uint32_t tw = 0, th = 0;
+		uint32_t w_pos = 0, w_name = 0, w_res = 0, w_time = 0;
+		const float col_gap = 18.0f;
+		if (filter->mode == 3) {
+			/* Usar ancho real de cada columna para evitar cortes de nombres y mantener RES/TIEMPO alineados. */
+			w_pos = obs_source_get_width(filter->sb_pos_source);
+			w_name = obs_source_get_width(filter->sb_name_source);
+			w_res = obs_source_get_width(filter->sb_solved_source);
+			w_time = obs_source_get_width(filter->sb_time_source);
+
+			const uint32_t h_pos = obs_source_get_height(filter->sb_pos_source);
+			const uint32_t h_name = obs_source_get_height(filter->sb_name_source);
+			const uint32_t h_res = obs_source_get_height(filter->sb_solved_source);
+			const uint32_t h_time = obs_source_get_height(filter->sb_time_source);
+
+			tw = (uint32_t)((float)w_pos + col_gap + (float)w_name + col_gap +
+					(float)w_res + col_gap + (float)w_time);
+			th = h_pos;
+			if (h_name > th) th = h_name;
+			if (h_res > th) th = h_res;
+			if (h_time > th) th = h_time;
+		} else {
+			tw = obs_source_get_width(filter->scoreboard_text_source);
+			th = obs_source_get_height(filter->scoreboard_text_source);
+		}
 		
 		float x = filter->scoreboard_offset_x;
 		float y = filter->scoreboard_offset_y;
@@ -1768,7 +1852,34 @@ static void filter_render(void *data, gs_effect_t *effect)
 			}
 		}
 
-		obs_source_video_render(filter->scoreboard_text_source);
+		if (filter->mode == 3) {
+			float x_cursor = 0.0f;
+
+			gs_matrix_push();
+			gs_matrix_translate3f(x_cursor, 0.0f, 0.0f);
+			obs_source_video_render(filter->sb_pos_source);
+			gs_matrix_pop();
+			x_cursor += (float)w_pos + col_gap;
+
+			gs_matrix_push();
+			gs_matrix_translate3f(x_cursor, 0.0f, 0.0f);
+			obs_source_video_render(filter->sb_name_source);
+			gs_matrix_pop();
+			x_cursor += (float)w_name + col_gap;
+
+			gs_matrix_push();
+			gs_matrix_translate3f(x_cursor, 0.0f, 0.0f);
+			obs_source_video_render(filter->sb_solved_source);
+			gs_matrix_pop();
+			x_cursor += (float)w_res + col_gap;
+
+			gs_matrix_push();
+			gs_matrix_translate3f(x_cursor, 0.0f, 0.0f);
+			obs_source_video_render(filter->sb_time_source);
+			gs_matrix_pop();
+		} else {
+			obs_source_video_render(filter->scoreboard_text_source);
+		}
 		gs_matrix_pop();
 
 		gs_matrix_pop();
@@ -1779,7 +1890,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 		if (filter->mode == 4) {
 			 int log_throttle_render = 0;
 			if (log_throttle_render++ % 60 == 0) {
-				blog(LOG_INFO, "[CUBE-TEAM-INFO-RENDER] Dibujando en X: %d.1f, Y: %d.1f", final_x, final_y);
+				blog(LOG_INFO, "[CUBE-TEAM-INFO-RENDER] Dibujando en X: %.1f, Y: %.1f", final_x, final_y);
 			}
 		}
 
@@ -1793,6 +1904,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 
 	obs_leave_graphics();
 }
+
 static bool render_mode_changed(obs_properties_t *props,
 				obs_property_t *property, obs_data_t *settings)
 {
@@ -2220,13 +2332,15 @@ static void filter_update(void *data, obs_data_t *settings)
 		}
 	}
 
-	/* Crear fuente de texto siempre que estemos en modo Scoreboard (3) o Team Info (4) para el overlay */
+	/* Crear fuente de texto para modo Scoreboard (3) o Team Info (4) */
 	if ((filter->mode == 3 || filter->mode == 4) && !filter->scoreboard_text_source) {
 		obs_data_t *txt_settings = obs_data_create();
 		if (filter->mode == 3)
-			obs_data_set_string(txt_settings, "text", "[[ MODO SCOREBOARD ACTIVO ]]\nEsperando datos...");
+			obs_data_set_string(txt_settings, "text",
+					    "[[ MODO SCOREBOARD ACTIVO ]]\nEsperando datos...");
 		else
-			obs_data_set_string(txt_settings, "text", "[[ MODO TEAM INFO ACTIVO ]]\nEsperando Deteccion de ArUco...");
+			obs_data_set_string(txt_settings, "text",
+					    "[[ MODO TEAM INFO ACTIVO ]]\nEsperando Deteccion de ArUco...");
 		obs_data_set_int(txt_settings, "color", filter->scoreboard_text_color);
 		obs_data_set_int(txt_settings, "font_size", filter->scoreboard_font_size);
 		obs_data_set_string(txt_settings, "font_face", filter->scoreboard_font_face ? filter->scoreboard_font_face : "Arial");
@@ -2245,6 +2359,135 @@ static void filter_update(void *data, obs_data_t *settings)
 			obs_source_add_active_child(filter->source, filter->scoreboard_text_source);
 		}
 		obs_data_release(txt_settings);
+	}
+
+	/* Scoreboard modo 3: columnas separadas en sources distintos (POS/EQUIPO/RES/TIEMPO). */
+	if (filter->mode == 3 &&
+	    (!filter->sb_pos_source || !filter->sb_name_source ||
+	     !filter->sb_solved_source || !filter->sb_time_source)) {
+		char name_pos[64], name_name[64], name_res[64], name_time[64];
+		snprintf(name_pos, sizeof(name_pos), "sb_pos_%p", (void *)filter);
+		snprintf(name_name, sizeof(name_name), "sb_name_%p", (void *)filter);
+		snprintf(name_res, sizeof(name_res), "sb_res_%p", (void *)filter);
+		snprintf(name_time, sizeof(name_time), "sb_time_%p", (void *)filter);
+
+		obs_data_t *s_pos = obs_data_create();
+		obs_data_t *s_name = obs_data_create();
+		obs_data_t *s_res = obs_data_create();
+		obs_data_t *s_time = obs_data_create();
+		obs_data_t *font_obj = obs_data_create();
+
+		const int fs = (filter->scoreboard_font_size > 0) ? filter->scoreboard_font_size : 25;
+
+		obs_data_set_int(font_obj, "size", fs);
+		obs_data_set_string(font_obj, "face",
+				    (filter->scoreboard_font_face && filter->scoreboard_font_face[0])
+					    ? filter->scoreboard_font_face
+					    : "Arial");
+
+		obs_data_set_obj(s_pos, "font", font_obj);
+		obs_data_set_obj(s_name, "font", font_obj);
+		obs_data_set_obj(s_res, "font", font_obj);
+		obs_data_set_obj(s_time, "font", font_obj);
+
+		obs_data_set_int(s_pos, "color", filter->scoreboard_text_color);
+		obs_data_set_int(s_name, "color", filter->scoreboard_text_color);
+		obs_data_set_int(s_res, "color", filter->scoreboard_text_color);
+		obs_data_set_int(s_time, "color", filter->scoreboard_text_color);
+
+		obs_data_set_bool(s_pos, "outline", true);
+		obs_data_set_bool(s_name, "outline", true);
+		obs_data_set_bool(s_res, "outline", true);
+		obs_data_set_bool(s_time, "outline", true);
+		obs_data_set_int(s_pos, "outline_size", filter->scoreboard_outline_size);
+		obs_data_set_int(s_name, "outline_size", filter->scoreboard_outline_size);
+		obs_data_set_int(s_res, "outline_size", filter->scoreboard_outline_size);
+		obs_data_set_int(s_time, "outline_size", filter->scoreboard_outline_size);
+		obs_data_set_int(s_pos, "outline_color", filter->scoreboard_outline_color);
+		obs_data_set_int(s_name, "outline_color", filter->scoreboard_outline_color);
+		obs_data_set_int(s_res, "outline_color", filter->scoreboard_outline_color);
+		obs_data_set_int(s_time, "outline_color", filter->scoreboard_outline_color);
+
+		/* Alineación por columna. */
+		obs_data_set_int(s_pos, "align", 2);
+		obs_data_set_int(s_name, "align", 0);
+		obs_data_set_int(s_res, "align", 2);
+		obs_data_set_int(s_time, "align", 2);
+		obs_data_set_bool(s_pos, "extents", false);
+		obs_data_set_bool(s_name, "extents", false);
+		obs_data_set_bool(s_res, "extents", false);
+		obs_data_set_bool(s_time, "extents", false);
+
+		obs_data_set_string(s_pos, "text", "POS\n");
+		obs_data_set_string(s_name, "text", "EQUIPO\n");
+		obs_data_set_string(s_res, "text", "RES\n");
+		obs_data_set_string(s_time, "text", "TIEMPO\n");
+
+		filter->sb_pos_source =
+			obs_source_create_private("text_gdiplus_v2", name_pos, s_pos);
+		if (!filter->sb_pos_source)
+			filter->sb_pos_source =
+				obs_source_create_private("text_gdiplus", name_pos, s_pos);
+
+		filter->sb_name_source =
+			obs_source_create_private("text_gdiplus_v2", name_name, s_name);
+		if (!filter->sb_name_source)
+			filter->sb_name_source =
+				obs_source_create_private("text_gdiplus", name_name, s_name);
+
+		filter->sb_solved_source =
+			obs_source_create_private("text_gdiplus_v2", name_res, s_res);
+		if (!filter->sb_solved_source)
+			filter->sb_solved_source =
+				obs_source_create_private("text_gdiplus", name_res, s_res);
+
+		filter->sb_time_source =
+			obs_source_create_private("text_gdiplus_v2", name_time, s_time);
+		if (!filter->sb_time_source)
+			filter->sb_time_source =
+				obs_source_create_private("text_gdiplus", name_time, s_time);
+
+		if (filter->sb_pos_source)
+			obs_source_add_active_child(filter->source, filter->sb_pos_source);
+		if (filter->sb_name_source)
+			obs_source_add_active_child(filter->source, filter->sb_name_source);
+		if (filter->sb_solved_source)
+			obs_source_add_active_child(filter->source, filter->sb_solved_source);
+		if (filter->sb_time_source)
+			obs_source_add_active_child(filter->source, filter->sb_time_source);
+
+		blog(LOG_INFO,
+		     "[CUBE] Scoreboard columnas creadas (POS/EQUIPO/RES/TIEMPO)");
+
+		obs_data_release(font_obj);
+		obs_data_release(s_pos);
+		obs_data_release(s_name);
+		obs_data_release(s_res);
+		obs_data_release(s_time);
+	}
+
+	/* Si salimos del modo 3, liberar columnas para evitar overlays residuales. */
+	if (filter->mode != 3) {
+		if (filter->sb_pos_source) {
+			obs_source_remove_active_child(filter->source, filter->sb_pos_source);
+			obs_source_release(filter->sb_pos_source);
+			filter->sb_pos_source = NULL;
+		}
+		if (filter->sb_name_source) {
+			obs_source_remove_active_child(filter->source, filter->sb_name_source);
+			obs_source_release(filter->sb_name_source);
+			filter->sb_name_source = NULL;
+		}
+		if (filter->sb_solved_source) {
+			obs_source_remove_active_child(filter->source, filter->sb_solved_source);
+			obs_source_release(filter->sb_solved_source);
+			filter->sb_solved_source = NULL;
+		}
+		if (filter->sb_time_source) {
+			obs_source_remove_active_child(filter->source, filter->sb_time_source);
+			obs_source_release(filter->sb_time_source);
+			filter->sb_time_source = NULL;
+		}
 	}
 
 	/* Aplicar cambios de fuente en tiempo real si la fuente ya existe */
@@ -2272,6 +2515,53 @@ static void filter_update(void *data, obs_data_t *settings)
 		obs_data_release(font_obj);
 		obs_data_release(t_set);
 	}
+
+	/* Aplicar estilo también a columnas del scoreboard (modo 3). */
+	if (filter->sb_pos_source || filter->sb_name_source ||
+	    filter->sb_solved_source || filter->sb_time_source) {
+		obs_data_t *font_obj = obs_data_create();
+		const int fs = (filter->scoreboard_font_size > 0) ? filter->scoreboard_font_size : 25;
+		const int name_chars = clampi(filter->scoreboard_name_max_chars, 8, 60);
+		const int w_pos = fs * 3 + 18;
+		const int w_name = (int)((float)fs * (float)name_chars * 0.65f) + 24;
+		const int w_res = fs * 4 + 18;
+		const int w_time = fs * 6 + 22;
+
+		obs_data_set_int(font_obj, "size", fs);
+		if (filter->scoreboard_font_face && filter->scoreboard_font_face[0])
+			obs_data_set_string(font_obj, "face", filter->scoreboard_font_face);
+		else
+			obs_data_set_string(font_obj, "face", "Arial");
+
+		obs_source_t *cols[4] = {
+			filter->sb_pos_source,
+			filter->sb_name_source,
+			filter->sb_solved_source,
+			filter->sb_time_source
+		};
+		const int aligns[4] = {2, 0, 2, 2};
+		const int widths[4] = {w_pos, w_name, w_res, w_time};
+
+		for (int i = 0; i < 4; i++) {
+			if (!cols[i])
+				continue;
+			obs_data_t *s = obs_source_get_settings(cols[i]);
+			obs_data_set_obj(s, "font", font_obj);
+			obs_data_set_int(s, "color", filter->scoreboard_text_color);
+			obs_data_set_bool(s, "outline", true);
+			obs_data_set_int(s, "outline_color", filter->scoreboard_outline_color);
+			obs_data_set_int(s, "outline_size", filter->scoreboard_outline_size);
+			obs_data_set_int(s, "align", aligns[i]);
+			obs_data_set_bool(s, "extents", false);
+			obs_data_set_int(s, "extents_cx", widths[i]);
+			obs_data_set_int(s, "extents_cy", 0);
+			obs_source_update(cols[i], s);
+			obs_data_release(s);
+		}
+
+		obs_data_release(font_obj);
+	}
+
 
 	/* Web sync: crear o actualizar (nunca bloquea el render) */
 	if (filter->sync_enabled) {
@@ -2478,13 +2768,6 @@ static void filter_tick(void *data, float seconds)
 					memcpy(filter->scoreboard_teams, sync_result.teams,
 					       sizeof(scoreboard_team_t) * sync_result.team_count);
 
-					/* Construir texto del scoreboard para overlay */
-					char sb_text[2048] = {0};
-					int offset = 0;
-
-					/* Tabla "limpia": sin separadores tipo '---' para que se vea profesional. */
-					const int name_width =
-						clampi(filter->scoreboard_name_max_chars, 5, 40);
 					const int max_rows = 10;
 					const int row_count =
 						(filter->scoreboard_team_count < max_rows)
@@ -2496,98 +2779,64 @@ static void filter_tick(void *data, float seconds)
 					filter->scoreboard_line_count =
 						filter->scoreboard_header_lines + row_count;
 
-					{
-						size_t rem = (offset >= 0 && (size_t)offset < sizeof(sb_text))
-								     ? (sizeof(sb_text) - (size_t)offset)
-								     : 0;
-						if (rem > 0) {
-							int w = snprintf(sb_text + offset, rem,
-									 "POS  %-*s  RES\n",
-									 name_width, "EQUIPO");
-							if (w > 0) {
-								if ((size_t)w >= rem)
-									offset = (int)(sizeof(sb_text) - 1);
-								else
-									offset += w;
-							}
-						}
-					}
+					char col_pos[1024] = {0};
+					char col_name[2048] = {0};
+					char col_res[1024] = {0};
+					char col_time[1024] = {0};
+
+					int off_pos = 0, off_name = 0, off_res = 0, off_time = 0;
+					off_pos += snprintf(col_pos + off_pos, sizeof(col_pos) - (size_t)off_pos, "POS\n");
+					off_name += snprintf(col_name + off_name, sizeof(col_name) - (size_t)off_name, "EQUIPO\n");
+					off_res += snprintf(col_res + off_res, sizeof(col_res) - (size_t)off_res, "RES\n");
+					off_time += snprintf(col_time + off_time, sizeof(col_time) - (size_t)off_time, "TIEMPO\n");
 
 					for (int i = 0; i < row_count; i++) {
-						char name_trunc[256] = {0};
-						const char *team_name =
-							filter->scoreboard_teams[i].team_name;
-						if (!team_name)
-							team_name = "";
+						const scoreboard_team_t *t = &filter->scoreboard_teams[i];
+						char team_clean[512] = {0};
+						const char *team_name = t->team_name ? t->team_name : "";
 
-						/* Reservar 3 chars para "..." si hay truncado y el ancho lo permite. */
-						int base_chars = name_width;
-						if (base_chars > 6)
-							base_chars = name_width - 3;
+						scoreboard_sanitize_name(team_name, team_clean, sizeof(team_clean));
 
-						utf8_copy_trunc_ellipsis(team_name, name_trunc,
-									 sizeof(name_trunc),
-									 base_chars);
+						char time_buf[32] = {0};
+						int total_m = t->total_time;
+						if (total_m < 0)
+							total_m = 0;
+						/* Mostrar valor bruto de score.total_time (DOMjudge), p.ej. 728, 1036. */
+						snprintf(time_buf, sizeof(time_buf), "%d", total_m);
 
-						const int disp_len =
-							utf8_count_codepoints_limit(name_trunc, 512);
-						int pad_spaces = name_width - disp_len;
-						if (pad_spaces < 0)
-							pad_spaces = 0;
-
-						{
-							size_t rem =
-								(offset >= 0 && (size_t)offset < sizeof(sb_text))
-									? (sizeof(sb_text) - (size_t)offset)
-									: 0;
-							if (rem > 0) {
-								int w = snprintf(sb_text + offset, rem,
-										 "%3d  %s",
-										 filter->scoreboard_teams[i].rank,
-										 name_trunc);
-								if (w > 0) {
-									if ((size_t)w >= rem)
-										offset = (int)(sizeof(sb_text) - 1);
-									else
-										offset += w;
-								}
-							}
-						}
-						while (pad_spaces-- > 0 &&
-						       (size_t)offset + 1 < sizeof(sb_text)) {
-							sb_text[offset++] = ' ';
-							sb_text[offset] = '\0';
-						}
-						{
-							size_t rem =
-								(offset >= 0 && (size_t)offset < sizeof(sb_text))
-									? (sizeof(sb_text) - (size_t)offset)
-									: 0;
-							if (rem > 0) {
-								int w = snprintf(sb_text + offset, rem,
-										 "  %3d\n",
-										 filter->scoreboard_teams[i].num_solved);
-								if (w > 0) {
-									if ((size_t)w >= rem)
-										offset = (int)(sizeof(sb_text) - 1);
-									else
-										offset += w;
-								}
-							}
-						}
+						off_pos += snprintf(col_pos + off_pos, sizeof(col_pos) - (size_t)off_pos,
+								    "%d\n", t->rank);
+						off_name += snprintf(col_name + off_name, sizeof(col_name) - (size_t)off_name,
+								     "%s\n", team_clean);
+						off_res += snprintf(col_res + off_res, sizeof(col_res) - (size_t)off_res,
+								    "%d\n", t->num_solved);
+						off_time += snprintf(col_time + off_time, sizeof(col_time) - (size_t)off_time,
+								     "%s\n", time_buf);
 					}
 
-					/* Crear o actualizar fuente de texto GDI+ */
-					if (filter->scoreboard_text_source) {
-						obs_data_t *txt_settings = obs_source_get_settings(
-							filter->scoreboard_text_source);
-						const char *old_text = obs_data_get_string(txt_settings, "text");
-						if (!old_text || strcmp(old_text, sb_text) != 0) {
-							obs_data_set_string(txt_settings, "text", sb_text);
-							obs_source_update(filter->scoreboard_text_source,
-									  txt_settings);
-						}
-						obs_data_release(txt_settings);
+					if (filter->sb_pos_source) {
+						obs_data_t *s = obs_source_get_settings(filter->sb_pos_source);
+						obs_data_set_string(s, "text", col_pos);
+						obs_source_update(filter->sb_pos_source, s);
+						obs_data_release(s);
+					}
+					if (filter->sb_name_source) {
+						obs_data_t *s = obs_source_get_settings(filter->sb_name_source);
+						obs_data_set_string(s, "text", col_name);
+						obs_source_update(filter->sb_name_source, s);
+						obs_data_release(s);
+					}
+					if (filter->sb_solved_source) {
+						obs_data_t *s = obs_source_get_settings(filter->sb_solved_source);
+						obs_data_set_string(s, "text", col_res);
+						obs_source_update(filter->sb_solved_source, s);
+						obs_data_release(s);
+					}
+					if (filter->sb_time_source) {
+						obs_data_t *s = obs_source_get_settings(filter->sb_time_source);
+						obs_data_set_string(s, "text", col_time);
+						obs_source_update(filter->sb_time_source, s);
+						obs_data_release(s);
 					}
 				}
 			}
