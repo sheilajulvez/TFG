@@ -31,7 +31,6 @@ struct web_sync {
 
 	bool has_new_result;
 
-	/* Resultados DOMjudge */
 	bool has_contest_result;
 	double result_elapsed_seconds;
 	double result_remaining_seconds;
@@ -41,7 +40,6 @@ struct web_sync {
 	scoreboard_team_t team_names[100];
 	int cached_team_count;
 
-	/* Autenticación */
 	char *username;
 	char *password;
 
@@ -86,7 +84,6 @@ static size_t header_callback(char *buffer, size_t size, size_t nitems,
 	header_date_t *hdr = (header_date_t *)userdata;
 	size_t total = size * nitems;
 
-	/* Buscar "Date:" al inicio de la línea  */
 	if (total > 6 && (_strnicmp(buffer, "Date:", 5) == 0)) {
 		const char *p = buffer + 5;
 		while (*p == ' ' || *p == '\t')
@@ -152,12 +149,10 @@ static bool fetch_team_name_by_url(CURL *curl, memory_buffer_t *buf,
 static int parse_scoreboard_json(const char *json,
 				 scoreboard_team_t *teams, int max_teams)
 {
-	/* Buscar el array "rows" */
 	const char *rows_key = strstr(json, "\"rows\"");
 	if (!rows_key)
 		return 0;
 
-	/* Buscar el inicio del array '[' */
 	const char *arr_start = strchr(rows_key, '[');
 	if (!arr_start)
 		return 0;
@@ -174,7 +169,6 @@ static int parse_scoreboard_json(const char *json,
 		if (!obj_end)
 			break;
 
-		/* Copiar el objeto a un buffer temporal para parseo seguro */
 		size_t obj_len = (size_t)(obj_end - obj + 1);
 		if (obj_len > 2048)
 			obj_len = 2048;
@@ -182,7 +176,6 @@ static int parse_scoreboard_json(const char *json,
 		memcpy(temp, obj, obj_len);
 		temp[obj_len] = '\0';
 
-		/* Extraer campos según la API DOMjudge */
 		uint32_t rank_val = 0;
 		char team_id_str[64] = {0};
 		uint32_t team_id_num = 0;
@@ -222,7 +215,6 @@ static int parse_scoreboard_json(const char *json,
 		count++;
 		p = obj_end + 1;
 
-		/* Si encontramos ']' estamos fuera del array */
 		while (*p && (*p == ' ' || *p == '\t' || *p == '\n' ||
 			      *p == '\r' || *p == ','))
 			p++;
@@ -264,7 +256,6 @@ static int parse_teams_json(const char *json, scoreboard_team_t *teams, int max_
 			parse_json_string(temp, "name", name, sizeof(name));
 		}
 		if (tid[0] && name[0]) {
-			/* Copia segura: garantiza terminador NUL para evitar basura en pantalla/logs. */
 			strncpy(teams[count].team_id, tid, sizeof(teams[count].team_id) - 1);
 			teams[count].team_id[sizeof(teams[count].team_id) - 1] = '\0';
 
@@ -293,7 +284,6 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	bool https_supported = false;
 	const char *const *proto = NULL;
 	
-	/* Variables de bucle y estado */
 	float interval;
 	char contest_url[2048];
 	char scoreboard_url[2048];
@@ -305,13 +295,11 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	long http_code;
 	header_date_t hdr;
 	
-	/* Variables para parseo de contest */
 	double server_time, start_epoch, end_epoch, elapsed, remaining, total_dur;
 	char start_time_str[128];
 	char end_time_str[128];
 	bool got_start, got_end;
 	
-	/* Variables para scoreboard */
 	scoreboard_team_t teams[MAX_SCOREBOARD_TEAMS];
 	int team_count;
 	int tc;
@@ -451,7 +439,6 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 			if (res == CURLE_OK) {
 				team_count = parse_scoreboard_json(buf.data, teams, MAX_SCOREBOARD_TEAMS);
 				if (team_count > 0) {
-					/* Resolver nombres desde cache local primero */
 					EnterCriticalSection(&sync->mutex);
 					for (int i = 0; i < team_count; i++) {
 						for (int j = 0; j < sync->cached_team_count; j++) {
@@ -464,7 +451,6 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 					}
 					LeaveCriticalSection(&sync->mutex);
 
-					/* Resolver nombres faltantes mediante /teams/{id} (top N mostrado). */
 					char team_url[2048];
 					char fetched_name[128];
 					for (int i = 0; i < team_count; i++) {
@@ -481,7 +467,6 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 								sizeof(teams[i].team_name) - 1);
 							teams[i].team_name[sizeof(teams[i].team_name) - 1] = '\0';
 
-							/* Guardar en cache para no volver a pedirlo todo el rato. */
 							EnterCriticalSection(&sync->mutex);
 							bool found = false;
 							for (int j = 0; j < sync->cached_team_count; j++) {
@@ -729,7 +714,6 @@ bool web_sync_test_connection(const char *base_url, const char *contest_id,
 	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
 
 	if (res == CURLE_OK) {
-		/* Verificar que el JSON contiene el campo "id" del contest */
 		char id_str[64] = {0};
 		ok = parse_json_string(buf.data, "id", id_str, sizeof(id_str));
 		if (ok) {

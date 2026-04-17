@@ -317,26 +317,29 @@ bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 
 	// Centro del marcador en coords base
 	float im_cx = 0.0f, im_cy = 0.0f;
+	const double scale_x = double(fw) / double(base_w);
+	const double scale_y = double(fh) / double(base_h);
 	for (int i = 0; i < 4; ++i) {
-		float vx = corners[marker_index][i].x * ((float)base_w / frame->width);
-		float vy = corners[marker_index][i].y * ((float)base_h / frame->height);
+		float vx_base = corners[marker_index][i].x * ((float)base_w / frame->width);
+		float vy_base = corners[marker_index][i].y * ((float)base_h / frame->height);
 
-		vx = std::clamp(vx, 0.0f, float(w - 1));
-		vy = std::clamp(vy, 0.0f, float(h - 1));
+		vx_base = std::clamp(vx_base, 0.0f, float(w - 1));
+		vy_base = std::clamp(vy_base, 0.0f, float(h - 1));
 
-		res->corners[i][0] = vx;
-		res->corners[i][1] = vy;
+		const float vx_screen = std::clamp(float(vx_base * scale_x), 0.0f, float(fw));
+		const float vy_screen = std::clamp(float(vy_base * scale_y), 0.0f, float(fh));
 
-		im_cx += vx;
-		im_cy += vy;
+		/* Guardamos esquinas en coordenadas de pantalla OBS para alinear el overlay AR 1:1. */
+		res->corners[i][0] = vx_screen;
+		res->corners[i][1] = vy_screen;
+
+		im_cx += vx_base;
+		im_cy += vy_base;
 	}
 	im_cx /= 4.0f;
 	im_cy /= 4.0f;
 
 	// Escalar al tamano de salida OBS
-	double scale_x = double(fw) / double(base_w);
-	double scale_y = double(fh) / double(base_h);
-
 	res->screen_pos_x = float(im_cx * scale_x);
 	res->screen_pos_y = float(im_cy * scale_y);
 
@@ -462,26 +465,29 @@ bool process_frame_rgba_select_ids(ArucoDetector *det, struct obs_source_frame *
 
 	// Centro del marcador en coords base
 	float im_cx = 0.0f, im_cy = 0.0f;
+	const double scale_x = double(fw) / double(base_w);
+	const double scale_y = double(fh) / double(base_h);
 	for (int i = 0; i < 4; ++i) {
-		float vx = corners[marker_index][i].x * ((float)base_w / frame->width);
-		float vy = corners[marker_index][i].y * ((float)base_h / frame->height);
+		float vx_base = corners[marker_index][i].x * ((float)base_w / frame->width);
+		float vy_base = corners[marker_index][i].y * ((float)base_h / frame->height);
 
-		vx = std::clamp(vx, 0.0f, float(w - 1));
-		vy = std::clamp(vy, 0.0f, float(h - 1));
+		vx_base = std::clamp(vx_base, 0.0f, float(w - 1));
+		vy_base = std::clamp(vy_base, 0.0f, float(h - 1));
 
-		res->corners[i][0] = vx;
-		res->corners[i][1] = vy;
+		const float vx_screen = std::clamp(float(vx_base * scale_x), 0.0f, float(fw));
+		const float vy_screen = std::clamp(float(vy_base * scale_y), 0.0f, float(fh));
 
-		im_cx += vx;
-		im_cy += vy;
+		/* Guardamos esquinas en coordenadas de pantalla OBS para alinear el overlay AR 1:1. */
+		res->corners[i][0] = vx_screen;
+		res->corners[i][1] = vy_screen;
+
+		im_cx += vx_base;
+		im_cy += vy_base;
 	}
 	im_cx /= 4.0f;
 	im_cy /= 4.0f;
 
 	// Escalar al tamano de salida OBS
-	double scale_x = double(fw) / double(base_w);
-	double scale_y = double(fh) / double(base_h);
-
 	res->screen_pos_x = float(im_cx * scale_x);
 	res->screen_pos_y = float(im_cy * scale_y);
 

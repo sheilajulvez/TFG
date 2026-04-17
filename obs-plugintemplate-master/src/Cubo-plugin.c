@@ -1,4 +1,4 @@
-﻿// InclusiÃ³n de las cabeceras del API de OBS Studio.
+// InclusiÃ³n de las cabeceras del API de OBS Studio.
 #include <obs-module.h>
 #include <graphics/graphics.h>
 #include <graphics/matrix4.h>
@@ -28,7 +28,6 @@
 /* MÃ¡ximo de mappings ArUco marker â†’ team_id para modo Team Info */
 #define MAX_TEAM_INF 16
 
-/* Mapeo de Team Info: ArUco ID -> team_id (DOMjudge) cargado desde JSON local */
 struct team_info_mapping {
 	int aruco_id;     /* ID del marker ArUco detectado */
 	char team_id[64]; /* ID de equipo (DOMjudge) asociado */
@@ -103,7 +102,6 @@ static int utf8_count_codepoints_limit(const char *s, int max_codepoints)
 static int utf8_copy_trunc_ellipsis(const char *in, char *out, size_t out_size,
 				   int max_chars)
 {
-	/* Devuelve 1 si ha truncado, 0 si no. */
 	if (!out || out_size == 0)
 		return 0;
 	out[0] = '\0';
@@ -111,7 +109,6 @@ static int utf8_copy_trunc_ellipsis(const char *in, char *out, size_t out_size,
 	if (!in || !in[0] || max_chars <= 0)
 		return 0;
 
-	/* Copiar hasta max_chars codepoints. */
 	int copied = 0;
 	size_t oi = 0;
 	const char *p = in;
@@ -128,7 +125,6 @@ static int utf8_copy_trunc_ellipsis(const char *in, char *out, size_t out_size,
 	}
 	out[oi] = '\0';
 
-	/* Si queda texto sin copiar, anadir "..." si cabe. */
 	if (*p) {
 		const char *dots = "...";
 		size_t dots_len = 3;
@@ -154,7 +150,6 @@ static int utf8_copy_trunc_ellipsis(const char *in, char *out, size_t out_size,
 
 static void scoreboard_sanitize_name(const char *in, char *out, size_t out_size)
 {
-	/* Evita que nombres con saltos/control rompan filas/columnas. */
 	if (!out || out_size == 0) {
 		return;
 	}
@@ -182,7 +177,6 @@ static void scoreboard_sanitize_name(const char *in, char *out, size_t out_size)
 static void overlay_pick_contrast_rgb(float r, float g, float b, float *out_r,
 				      float *out_g, float *out_b)
 {
-	/* Elige blanco o negro segun luminancia para que las bandas se vean bien. */
 	const float l = 0.2126f * r + 0.7152f * g + 0.0722f * b;
 	if (l < 0.5f) {
 		*out_r = 1.0f;
@@ -229,11 +223,9 @@ static size_t utf8_copy_n_codepoints(const char *in, char *out, size_t out_size,
 		} else if ((*p & 0xF8) == 0xF0) {
 			seq = 4;
 		} else {
-			/* Byte invalido: consumir 1 para evitar bucle infinito */
 			seq = 1;
 		}
 
-		/* Comprobar capacidad: dejamos 1 byte para '\0' */
 		if (written + seq >= out_size)
 			break;
 
@@ -257,28 +249,35 @@ static size_t utf8_copy_n_codepoints(const char *in, char *out, size_t out_size,
 static void utf8_truncate_with_ellipsis(const char *in, char *out, size_t out_size,
 				       size_t max_codepoints)
 {
-	/* Trunca con "..." ASCII si hace falta. */
-	bool truncated = false;
-	utf8_copy_n_codepoints(in, out, out_size, max_codepoints, &truncated);
-	if (!truncated)
-		return;
-
-	const char *ellipsis = "...";
-	const size_t el_len = 3;
-	const size_t cur = strlen(out);
-	if (out_size <= 1)
-		return;
-
-	if (cur + el_len < out_size) {
-		memcpy(out + cur, ellipsis, el_len);
-		out[cur + el_len] = '\0';
+	if (max_codepoints <= 3) {
+		bool dummy = false;
+		utf8_copy_n_codepoints(in, out, out_size, max_codepoints, &dummy);
 		return;
 	}
 
-	size_t new_len = (out_size > el_len + 1) ? (out_size - el_len - 1) : 0;
-	out[new_len] = '\0';
-	memcpy(out + new_len, ellipsis, el_len);
-	out[new_len + el_len] = '\0';
+	size_t in_codepoints = 0;
+	const unsigned char *pi = (const unsigned char *)in;
+	while (*pi) {
+		if ((*pi & 0xC0) != 0x80) in_codepoints++;
+		pi++;
+	}
+
+	if (in_codepoints <= max_codepoints) {
+		bool dummy = false;
+		utf8_copy_n_codepoints(in, out, out_size, max_codepoints, &dummy);
+	} else {
+		bool dummy = false;
+		size_t keep = max_codepoints - 3;
+		utf8_copy_n_codepoints(in, out, out_size, keep, &dummy);
+		
+		const char *ellipsis = "...";
+		const size_t el_len = 3;
+		const size_t cur = strlen(out);
+		if (cur + el_len < out_size) {
+			memcpy(out + cur, ellipsis, el_len);
+			out[cur + el_len] = '\0';
+		}
+	}
 }
 
 static int count_lines_lf(const char *text)
@@ -293,7 +292,6 @@ static int count_lines_lf(const char *text)
 	return lines;
 }
 
-/* Convierte rvec (eje-Ã¡ngulo) de OpenCV a matriz 3x3 usando Rodrigues. */
 static void aruco_rvec_to_rotmat3x3(const float rvec[3], float R[3][3])
 {
 	/* FÃ³rmula de Rodrigues para eje unitario k y Ã¡ngulo theta:
@@ -304,7 +302,6 @@ static void aruco_rvec_to_rotmat3x3(const float rvec[3], float R[3][3])
 	const float rz = rvec[2];
 	const float theta = sqrtf(rx * rx + ry * ry + rz * rz);
 
-	/* Caso sin rotaciÃ³n */
 	if (theta < 1e-6f) {
 		R[0][0] = 1.0f; R[0][1] = 0.0f; R[0][2] = 0.0f;
 		R[1][0] = 0.0f; R[1][1] = 1.0f; R[1][2] = 0.0f;
@@ -333,7 +330,6 @@ static void aruco_rvec_to_rotmat3x3(const float rvec[3], float R[3][3])
 	R[2][2] = kz * kz * v + c;
 }
 
-/* Construye una matriz 4x4 de pose desde rvec/tvec (OpenCV). */
 static void aruco_pose_to_matrix4(const float rvec[3], const float tvec[3],
 				  struct matrix4 *out_pose)
 {
@@ -343,7 +339,6 @@ static void aruco_pose_to_matrix4(const float rvec[3], const float tvec[3],
 	float R3[3][3];
 	aruco_rvec_to_rotmat3x3(rvec, R3);
 
-	/* OBS matrix4 almacena columnas x/y/z/t como vec4. */
 	matrix4_identity(out_pose);
 	out_pose->x.x = R3[0][0];
 	out_pose->x.y = R3[1][0];
@@ -366,32 +361,53 @@ static void aruco_pose_to_matrix4(const float rvec[3], const float tvec[3],
 	out_pose->t.w = 1.0f;
 }
 
-/* Calcula mÃ©tricas 2D del marcador en pantalla a partir de sus 4 esquinas. */
 static bool aruco_marker_metrics_2d(const ArucoResult *res,
+				    float screen_h,
 				    float *out_edge_px,
-				    float *out_angle_rad)
+				    float *out_width_px,
+				    float *out_height_px,
+				    float *out_angle_rad,
+				    float *out_center_x,
+				    float *out_center_y)
 {
-	if (!res || !res->detected || !out_edge_px || !out_angle_rad)
+	if (!res || !res->detected || !(screen_h > 1.0f) || !out_edge_px || !out_angle_rad ||
+	    !out_width_px || !out_height_px || !out_center_x || !out_center_y)
 		return false;
 
-	/* Distancias de los 4 lados en pÃ­xeles (aprox). */
-	const float x0 = res->corners[0][0], y0 = res->corners[0][1];
-	const float x1 = res->corners[1][0], y1 = res->corners[1][1];
-	const float x2 = res->corners[2][0], y2 = res->corners[2][1];
-	const float x3 = res->corners[3][0], y3 = res->corners[3][1];
+	/* Distancias de los 4 lados en pixeles (aprox). */
+	const float x0 = res->corners[0][0], y0 = screen_h - res->corners[0][1];
+	const float x1 = res->corners[1][0], y1 = screen_h - res->corners[1][1];
+	const float x2 = res->corners[2][0], y2 = screen_h - res->corners[2][1];
+	const float x3 = res->corners[3][0], y3 = screen_h - res->corners[3][1];
 
 	const float e01 = hypotf(x1 - x0, y1 - y0);
 	const float e12 = hypotf(x2 - x1, y2 - y1);
 	const float e23 = hypotf(x3 - x2, y3 - y2);
 	const float e30 = hypotf(x0 - x3, y0 - y3);
+	const float marker_w = (e01 + e23) * 0.5f;
+	const float marker_h = (e12 + e30) * 0.5f;
 
 	const float edge_avg = (e01 + e12 + e23 + e30) * 0.25f;
-	if (!(edge_avg > 1.0f))
+	if (!(edge_avg > 1.0f) || !(marker_w > 1.0f) || !(marker_h > 1.0f))
 		return false;
 
-	/* Ãngulo en pantalla: direcciÃ³n del lado 0->1 (manteniendo el mismo sentido que ya venÃ­as usando) */
-	*out_angle_rad = atan2f((y1 - y0), x1 - x0);
+	/* Centro del marcador convertido al sistema del render (Y hacia arriba en gs_ortho). */
+	*out_center_x = res->screen_pos_x;
+	*out_center_y = screen_h - res->screen_pos_y;
+	if (!isfinite(*out_center_x) || !isfinite(*out_center_y) ||
+	    *out_center_x < 0.0f || *out_center_y < 0.0f) {
+		/* Fallback robusto al promedio de esquinas si screen_pos no es valido. */
+		*out_center_x = (x0 + x1 + x2 + x3) * 0.25f;
+		*out_center_y = (y0 + y1 + y2 + y3) * 0.25f;
+	}
+
+	/* Angulo robusto en pantalla: promedio de borde superior e inferior. */
+	const float vx = ((x1 - x0) + (x2 - x3)) * 0.5f;
+	const float vy = ((y1 - y0) + (y2 - y3)) * 0.5f;
+	*out_angle_rad = atan2f(vy, vx);
 	*out_edge_px = edge_avg;
+	*out_width_px = marker_w;
+	*out_height_px = marker_h;
 	return true;
 }
 struct cube_filter_data {
@@ -436,7 +452,6 @@ struct cube_filter_data {
 	float ar_offset_rot_z;
 	
 
-	// Resultados del ArUco
 	ArucoDetector *detector; //
 	ArucoResult last_result; //
 
@@ -497,6 +512,8 @@ struct cube_filter_data {
 	float overlay_ar_smooth_x;
 	float overlay_ar_smooth_y;
 	float overlay_ar_smooth_scale;
+	float overlay_ar_smooth_scale_x;
+	float overlay_ar_smooth_scale_y;
 	float overlay_ar_smooth_angle;
 
 	/* Tabla Scoreboard (modo 3): formato profesional */
@@ -1179,17 +1196,13 @@ gs_texture_t *load_texture_file(const char *path)
 	if (image.loaded) {
 		blog(LOG_INFO, "Textura de usuario cargada: %s", path);
 		gs_texture_t *new_texture = image.texture;
-		gs_image_file_free(
-			&image); // Libera los datos internos de la imagen, no la textura
+		image.texture = NULL; // Evitar que free lo destruya si lo estamos devolviendo (depende de la implemenation de OBS, pero por si acaso)
+		gs_image_file_free(&image);
 		return new_texture;
 	} else {
-		if (image.texture) { // Si hubo un intento de crear la textura pero fallÃ³ la carga
-			gs_texture_destroy(image.texture);
-		}
 		blog(LOG_WARNING, "No se pudo cargar la textura de usuario: %s",
 		     path);
-		gs_image_file_free(
-			&image); // AsegÃºrate de liberar la estructura de imagen
+		gs_image_file_free(&image); // Asegúrate de liberar la estructura de imagen
 		return NULL;
 	}
 }
@@ -1304,6 +1317,8 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->overlay_ar_smooth_x = 0.0f;
 	data->overlay_ar_smooth_y = 0.0f;
 	data->overlay_ar_smooth_scale = 1.0f;
+	data->overlay_ar_smooth_scale_x = 1.0f;
+	data->overlay_ar_smooth_scale_y = 1.0f;
 	data->overlay_ar_smooth_angle = 0.0f;
 
 	/* Scoreboard tabla: defaults */
@@ -1471,7 +1486,6 @@ static void filter_render(void *data, gs_effect_t *effect)
 		gs_matrix_push();
 		gs_matrix_identity();
 
-		// TraslaciÃ³n global (ya incluye el offset si es modo AR, o la pos 3D si es modo 3D)
 		gs_matrix_translate3f(filter->pos_x, filter->pos_y, filter->pos_z);
 
 
@@ -1485,7 +1499,6 @@ static void filter_render(void *data, gs_effect_t *effect)
 			rot_y = filter->ar_offset_rot_y;
 			rot_z = filter->ar_offset_rot_z;
 		} else {
-			// usar AR si estÃ¡ activado, sino rotaciÃ³n manual
 			if (filter->countdown_use_ar) {
 				rot_x = filter->ar_offset_rot_x;
 				rot_y = filter->ar_offset_rot_y;
@@ -1580,13 +1593,33 @@ static void filter_render(void *data, gs_effect_t *effect)
 		float x = filter->scoreboard_offset_x;
 		float y = filter->scoreboard_offset_y;
 		float final_x, final_y;
+		float marker_edge_px = 0.0f;
+		float marker_w_px = 0.0f;
+		float marker_h_px = 0.0f;
+		float angle_screen = 0.0f;
+		float marker_cx = 0.0f;
+		float marker_cy = 0.0f;
+		const bool have_marker_2d =
+			aruco_marker_metrics_2d(&filter->last_result,
+						filter->height_screen,
+						&marker_edge_px,
+						&marker_w_px,
+						&marker_h_px,
+						&angle_screen,
+						&marker_cx,
+						&marker_cy);
 
 		/* AlineaciÃ³n AR del overlay (Scoreboard/Team Info): mantener el posicionamiento original */
 		const bool align_overlay_to_aruco = filter->last_result.detected;
 		if (align_overlay_to_aruco) {
-			/* Volver al posicionamiento que ya funcionaba: screen_pos_x/y */
-			final_x = filter->last_result.screen_pos_x + x;
-			final_y = filter->last_result.screen_pos_y + y;
+			/* Anclaje AR: centro exacto del marcador (sin offsets manuales). */
+			if (have_marker_2d) {
+				final_x = marker_cx;
+				final_y = marker_cy;
+			} else {
+				final_x = filter->last_result.screen_pos_x + x;
+				final_y = filter->last_result.screen_pos_y + y;
+			}
 		} else {
 			if (filter->mode == 4) {
 				/* Modo Team Info: centrado fijo si no hay marcador */
@@ -1637,26 +1670,29 @@ static void filter_render(void *data, gs_effect_t *effect)
 			const float safe_tw = (tw > 0) ? (float)tw : 200.0f;
 			const float safe_th = (th > 0) ? (float)th : 100.0f;
 
-			float marker_edge_px = 0.0f;
-			float angle_screen = 0.0f;
-			const bool have_marker_2d =
-				aruco_marker_metrics_2d(&filter->last_result,
-							&marker_edge_px,
-							&angle_screen);
-
-			float overlay_scale = 1.0f;
+			float overlay_scale_x = 1.0f;
+			float overlay_scale_y = 1.0f;
 			if (have_marker_2d) {
-				const float denom = (safe_tw > safe_th) ? safe_tw : safe_th;
-				const float safe_denom = (denom > 1.0f) ? denom : 1.0f;
-				overlay_scale = marker_edge_px / safe_denom;
-				overlay_scale = clampf(overlay_scale, 0.1f, 10.0f);
+				/* Ajuste AR por contenido real del texto (sin padding del fondo),
+				 * para que tambien escale bien en alto y no solo en ancho. */
+				const float safe_fit_w = (safe_tw > 1.0f) ? safe_tw : 1.0f;
+				const float safe_fit_h = (safe_th > 1.0f) ? safe_th : 1.0f;
+				overlay_scale_x = marker_w_px / safe_fit_w;
+				overlay_scale_y = marker_h_px / safe_fit_h;
+				/* Compensacion suave vertical para que la altura visual del texto
+				 * se ajuste mejor al marcador en scoreboard/team info. */
+				overlay_scale_y *= 1.10f;
+				overlay_scale_x = clampf(overlay_scale_x, 0.05f, 20.0f);
+				overlay_scale_y = clampf(overlay_scale_y, 0.05f, 20.0f);
 			} else {
 				/* Fallback: si no hay corners, usar distancia. */
 				const float z = pose.t.z;
 				float distance_scale = 1.0f;
 				if (z > 0.05f)
 					distance_scale = 1.0f / z;
-				overlay_scale = clampf(distance_scale, 0.2f, 3.0f);
+				distance_scale = clampf(distance_scale, 0.2f, 3.0f);
+				overlay_scale_x = distance_scale;
+				overlay_scale_y = distance_scale;
 			}
 
 			/* Suavizado AR (solo para modos 3 y 4): reduce jitter en posicion/escala/angulo. */
@@ -1669,15 +1705,24 @@ static void filter_render(void *data, gs_effect_t *effect)
 					filter->overlay_ar_smooth_marker_id = filter->last_result.id;
 					filter->overlay_ar_smooth_x = final_x;
 					filter->overlay_ar_smooth_y = final_y;
-					filter->overlay_ar_smooth_scale = overlay_scale;
+					filter->overlay_ar_smooth_scale =
+						(overlay_scale_x + overlay_scale_y) * 0.5f;
+					filter->overlay_ar_smooth_scale_x = overlay_scale_x;
+					filter->overlay_ar_smooth_scale_y = overlay_scale_y;
 					filter->overlay_ar_smooth_angle = angle_screen;
 				} else {
 					filter->overlay_ar_smooth_x =
 						(1.0f - a) * filter->overlay_ar_smooth_x + a * final_x;
 					filter->overlay_ar_smooth_y =
 						(1.0f - a) * filter->overlay_ar_smooth_y + a * final_y;
+					const float scale_avg =
+						(overlay_scale_x + overlay_scale_y) * 0.5f;
 					filter->overlay_ar_smooth_scale =
-						(1.0f - a) * filter->overlay_ar_smooth_scale + a * overlay_scale;
+						(1.0f - a) * filter->overlay_ar_smooth_scale + a * scale_avg;
+					filter->overlay_ar_smooth_scale_x =
+						(1.0f - a) * filter->overlay_ar_smooth_scale_x + a * overlay_scale_x;
+					filter->overlay_ar_smooth_scale_y =
+						(1.0f - a) * filter->overlay_ar_smooth_scale_y + a * overlay_scale_y;
 
 					const float d =
 						wrap_angle_delta(filter->overlay_ar_smooth_angle, angle_screen);
@@ -1688,12 +1733,13 @@ static void filter_render(void *data, gs_effect_t *effect)
 				gs_matrix_translate3f(filter->overlay_ar_smooth_x - final_x,
 						      filter->overlay_ar_smooth_y - final_y,
 						      0.0f);
-				overlay_scale = filter->overlay_ar_smooth_scale;
+				overlay_scale_x = filter->overlay_ar_smooth_scale_x;
+				overlay_scale_y = filter->overlay_ar_smooth_scale_y;
 				angle_screen = filter->overlay_ar_smooth_angle;
 			}
 
 			gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, angle_screen);
-			gs_matrix_scale3f(overlay_scale, overlay_scale, 1.0f);
+			gs_matrix_scale3f(overlay_scale_x, overlay_scale_y, 1.0f);
 
 			/* Este translate es el anclaje: deja el texto centrado en el QR. */
 			gs_matrix_translate3f(-safe_tw * 0.5f, -safe_th * 0.5f, 0.0f);
@@ -1702,10 +1748,14 @@ static void filter_render(void *data, gs_effect_t *effect)
 			static int log_throttle_overlay = 0;
 			if ((log_throttle_overlay++ % 120) == 0) {
 				blog(LOG_INFO,
-				     "[CUBE-AR] Overlay centrado en marcador ID: %d (centro=%.1f,%.1f lado=%.1f px texto=%.0fx%.0f escala=%.3f ang=%.2f rad)",
+				     "[CUBE-AR] Overlay centrado en marcador ID: %d (centro_render=%.1f,%.1f centro_raw=%.1f,%.1f marcador=%.1fx%.1f texto=%.0fx%.0f escala=%.3fx%.3f ang=%.2f rad)",
 				     filter->last_result.id, final_x, final_y,
-				     have_marker_2d ? marker_edge_px : -1.0f,
-				     safe_tw, safe_th, overlay_scale, angle_screen);
+				     filter->last_result.screen_pos_x,
+				     filter->last_result.screen_pos_y,
+				     have_marker_2d ? marker_w_px : -1.0f,
+				     have_marker_2d ? marker_h_px : -1.0f,
+				     safe_tw, safe_th, overlay_scale_x, overlay_scale_y,
+				     angle_screen);
 			}
 		}
 		else {
@@ -1915,7 +1965,6 @@ static bool render_mode_changed(obs_properties_t *props,
 	bool show_scoreboard = (mode == 3);
 	bool show_team_info = (mode == 4);
 
-	// Leer configuraciÃ³n de countdown
 	bool countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
 	int clock_mode = (int)obs_data_get_int(settings, "clock_mode");
 	
@@ -2215,7 +2264,6 @@ static void filter_update(void *data, obs_data_t *settings)
 	filter->sync_enabled = obs_data_get_bool(settings, "sync_enabled");
 	filter->sync_interval_sec = (float)obs_data_get_double(settings, "sync_interval_sec");
 	
-	// Leer configuraciÃ³n de reloj
 	filter->clock_mode = (int)obs_data_get_int(settings, "clock_mode");
 	filter->mesh_id_dial = (int)obs_data_get_int(settings, "mesh_id_dial");
 	filter->mesh_id_hour_hand = (int)obs_data_get_int(settings, "mesh_id_hour_hand");
@@ -2490,7 +2538,6 @@ static void filter_update(void *data, obs_data_t *settings)
 		}
 	}
 
-	/* Aplicar cambios de fuente en tiempo real si la fuente ya existe */
 	if (filter->scoreboard_text_source) {
 		obs_data_t *t_set = obs_data_create();
 		obs_data_t *font_obj = obs_data_create();
@@ -2516,7 +2563,6 @@ static void filter_update(void *data, obs_data_t *settings)
 		obs_data_release(t_set);
 	}
 
-	/* Aplicar estilo también a columnas del scoreboard (modo 3). */
 	if (filter->sb_pos_source || filter->sb_name_source ||
 	    filter->sb_solved_source || filter->sb_time_source) {
 		obs_data_t *font_obj = obs_data_create();
@@ -2563,7 +2609,6 @@ static void filter_update(void *data, obs_data_t *settings)
 	}
 
 
-	/* Web sync: crear o actualizar (nunca bloquea el render) */
 	if (filter->sync_enabled) {
 		bool use_domjudge = (filter->api_base_url && filter->api_base_url[0] &&
 				     filter->contest_id && filter->contest_id[0]);
@@ -2796,18 +2841,20 @@ static void filter_tick(void *data, float seconds)
 						const char *team_name = t->team_name ? t->team_name : "";
 
 						scoreboard_sanitize_name(team_name, team_clean, sizeof(team_clean));
+						
+						char team_trunc[512] = {0};
+						utf8_truncate_with_ellipsis(team_clean, team_trunc, sizeof(team_trunc), filter->scoreboard_name_max_chars);
 
 						char time_buf[32] = {0};
 						int total_m = t->total_time;
 						if (total_m < 0)
 							total_m = 0;
-						/* Mostrar valor bruto de score.total_time (DOMjudge), p.ej. 728, 1036. */
 						snprintf(time_buf, sizeof(time_buf), "%d", total_m);
 
 						off_pos += snprintf(col_pos + off_pos, sizeof(col_pos) - (size_t)off_pos,
 								    "%d\n", t->rank);
 						off_name += snprintf(col_name + off_name, sizeof(col_name) - (size_t)off_name,
-								     "%s\n", team_clean);
+								     "%s\n", team_trunc);
 						off_res += snprintf(col_res + off_res, sizeof(col_res) - (size_t)off_res,
 								    "%d\n", t->num_solved);
 						off_time += snprintf(col_time + off_time, sizeof(col_time) - (size_t)off_time,
@@ -2850,12 +2897,10 @@ static void filter_tick(void *data, float seconds)
 				bool do_log = (log_throttle_ti++ % 60 == 0);
 
 				if (det_id >= 0) {
-					/* Buscar el team_id configurado en el JSON local para este marker */
 					const char *mapped_team_id =
 						team_info_lookup_team_id(filter, det_id);
 
 					if (mapped_team_id && mapped_team_id[0] != '\0') {
-						/* Buscar team en la cache de equipos */
 						scoreboard_team_t *found_team = NULL;
 						for (int i = 0; i < filter->team_info_cache_count; i++) {
 							if (strcmp(filter->team_info_cache[i].team_id, mapped_team_id) == 0) {
@@ -2865,16 +2910,19 @@ static void filter_tick(void *data, float seconds)
 						}
 
 						if (found_team) {
+							char team_trunc[512] = {0};
+							utf8_truncate_with_ellipsis(found_team->team_name, team_trunc, sizeof(team_trunc), filter->scoreboard_name_max_chars);
+
 							snprintf(ti_text, sizeof(ti_text),
 								"EQUIPO: %s\n"
 								"PUESTO: %d\n"
 								"RESUELTOS: %d",
-								found_team->team_name,
+								team_trunc,
 								found_team->rank,
 								found_team->num_solved);
 							if (do_log) {
 								blog(LOG_INFO, "[CUBE-TEAM-INFO] ArUco %d -> T_ID %s -> Equipo %s (Rk:%d)",
-									det_id, mapped_team_id, found_team->team_name, found_team->rank);
+									det_id, mapped_team_id, team_trunc, found_team->rank);
 							}
 						} else {
 							snprintf(ti_text, sizeof(ti_text),

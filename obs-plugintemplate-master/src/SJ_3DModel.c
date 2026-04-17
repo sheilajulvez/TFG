@@ -1,10 +1,8 @@
-	// Inclusión de la biblioteca Assimp (Open Asset Import Library) para la carga de modelos 3D.
 	#include <assimp/cimport.h>
 	#include <assimp/scene.h>
 	#include <assimp/postprocess.h>
 	#include <assimp/material.h>
 
-	// Inclusión de las cabeceras del API de OBS Studio.
 	#include <obs-module.h>
 	#include <graphics/graphics.h>
 	#include <graphics/matrix4.h>
@@ -12,7 +10,6 @@
 	#include <util/platform.h>
 	#include <graphics/vec4.h>
 
-	// Inclusión de bibliotecas estándar de C.
 	#include <string.h>
 	#include <assimp/types.h>
 	#include "SJ_3DModel.h"
