@@ -27,6 +27,9 @@ typedef struct {
 	float corners[4][2];
 	float screen_pos_x;
 	float screen_pos_y;
+	float normal_tip_x;
+	float normal_tip_y;
+	bool normal_tip_valid;
 	float euler_x;
 	float euler_y;
 	float euler_z;

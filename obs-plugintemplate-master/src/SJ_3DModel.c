@@ -708,15 +708,15 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
 	
-        gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, degrees_to_radians(offset_rot_x_deg));
-        gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, degrees_to_radians(offset_rot_y_deg));
-        gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, degrees_to_radians(offset_rot_z_deg));
-
-	
 		if (detected) {
-			
-			gs_matrix_rotaa4f(ax, -ay, -az, angle_rad); 
+			/* Aplicar primero la rotación del marcador (ArUco) */
+			gs_matrix_rotaa4f(ax, ay, az, angle_rad); 
 		}
+
+		/* Aplicar después los offsets manuales (relativos al marcador) */
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, degrees_to_radians(offset_rot_x_deg));
+		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, degrees_to_radians(offset_rot_y_deg));
+		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, degrees_to_radians(offset_rot_z_deg));
 	
 
 		gs_effect_set_texture(image_param, m->texture);

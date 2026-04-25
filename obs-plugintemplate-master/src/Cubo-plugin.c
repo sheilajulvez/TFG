@@ -294,24 +294,28 @@ static int count_lines_lf(const char *text)
 
 static void aruco_rvec_to_rotmat3x3(const float rvec[3], float R[3][3])
 {
-	/* FÃ³rmula de Rodrigues para eje unitario k y Ã¡ngulo theta:
-	 * R = I*c + (1-c)kk^T + s*[k]_x
-	 */
 	const float rx = rvec[0];
 	const float ry = rvec[1];
 	const float rz = rvec[2];
 	const float theta = sqrtf(rx * rx + ry * ry + rz * rz);
 
 	if (theta < 1e-6f) {
-		R[0][0] = 1.0f; R[0][1] = 0.0f; R[0][2] = 0.0f;
-		R[1][0] = 0.0f; R[1][1] = 1.0f; R[1][2] = 0.0f;
-		R[2][0] = 0.0f; R[2][1] = 0.0f; R[2][2] = 1.0f;
+		// Matriz identidad...
+		R[0][0] = 1.0f;
+		R[0][1] = 0.0f;
+		R[0][2] = 0.0f;
+		R[1][0] = 0.0f;
+		R[1][1] = 1.0f;
+		R[1][2] = 0.0f;
+		R[2][0] = 0.0f;
+		R[2][1] = 0.0f;
+		R[2][2] = 1.0f;
 		return;
 	}
-
+	/*  Inversión de ejes para coordinar con el escalado X negativo */
 	const float kx = rx / theta;
-	const float ky = ry / theta;
-	const float kz = rz / theta;
+	const float ky = -(ry /theta); // Invertimos Y para que el giro horizontal sea correcto
+	const float kz = -(rz /	theta);// Invertimos Z para que el giro de volante sea correcto
 
 	const float c = cosf(theta);
 	const float s = sinf(theta);
@@ -374,11 +378,11 @@ static bool aruco_marker_metrics_2d(const ArucoResult *res,
 	    !out_width_px || !out_height_px || !out_center_x || !out_center_y)
 		return false;
 
-	/* Distancias de los 4 lados en pixeles (aprox). */
-	const float x0 = res->corners[0][0], y0 = screen_h - res->corners[0][1];
-	const float x1 = res->corners[1][0], y1 = screen_h - res->corners[1][1];
-	const float x2 = res->corners[2][0], y2 = screen_h - res->corners[2][1];
-	const float x3 = res->corners[3][0], y3 = screen_h - res->corners[3][1];
+	/* Coordenadas RAW del marcador (Y=0 es la parte superior en cámaras y OBS) */
+	const float x0 = res->corners[0][0], y0 = res->corners[0][1];
+	const float x1 = res->corners[1][0], y1 = res->corners[1][1];
+	const float x2 = res->corners[2][0], y2 = res->corners[2][1];
+	const float x3 = res->corners[3][0], y3 = res->corners[3][1];
 
 	const float e01 = hypotf(x1 - x0, y1 - y0);
 	const float e12 = hypotf(x2 - x1, y2 - y1);
@@ -391,15 +395,9 @@ static bool aruco_marker_metrics_2d(const ArucoResult *res,
 	if (!(edge_avg > 1.0f) || !(marker_w > 1.0f) || !(marker_h > 1.0f))
 		return false;
 
-	/* Centro del marcador convertido al sistema del render (Y hacia arriba en gs_ortho). */
-	*out_center_x = res->screen_pos_x;
-	*out_center_y = screen_h - res->screen_pos_y;
-	if (!isfinite(*out_center_x) || !isfinite(*out_center_y) ||
-	    *out_center_x < 0.0f || *out_center_y < 0.0f) {
-		/* Fallback robusto al promedio de esquinas si screen_pos no es valido. */
-		*out_center_x = (x0 + x1 + x2 + x3) * 0.25f;
-		*out_center_y = (y0 + y1 + y2 + y3) * 0.25f;
-	}
+	/* Centro del marcador (promedio de esquinas para máxima estabilidad horizontal) */
+	*out_center_x = (x0 + x1 + x2 + x3) * 0.25f;
+	*out_center_y = (y0 + y1 + y2 + y3) * 0.25f;
 
 	/* Angulo robusto en pantalla: promedio de borde superior e inferior. */
 	const float vx = ((x1 - x0) + (x2 - x3)) * 0.5f;
@@ -1115,10 +1113,10 @@ static struct obs_source_frame *filter_video(void *data,
 	 * Esto evita offsets extraños (por ejemplo, que el texto se vaya a una esquina del marcador)
 	 * cuando la resolución del frame no coincide con la resolución base de OBS.
 	 */
-	const int base_w = (int)filter->width_screen;
-	const int base_h = (int)filter->height_screen;
-	const int out_w = base_w;
-	const int out_h = base_h;
+		const int base_w = (int)obs_source_get_width(filter->source);
+		const int base_h = (int)obs_source_get_height(filter->source);
+		const int out_w = base_w;
+		const int out_h = base_h;
 
 	if (filter->mode == 4 && filter->team_info_allowed_marker_ids_count > 0) {
 		detected = process_frame_rgba_select_ids(
@@ -1134,7 +1132,7 @@ static struct obs_source_frame *filter_video(void *data,
 	}
 
 	if (detected && filter->last_result.detected) {
-		/* Log de depuraciÃ³n (con throttling) */
+		
 			static int log_throttle_marker = 0;
 			if ((log_throttle_marker++ % 90) == 0) {
 				blog(LOG_INFO, "[CUBE-AR] Detectado marcador ID: %d",
@@ -1147,7 +1145,11 @@ static struct obs_source_frame *filter_video(void *data,
 			}
 	
 		filter->pos_x = filter->last_result.screen_pos_x +filter->ar_offset_pos_x;
-		filter->pos_y = filter->last_result.screen_pos_y +filter->ar_offset_pos_y;
+		/* Invertir Y para que coincida con el sistema de OBS (0 abajo) */
+		filter->pos_y =
+			(float)base_h - (filter->last_result.screen_pos_y +
+					 filter->ar_offset_pos_y);
+		;
 		filter->pos_z =0 +filter->ar_offset_pos_z; 
 
 		/* Escala por distancia (tvec[2]): cuanto mÃ¡s cerca el marcador, mÃ¡s grande el objeto */
@@ -1585,23 +1587,29 @@ static void filter_render(void *data, gs_effect_t *effect)
 			if (h_name > th) th = h_name;
 			if (h_res > th) th = h_res;
 			if (h_time > th) th = h_time;
-		} else {
+		} else if (filter->mode == 3 || filter->mode == 4) {
 			tw = obs_source_get_width(filter->scoreboard_text_source);
 			th = obs_source_get_height(filter->scoreboard_text_source);
 		}
-		
+
+		uint32_t cur_w = obs_source_get_width(filter->source);
+		uint32_t cur_h = obs_source_get_height(filter->source);
+		if (cur_w == 0) cur_w = (uint32_t)filter->width_screen;
+		if (cur_h == 0) cur_h = (uint32_t)filter->height_screen;
+
 		float x = filter->scoreboard_offset_x;
 		float y = filter->scoreboard_offset_y;
-		float final_x, final_y;
+		float final_x = 0.0f, final_y = 0.0f;
 		float marker_edge_px = 0.0f;
 		float marker_w_px = 0.0f;
 		float marker_h_px = 0.0f;
 		float angle_screen = 0.0f;
 		float marker_cx = 0.0f;
 		float marker_cy = 0.0f;
+
 		const bool have_marker_2d =
 			aruco_marker_metrics_2d(&filter->last_result,
-						filter->height_screen,
+						(float)cur_h,
 						&marker_edge_px,
 						&marker_w_px,
 						&marker_h_px,
@@ -1609,53 +1617,100 @@ static void filter_render(void *data, gs_effect_t *effect)
 						&marker_cx,
 						&marker_cy);
 
-		/* AlineaciÃ³n AR del overlay (Scoreboard/Team Info): mantener el posicionamiento original */
 		const bool align_overlay_to_aruco = filter->last_result.detected;
 		if (align_overlay_to_aruco) {
-			/* Anclaje AR: centro exacto del marcador (sin offsets manuales). */
+			const float deg_to_rad = 0.017453292519943295f;
+			/* Orientacion principal: proyeccion del eje Z del marcador (normal del papel).
+			 * Esto mantiene el texto "recto hacia arriba" cuando el marcador esta tumbado. */
+			if (filter->last_result.normal_tip_valid) {
+				const float vx = filter->last_result.normal_tip_x - filter->last_result.screen_pos_x;
+				const float vy = filter->last_result.normal_tip_y - filter->last_result.screen_pos_y;
+				const float len = hypotf(vx, vy);
+				if (len > 1e-3f) {
+					float nx = vx / len;
+					float ny = vy / len;
+
+					/* Forzar que la normal proyectada apunte visualmente hacia arriba en pantalla. */
+					if (ny > 0.0f) {
+						nx = -nx;
+						ny = -ny;
+					}
+
+					/* Convertir vector "up" a eje X del texto (perpendicular). */
+					const float right_x = ny;
+					const float right_y = -nx;
+					angle_screen = atan2f(right_y, right_x);
+				} else if (!have_marker_2d) {
+					angle_screen = 0.0f;
+				}
+			} else if (!have_marker_2d) {
+				angle_screen = 0.0f;
+			}
+
+			angle_screen += filter->ar_offset_rot_z * deg_to_rad;
+		}
+
+		if (align_overlay_to_aruco) {
 			if (have_marker_2d) {
 				final_x = marker_cx;
 				final_y = marker_cy;
 			} else {
+				/* Fallback si no hay corners detectados: sistema Y-Down directo (0=arriba) */
 				final_x = filter->last_result.screen_pos_x + x;
 				final_y = filter->last_result.screen_pos_y + y;
 			}
 		} else {
-			if (filter->mode == 4) {
-				/* Modo Team Info: centrado fijo si no hay marcador */
-				if (tw > 0 && th > 0) {
-					final_x = (filter->width_screen - (float)tw) / 2.0f;
-					final_y = (filter->height_screen - (float)th) / 2.0f;
-				} else {
-					final_x = filter->width_screen / 2.0f;
-					final_y = filter->height_screen / 2.0f;
-				}
-			} else if (filter->scoreboard_centered && tw > 0) {
-				final_x = (filter->width_screen - (float)tw) / 2.0f;
-				final_y = (filter->height_screen - (float)th) / 2.0f;
+			/* Posicionamiento manual o centrado en pantalla sin AR */
+			if (filter->scoreboard_centered && tw > 0) {
+				final_x = (float)cur_w * 0.5f;
+				final_y = (float)cur_h * 0.5f;
 			} else {
 				final_x = x;
-				float safe_th = (th > 0) ? (float)th : 100.0f;
-				final_y = filter->height_screen - y - safe_th;
+				final_y = y; /* Sistema 0=arriba directo */
 			}
 		}
 
-		/* Configurar estado 2D */
+		/* Configurar estado de render del overlay */
 		gs_enable_depth_test(false);
 		gs_blend_state_push();
 		gs_enable_blending(true);
 		gs_blend_function(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
+		const enum gs_cull_mode prev_cull_mode = gs_get_cull_mode();
+		gs_set_cull_mode(GS_NEITHER);
+
+		uint32_t current_source_w = obs_source_get_width(filter->source);
+		uint32_t current_source_h = obs_source_get_height(filter->source);
+		if (current_source_w == 0) current_source_w = (uint32_t)filter->width_screen;
+		if (current_source_h == 0) current_source_h = (uint32_t)filter->height_screen;
 
 		gs_projection_push();
-		
-		gs_ortho(0.0f, filter->width_screen, 0.0f, filter->height_screen, -100.0f, 100.0f);
+		const bool overlay_use_3d_pose = align_overlay_to_aruco && filter->last_result.detected;
+		if (overlay_use_3d_pose) {
+			/* IMPORTANTE: gs_set_3d_mode() en libobs es un stub no implementado
+			 * (libobs/graphics/graphics.c:1078 → /* TODO * con UNUSED_PARAMETER).
+			 * Por eso ajustar near/far ahí no tenía efecto y el texto se recortaba
+			 * en modos 3 y 4 al rotarlo (el rango Z por defecto de OBS es muy
+			 * pequeño y el texto rotado se sale por el plano de corte).
+			 *
+			 * Usamos gs_ortho con un rango Z amplio y simétrico: las coordenadas
+			 * X/Y siguen siendo píxeles (no rompe el posicionamiento del marcador)
+			 * y la profundidad da margen para cualquier rotación del panel.
+			 */
+			gs_ortho(0.0f, (float)current_source_w,
+				 0.0f, (float)current_source_h,
+				 -10000.0f, 10000.0f);
+		} else {
+			/* Fallback 2D para modo sin marcador. */
+			gs_ortho(0.0f, (float)current_source_w, 0.0f, (float)current_source_h, -100.0f, 100.0f);
+		}
 
 		gs_matrix_push();
 		gs_matrix_identity();
 
 	
 		gs_matrix_push();
-		gs_matrix_translate3f(final_x, final_y, 0.0f);
+		if (!overlay_use_3d_pose)
+			gs_matrix_translate3f(final_x, final_y, 0.0f);
 
 		if (align_overlay_to_aruco) {
 			/* Mantener el overlay centrado en el marcador:
@@ -1663,37 +1718,15 @@ static void filter_render(void *data, gs_effect_t *effect)
 			 * - aplicamos rotacion + escala segun marcador
 			 * - trasladamos -tw/2,-th/2 para que el texto quede centrado (no su esquina)
 			 */
-			struct matrix4 pose;
-			aruco_pose_to_matrix4(filter->last_result.rvec,
-					      filter->last_result.tvec, &pose);
 
 			const float safe_tw = (tw > 0) ? (float)tw : 200.0f;
 			const float safe_th = (th > 0) ? (float)th : 100.0f;
 
 			float overlay_scale_x = 1.0f;
 			float overlay_scale_y = 1.0f;
-			if (have_marker_2d) {
-				/* Ajuste AR por contenido real del texto (sin padding del fondo),
-				 * para que tambien escale bien en alto y no solo en ancho. */
-				const float safe_fit_w = (safe_tw > 1.0f) ? safe_tw : 1.0f;
-				const float safe_fit_h = (safe_th > 1.0f) ? safe_th : 1.0f;
-				overlay_scale_x = marker_w_px / safe_fit_w;
-				overlay_scale_y = marker_h_px / safe_fit_h;
-				/* Compensacion suave vertical para que la altura visual del texto
-				 * se ajuste mejor al marcador en scoreboard/team info. */
-				overlay_scale_y *= 1.10f;
-				overlay_scale_x = clampf(overlay_scale_x, 0.05f, 20.0f);
-				overlay_scale_y = clampf(overlay_scale_y, 0.05f, 20.0f);
-			} else {
-				/* Fallback: si no hay corners, usar distancia. */
-				const float z = pose.t.z;
-				float distance_scale = 1.0f;
-				if (z > 0.05f)
-					distance_scale = 1.0f / z;
-				distance_scale = clampf(distance_scale, 0.2f, 3.0f);
-				overlay_scale_x = distance_scale;
-				overlay_scale_y = distance_scale;
-			}
+			/* Requisito funcional: tamano fijo decidido en UI, sin autoajuste al marcador. */
+			overlay_scale_x = 1.0f;
+			overlay_scale_y = 1.0f;
 
 			/* Suavizado AR (solo para modos 3 y 4): reduce jitter en posicion/escala/angulo. */
 			if (filter->overlay_ar_smooth_enabled) {
@@ -1729,33 +1762,111 @@ static void filter_render(void *data, gs_effect_t *effect)
 					filter->overlay_ar_smooth_angle += a * d;
 				}
 
-				/* Ajuste de centro ya que el gs_matrix_translate anterior usaba final_x/y sin suavizar. */
-				gs_matrix_translate3f(filter->overlay_ar_smooth_x - final_x,
-						      filter->overlay_ar_smooth_y - final_y,
-						      0.0f);
+				/* En modo 2D se suaviza traslacion en pantalla; en 3D no se mezcla con pixeles. */
+				if (!overlay_use_3d_pose) {
+					gs_matrix_translate3f(filter->overlay_ar_smooth_x - final_x,
+							      filter->overlay_ar_smooth_y - final_y,
+							      0.0f);
+				}
 				overlay_scale_x = filter->overlay_ar_smooth_scale_x;
 				overlay_scale_y = filter->overlay_ar_smooth_scale_y;
 				angle_screen = filter->overlay_ar_smooth_angle;
 			}
 
-			gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, angle_screen);
-			gs_matrix_scale3f(overlay_scale_x, overlay_scale_y, 1.0f);
+			if (overlay_use_3d_pose) {
+				/* 
+				 *
+				 * OBS post-multiplica matrices: el vértice se transforma de derecha a
+				 * izquierda respecto al orden del código.  Colocando los offsets ANTES de
+				 * R_x(180), R_aruco y R_x(90) en el código, se aplican AL ÚLTIMO sobre
+				 * el vértice — es decir, después de que el panel ya está completamente
+				 * orientado y centrado.  Resultado: los tres ejes del usuario son los ejes
+				 * de PANTALLA, independientes entre sí y de la orientación del marcador:
+				 *
+				 *   ar_offset_rot_x → pitch  (eje horizontal de pantalla)
+				 *   ar_offset_rot_y → yaw    (eje vertical de pantalla)
+				 *   ar_offset_rot_z → roll   (eje que entra/sale por la pantalla)
+				 *
+				 * Como T_pos viene después en código (antes al vértice), las rotaciones
+				 * se aplican sobre el panel centrado en el origen → giran respecto al
+				 * centro del overlay, no respecto al origen de pantalla.
+				 */
+				const float overlay_pos_x = final_x + filter->ar_offset_pos_x;
+				const float overlay_pos_y = final_y + filter->ar_offset_pos_y;
+				const float overlay_pos_z = filter->ar_offset_pos_z;
+				const float deg2rad = (float)M_PI / 180.0f;
 
-			/* Este translate es el anclaje: deja el texto centrado en el QR. */
-			gs_matrix_translate3f(-safe_tw * 0.5f, -safe_th * 0.5f, 0.0f);
+				const float rvx = filter->last_result.rvec[0];
+				const float rvy = filter->last_result.rvec[1];
+				const float rvz = filter->last_result.rvec[2];
+				float rangle = sqrtf(rvx * rvx + rvy * rvy + rvz * rvz);
+
+				/* 1. Trasladar al centro del marcador. */
+				gs_matrix_translate3f(overlay_pos_x, overlay_pos_y, overlay_pos_z);
+
+				/* 2. Offsets manuales en frame de pantalla (ANTES de la cadena de
+				 *    orientación: corrección OpenCV→OBS + rvec + levantado R_x(90)).
+				 *    Por el orden de post-multiplicación, el vértice los recibe al final,
+				 *    cuando el panel ya está en su pose definitiva → ejes de pantalla. */
+				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, filter->ar_offset_rot_x * deg2rad);
+				gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, filter->ar_offset_rot_y * deg2rad);
+				gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, filter->ar_offset_rot_z * deg2rad);
+
+				/* 3. Corrección de ejes OpenCV → OBS. */
+				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
+
+				/* 4. Rotación de pose del marcador (rvec ArUco). */
+				if (rangle > 1e-6f) {
+					const float ax = rvx / rangle;
+					const float ay = rvy / rangle;
+					const float az = -rvz / rangle;   /* negar Z: OpenCV→OBS */
+					gs_matrix_rotaa4f(ax, ay, az, rangle);
+				}
+
+				/* 5. Levantar el panel de texto perpendicular a la superficie del marcador. */
+				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI / 2.0f);
+
+			} else {
+				/* Modo 2D fallback (marcador no detectado). */
+				gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, angle_screen);
+				gs_matrix_scale3f(overlay_scale_x, overlay_scale_y, 1.0f);
+			}
+
+			/* Anclaje clínico (Y-DOWN):
+			 * final_x/final_y es el centro exacto de la cara del marcador.
+			 * En modo AR: base del texto en el centro del marcador (texto sobre él).
+			 * En modo 2D: texto centrado sobre el marcador.
+			 */
+			if (overlay_use_3d_pose) {
+				/* El centro del marcador coincide con la base del texto. */
+				gs_matrix_translate3f(-safe_tw * 0.5f, -safe_th, 0.0f);
+			} else {
+				/* Fallback 2D: centrado clásico. */
+				gs_matrix_translate3f(-safe_tw * 0.5f, -safe_th * 0.5f, 0.0f);
+			}
 
 			/* Log de depuracion con throttling */
 			static int log_throttle_overlay = 0;
 			if ((log_throttle_overlay++ % 120) == 0) {
 				blog(LOG_INFO,
-				     "[CUBE-AR] Overlay centrado en marcador ID: %d (centro_render=%.1f,%.1f centro_raw=%.1f,%.1f marcador=%.1fx%.1f texto=%.0fx%.0f escala=%.3fx%.3f ang=%.2f rad)",
-				     filter->last_result.id, final_x, final_y,
+				     "[CUBE-AR] Overlay marcador ID: %d (modo3d=%d centro_render=%.1f,%.1f centro_raw=%.1f,%.1f tvec=%.3f,%.3f,%.3f rvec=%.3f,%.3f,%.3f normal_tip=%.1f,%.1f normal_ok=%d marcador=%.1fx%.1f texto=%.0fx%.0f ang=%.2f rad)",
+				     filter->last_result.id,
+				     overlay_use_3d_pose ? 1 : 0,
+				     final_x, final_y,
 				     filter->last_result.screen_pos_x,
 				     filter->last_result.screen_pos_y,
+				     filter->last_result.tvec[0],
+				     filter->last_result.tvec[1],
+				     filter->last_result.tvec[2],
+				     filter->last_result.rvec[0],
+				     filter->last_result.rvec[1],
+				     filter->last_result.rvec[2],
+				     filter->last_result.normal_tip_x,
+				     filter->last_result.normal_tip_y,
+				     filter->last_result.normal_tip_valid ? 1 : 0,
 				     have_marker_2d ? marker_w_px : -1.0f,
 				     have_marker_2d ? marker_h_px : -1.0f,
-				     safe_tw, safe_th, overlay_scale_x, overlay_scale_y,
-				     angle_screen);
+				     safe_tw, safe_th, angle_screen);
 			}
 		}
 		else {
@@ -1934,6 +2045,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 
 		gs_matrix_pop();
 		gs_projection_pop();
+		gs_set_cull_mode(prev_cull_mode);
 		gs_blend_state_pop();
 		gs_enable_depth_test(true);
 
