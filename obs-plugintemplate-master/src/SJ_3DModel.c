@@ -585,14 +585,14 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 			angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] +
 					 rvec[2] * rvec[2]);
 			if (angle_rad > 1e-5f) { // Evitar división por cero
-				ax = rvec[0] / angle_rad;
-				ay = rvec[1] / angle_rad;
-				az = rvec[2] / angle_rad;
+				ax =  rvec[0] / angle_rad;
+				ay = -rvec[1] / angle_rad; /* negar Y: OpenCV→OBS */
+				az = -rvec[2] / angle_rad; /* negar Z: OpenCV→OBS */
 			} else {
 				angle_rad = 0.0f;
 			}
 		}
-	
+
 		struct vec4 c = {1.0f, 0.0f, 0.0f,
 				 1.0f}; 
 		gs_technique_begin(tech);
@@ -663,14 +663,13 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 	if (detected) {
 		angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] + rvec[2] * rvec[2]);
 		if (angle_rad > 1e-5f) {
-			ax = rvec[0] / angle_rad;
-			ay = rvec[1] / angle_rad;
-			az = rvec[2] / angle_rad;
+			ax =  rvec[0] / angle_rad;
+			ay = -rvec[1] / angle_rad; /* negar Y: OpenCV→OBS */
+			az = -rvec[2] / angle_rad; /* negar Z: OpenCV→OBS */
 		} else {
 			angle_rad = 0.0f;
 		}
 	}
-	
 
 	gs_technique_begin(tech);
 	gs_technique_begin_pass(tech, 0);
@@ -760,9 +759,9 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] +
 				 rvec[2] * rvec[2]);
 		if (angle_rad > 1e-5f) {
-			ax = rvec[0] / angle_rad;
-			ay = rvec[1] / angle_rad;
-			az = rvec[2] / angle_rad;
+			ax =  rvec[0] / angle_rad;
+			ay = -rvec[1] / angle_rad; /* negar Y: OpenCV→OBS */
+			az = -rvec[2] / angle_rad; /* negar Z: OpenCV→OBS */
 		} else {
 			angle_rad = 0.0f;
 		}

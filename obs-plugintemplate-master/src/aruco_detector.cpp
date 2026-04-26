@@ -479,17 +479,12 @@ bool process_frame_rgba_select_ids(ArucoDetector *det, struct obs_source_frame *
 		return false;
 	}
 
-	// Elegir el marcador permitido mas grande en pantalla
+	// Elegir el primer marcador permitido que aparezca en la lista de deteccion
 	int marker_index = -1;
-	float best_area = 0.0f;
 	for (int i = 0; i < (int)ids.size(); ++i) {
-		if (!id_permitido(ids[i], allowed_ids, allowed_count))
-			continue;
-
-		const float a = area_cuadrilatero(corners[i]);
-		if (a > best_area) {
-			best_area = a;
+		if (id_permitido(ids[i], allowed_ids, allowed_count)) {
 			marker_index = i;
+			break;
 		}
 	}
 

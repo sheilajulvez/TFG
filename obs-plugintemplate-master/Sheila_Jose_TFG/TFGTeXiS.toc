@@ -60,23 +60,23 @@
 \contentsline {subsection}{\numberline {3.6.2}Consumo de Endpoints y Procesamiento JSON}{35}{subsection.100}%
 \contentsline {subsection}{\numberline {3.6.3}Sincronización AR: Mapeo de Marcadores a Equipos}{35}{subsection.104}%
 \contentsline {subsection}{\numberline {3.6.4}Presentación de Datos y Modos de Visualización}{35}{subsection.105}%
-\contentsline {section}{\numberline {3.7}Liberación de Recursos y Finalización}{36}{section.106}%
-\contentsline {subsection}{\numberline {3.7.1}Seguridad y Persistencia de Estado}{36}{subsection.107}%
-\contentsline {subsection}{\numberline {3.7.2}Gestión de Memoria GPU (Mallas y Texturas)}{36}{subsection.110}%
-\contentsline {subsection}{\numberline {3.7.3}Cleanup del Módulo de Detección (OpenCV)}{36}{subsection.111}%
-\contentsline {subsection}{\numberline {3.7.4}Cierre de Conexiones de Red y Sincronización}{37}{subsection.112}%
-\contentsline {section}{\numberline {3.8}Modos de Visualización 2D: Scoreboard y Team Info}{37}{section.113}%
-\contentsline {subsection}{\numberline {3.8.1}Arquitectura de Coordenadas: el Sistema Y-Down}{37}{subsection.114}%
-\contentsline {subsection}{\numberline {3.8.2}Pipeline de Detección en los Modos de Overlay}{38}{subsection.115}%
-\contentsline {subsubsection}{\numberline {3.8.2.1}Conversión de la Rotación de Rodrigues a Ángulos de Euler}{39}{subsubsection.116}%
-\contentsline {subsection}{\numberline {3.8.3}Algoritmo de Selección por Área: la Fórmula del Shoelace}{39}{subsection.117}%
-\contentsline {subsection}{\numberline {3.8.4}Cálculo de Métricas 2D del Marcador}{40}{subsection.118}%
-\contentsline {subsection}{\numberline {3.8.5}Composición Multi-Columna del Scoreboard}{41}{subsection.119}%
-\contentsline {subsection}{\numberline {3.8.6}El Pipeline de Renderizado AR: la Cadena de Matrices}{41}{subsection.125}%
-\contentsline {subsection}{\numberline {3.8.7}Suavizado EMA y Estabilización del Overlay}{43}{subsection.126}%
-\contentsline {subsection}{\numberline {3.8.8}Geometría de Fondo con Esquinas Redondeadas}{43}{subsection.127}%
-\contentsline {subsection}{\numberline {3.8.9}Modo 4: Team Info, JSON de Mapeo y Detección Multi-Marcador}{44}{subsection.128}%
-\contentsline {chapter}{\numberline {4}Conclusiones y Trabajo Futuro}{47}{chapter.129}%
-\contentsline {chapter}{Contribuciones Personales}{49}{chapter*.130}%
+\contentsline {section}{\numberline {3.7}Renderizado de Overlays 2D Anclados al Marcador}{36}{section.106}%
+\contentsline {subsection}{\numberline {3.7.1}El Sistema de Coordenadas: Por Qué Todo Funciona con el Origen Arriba}{36}{subsection.107}%
+\contentsline {subsection}{\numberline {3.7.2}Qué se Quiere Lograr Visualmente y Cómo se Consigue}{36}{subsection.108}%
+\contentsline {subsection}{\numberline {3.7.3}El Módulo de Detección en los Modos de Texto}{37}{subsection.109}%
+\contentsline {subsubsection}{\numberline {3.7.3.1}De la Rotación Detectada a la Orientación del Overlay}{37}{subsubsection.110}%
+\contentsline {subsection}{\numberline {3.7.4}Selección del Marcador en el Modo Team Info}{38}{subsection.111}%
+\contentsline {subsection}{\numberline {3.7.5}La Composición Visual del Scoreboard}{38}{subsection.112}%
+\contentsline {subsection}{\numberline {3.7.6}La Cadena de Transformaciones para Anclar el Texto al Marcador}{39}{subsection.113}%
+\contentsline {subsection}{\numberline {3.7.7}Suavizado del Overlay para Evitar el Temblor}{40}{subsection.114}%
+\contentsline {subsection}{\numberline {3.7.8}Fondo Visual del Overlay}{40}{subsection.115}%
+\contentsline {subsection}{\numberline {3.7.9}El JSON de Mapeo en el Modo Team Info}{41}{subsection.116}%
+\contentsline {section}{\numberline {3.8}Liberación de Recursos y Finalización}{41}{section.117}%
+\contentsline {subsection}{\numberline {3.8.1}Seguridad y Persistencia de Estado}{41}{subsection.118}%
+\contentsline {subsection}{\numberline {3.8.2}Gestión de Memoria GPU (Mallas y Texturas)}{42}{subsection.121}%
+\contentsline {subsection}{\numberline {3.8.3}Cleanup del Módulo de Detección (OpenCV)}{42}{subsection.122}%
+\contentsline {subsection}{\numberline {3.8.4}Cierre de Conexiones de Red y Sincronización}{42}{subsection.123}%
+\contentsline {chapter}{\numberline {4}Conclusiones y Trabajo Futuro}{43}{chapter.124}%
+\contentsline {chapter}{Contribuciones Personales}{45}{chapter*.125}%
 \babel@toc {english}{}\relax 
 \babel@toc {spanish}{}\relax 

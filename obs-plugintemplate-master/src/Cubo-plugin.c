@@ -1808,17 +1808,17 @@ static void filter_render(void *data, gs_effect_t *effect)
 				 *    orientación: corrección OpenCV→OBS + rvec + levantado R_x(90)).
 				 *    Por el orden de post-multiplicación, el vértice los recibe al final,
 				 *    cuando el panel ya está en su pose definitiva → ejes de pantalla. */
-				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, filter->ar_offset_rot_x * deg2rad);
-				gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, filter->ar_offset_rot_y * deg2rad);
-				gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, filter->ar_offset_rot_z * deg2rad);
+				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,  filter->ar_offset_rot_x * deg2rad);
+				gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, -filter->ar_offset_rot_y * deg2rad);  /* negar Y: OpenCV→OBS */
+				gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, -filter->ar_offset_rot_z * deg2rad);  /* negar Z: OpenCV→OBS */
 
 				/* 3. Corrección de ejes OpenCV → OBS. */
 				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
 				/* 4. Rotación de pose del marcador (rvec ArUco). */
 				if (rangle > 1e-6f) {
-					const float ax = rvx / rangle;
-					const float ay = rvy / rangle;
+					const float ax =  rvx / rangle;
+					const float ay = -rvy / rangle;   /* negar Y: OpenCV→OBS */
 					const float az = -rvz / rangle;   /* negar Z: OpenCV→OBS */
 					gs_matrix_rotaa4f(ax, ay, az, rangle);
 				}

@@ -401,7 +401,7 @@ Adicionalmente, el módulo calcula en qué dirección apunta la cara del marcado
 \subsection{Selección del Marcador en el Modo Team Info}
 \label{subsec:seleccion_marcador}
 
-En el modo Scoreboard el sistema busca un único marcador con el ID configurado. En el modo Team Info cualquier marcador registrado en el JSON de mapeo es válido. Si varios marcadores aparecen en cámara al mismo tiempo, el sistema selecciona automáticamente el que ocupa mayor área visual, que en la práctica corresponde al más cercano o al más centrado, y por tanto el más adecuado para el seguimiento. Si en algún momento se necesita mostrar información de varios equipos a la vez, la propia arquitectura de plugins de OBS lo permite: se añade otra instancia del filtro sobre la misma fuente, cada una configurada para un marcador distinto, y trabajan en paralelo sin interferirse.
+En el modo Scoreboard el sistema busca un único marcador con el ID configurado. En el modo Team Info cualquier marcador registrado en el JSON de mapeo es válido. Si varios marcadores válidos aparecen en cámara al mismo tiempo, el sistema usa el primero que encuentra en el orden en que el detector los devuelve, que coincide con el orden natural de aparición en la imagen. Este comportamiento es simple y predecible: en un escenario habitual de retransmisión la cámara apunta a un equipo concreto, por lo que la situación de ambigüedad raramente se presenta. Si en algún momento se necesita mostrar información de varios equipos simultáneamente, la arquitectura de plugins de OBS lo resuelve añadiendo una instancia del filtro por cada equipo, cada una configurada para su marcador correspondiente, trabajando en paralelo sin interferirse.
 
 \subsection{La Composición Visual del Scoreboard}
 \label{subsec:multicolumna}
