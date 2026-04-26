@@ -1,0 +1,23 @@
+\babel@toc {spanish}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {spanish}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Uso de realidad aumentada (RA) en la retransmisión de la Super Bowl.}}{8}{figure.caption.16}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Aplicación de la realidad aumentada (RA) en informativos televisivos para la visualización de datos y escenarios virtuales.}}{8}{figure.caption.17}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Ejemplo de filtro con realidad aumentada (RA) en la red social Snapchat, utilizado para superponer elementos virtuales sobre el rostro del usuario en tiempo real.}}{9}{figure.caption.18}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Uso de la realidad aumentada (RA) en retransmisiones en vivo de competiciones de \textit {eSports}, donde se integran elementos virtuales en la escena para mejorar la visualización y el análisis del evento.}}{10}{figure.caption.19}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Ejemplo de aplicación de la realidad aumentada (RA) en el ámbito educativo, utilizada para el aprendizaje de anatomía y procedimientos médicos mediante la visualización interactiva de modelos tridimensionales.}}{11}{figure.caption.20}%
+\contentsline {figure}{\numberline {2.6}{\ignorespaces Vista de la pestaña \textit {Escenas} en OBS Studio.}}{15}{figure.caption.31}%
+\contentsline {figure}{\numberline {2.7}{\ignorespaces Vista de la pestaña \textit {Fuentes} en OBS Studio.}}{15}{figure.32}%
+\contentsline {figure}{\numberline {2.8}{\ignorespaces Interfaz de gestión de filtros en OBS Studio.}}{16}{figure.33}%
+\contentsline {figure}{\numberline {2.9}{\ignorespaces Ejemplo de configuración de transiciones en OBS Studio.}}{16}{figure.34}%
+\contentsline {figure}{\numberline {2.10}{\ignorespaces Panel del mezclador de audio en OBS Studio.}}{16}{figure.35}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Diagrama detallado del ciclo de vida del plugin}}{27}{figure.caption.61}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Diagrama geométrico del modelo de cámara \textit {pinhole}. Se ilustra cómo un punto $P$ en el espacio real (coordenadas $X,Y,Z$) se proyecta a través del centro óptico (lente) hasta impactar en el plano del sensor (coordenadas de píxel $u,v$). Esta proyección ideal justifica la necesidad de la calibración para corregir las distorsiones de las lentes reales.}}{30}{figure.caption.82}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Código Aruco }}{32}{figure.caption.89}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces DOMJuez Demo Web}}{34}{figure.caption.98}%
+\addvspace {10\p@ }
+\babel@toc {english}{}\relax 
+\babel@toc {spanish}{}\relax 
