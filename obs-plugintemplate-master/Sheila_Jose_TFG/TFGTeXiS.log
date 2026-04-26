@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.4.25)  26 APR 2026 13:24
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.4.25)  26 APR 2026 22:42
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -495,59 +495,59 @@ LaTeX Info: Redefining \setlength on input line 86.
 LaTeX Info: Redefining \addtolength on input line 87.
 \calc@Ccount=\count344
 \calc@Cskip=\skip75
-) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
-Package: geometry 2026/03/07 v6.0 Page Geometry
- (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
-Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/frontendlayer\tikz.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgf.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfrcs.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil-common.tex
+\pgfutil@everybye=\toks33
+\pgfutil@tempdima=\dimen256
+\pgfutil@tempdimb=\dimen257
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil-latex.def
+\pgfutil@abb=\box108
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfrcs.code.tex (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf\pgf.revision.tex)
+Package: pgfrcs 2025-08-29 v3.1.11a (3.1.11a)
+))
+Package: pgf 2025-08-29 v3.1.11a (3.1.11a)
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgfcore.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/systemlayer\pgfsys.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys.code.tex
+Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys.code.tex
+\pgfkeys@pathtoks=\toks34
+\pgfkeys@temptoks=\toks35
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeyslibraryfiltered.code.tex
+\pgfkeys@tmptoks=\toks36
+))
+\pgf@x=\dimen258
+\pgf@y=\dimen259
+\pgf@xa=\dimen260
+\pgf@ya=\dimen261
+\pgf@xb=\dimen262
+\pgf@yb=\dimen263
+\pgf@xc=\dimen264
+\pgf@yc=\dimen265
+\pgf@xd=\dimen266
+\pgf@yd=\dimen267
+\w@pgf@writea=\write5
+\r@pgf@reada=\read4
+\c@pgf@counta=\count345
+\c@pgf@countb=\count346
+\c@pgf@countc=\count347
+\c@pgf@countd=\count348
+\t@pgf@toka=\toks37
+\t@pgf@tokb=\toks38
+\t@pgf@tokc=\toks39
+\pgf@sys@id@count=\count349
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf.cfg
+File: pgf.cfg 2025-08-29 v3.1.11a (3.1.11a)
 )
-\Gm@cnth=\count345
-\Gm@cntv=\count346
-\c@Gm@tempcnt=\count347
-\Gm@bindingoffset=\dimen256
-\Gm@wd@mp=\dimen257
-\Gm@odd@mp=\dimen258
-\Gm@even@mp=\dimen259
-\Gm@layoutwidth=\dimen260
-\Gm@layoutheight=\dimen261
-\Gm@layouthoffset=\dimen262
-\Gm@layoutvoffset=\dimen263
-\Gm@dimlist=\toks33
- (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/titlesec\titlesec.sty
-Package: titlesec 2025/01/04 v2.17 Sectioning titles
-\ttl@box=\box108
-\beforetitleunit=\skip76
-\aftertitleunit=\skip77
-\ttl@plus=\dimen264
-\ttl@minus=\dimen265
-\ttl@toksa=\toks34
-\titlewidth=\dimen266
-\titlewidthlast=\dimen267
-\titlewidthfirst=\dimen268
-) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.sty
-Package: csquotes 2024-04-04 v5.2o context-sensitive quotations (JAW)
-\csq@reset=\count348
-\csq@gtype=\count349
-\csq@glevel=\count350
-\csq@qlevel=\count351
-\csq@maxlvl=\count352
-\csq@tshold=\count353
-\csq@ltx@everypar=\toks35
- (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.def
-File: csquotes.def 2024-04-04 v5.2o csquotes generic definitions (JAW)
-)
-Package csquotes Info: Trying to load configuration file 'csquotes.cfg'...
-Package csquotes Info: ... configuration file loaded successfully.
- (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.cfg
-File: csquotes.cfg 
-)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pdfpages\pdfpages.sty
-Package: pdfpages 2026/03/30 v0.6h Insert pages of external PDF documents (AM)
- (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\ifthen.sty
-Package: ifthen 2024/03/16 v1.1e Standard LaTeX ifthen package (DPC)
-) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/eso-pic\eso-pic.sty
-Package: eso-pic 2025/12/10 v3.0d eso-pic (RN)
-\ESO@tempdima=\dimen269
-\ESO@tempdimb=\dimen270
- (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
+Driver file for pgf: pgfsys-pdftex.def
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys-pdftex.def
+File: pgfsys-pdftex.def 2025-08-29 v3.1.11a (3.1.11a)
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys-common-pdf.def
+File: pgfsys-common-pdf.def 2025-08-29 v3.1.11a (3.1.11a)
+))) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsyssoftpath.code.tex
+File: pgfsyssoftpath.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfsyssoftpath@smallbuffer@items=\count350
+\pgfsyssoftpath@bigbuffer@items=\count351
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsysprotocol.code.tex
+File: pgfsysprotocol.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
 Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
  (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cfg
 File: color.cfg 2016/01/02 v1.6 sample color configuration
@@ -563,33 +563,212 @@ Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1369.
 Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1370.
 Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
 Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
-))
-\AM@pagewidth=\dimen271
-\AM@pageheight=\dimen272
-\AM@fboxrule=\dimen273
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore.code.tex
+Package: pgfcore 2025-08-29 v3.1.11a (3.1.11a)
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.code.tex (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathutil.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathparser.code.tex
+\pgfmath@dimen=\dimen268
+\pgfmath@count=\count352
+\pgfmath@box=\box109
+\pgfmath@toks=\toks40
+\pgfmath@stack@operand=\toks41
+\pgfmath@stack@operation=\toks42
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.basic.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.trigonometric.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.random.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.comparison.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.base.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.round.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.misc.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.integerarithmetics.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathcalc.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfloat.code.tex
+\c@pgfmathroundto@lastzeros=\count353
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfint.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepoints.code.tex
+File: pgfcorepoints.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@picminx=\dimen269
+\pgf@picmaxx=\dimen270
+\pgf@picminy=\dimen271
+\pgf@picmaxy=\dimen272
+\pgf@pathminx=\dimen273
+\pgf@pathmaxx=\dimen274
+\pgf@pathminy=\dimen275
+\pgf@pathmaxy=\dimen276
+\pgf@xx=\dimen277
+\pgf@xy=\dimen278
+\pgf@yx=\dimen279
+\pgf@yy=\dimen280
+\pgf@zx=\dimen281
+\pgf@zy=\dimen282
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepathconstruct.code.tex
+File: pgfcorepathconstruct.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@path@lastx=\dimen283
+\pgf@path@lasty=\dimen284
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepathusage.code.tex
+File: pgfcorepathusage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@shorten@end@additional=\dimen285
+\pgf@shorten@start@additional=\dimen286
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorescopes.code.tex
+File: pgfcorescopes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfpic=\box110
+\pgf@hbox=\box111
+\pgf@layerbox@main=\box112
+\pgf@picture@serial@count=\count354
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoregraphicstate.code.tex
+File: pgfcoregraphicstate.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgflinewidth=\dimen287
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoretransformations.code.tex
+File: pgfcoretransformations.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@pt@x=\dimen288
+\pgf@pt@y=\dimen289
+\pgf@pt@temp=\dimen290
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorequick.code.tex
+File: pgfcorequick.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoreobjects.code.tex
+File: pgfcoreobjects.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepathprocessing.code.tex
+File: pgfcorepathprocessing.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorearrows.code.tex
+File: pgfcorearrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfarrowsep=\dimen291
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoreshade.code.tex
+File: pgfcoreshade.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@max=\dimen292
+\pgf@sys@shading@range@num=\count355
+\pgf@shadingcount=\count356
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoreimage.code.tex
+File: pgfcoreimage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoreexternal.code.tex
+File: pgfcoreexternal.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfexternal@startupbox=\box113
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorelayers.code.tex
+File: pgfcorelayers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoretransparency.code.tex
+File: pgfcoretransparency.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepatterns.code.tex
+File: pgfcorepatterns.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorerdf.code.tex
+File: pgfcorerdf.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmoduleshapes.code.tex
+File: pgfmoduleshapes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfnodeparttextbox=\box114
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmoduleplot.code.tex
+File: pgfmoduleplot.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfcomp-version-0-65.sty
+Package: pgfcomp-version-0-65 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@nodesepstart=\dimen293
+\pgf@nodesepend=\dimen294
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfcomp-version-1-18.sty
+Package: pgfcomp-version-1-18 2025-08-29 v3.1.11a (3.1.11a)
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgffor.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfkeys.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys.code.tex)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/math\pgfmath.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.code.tex)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgffor.code.tex
+Package: pgffor 2025-08-29 v3.1.11a (3.1.11a)
+\pgffor@iter=\dimen295
+\pgffor@skip=\dimen296
+\pgffor@stack=\toks43
+\pgffor@toks=\toks44
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz\tikz.code.tex
+Package: tikz 2025-08-29 v3.1.11a (3.1.11a)
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibraryplothandlers.code.tex
+File: pgflibraryplothandlers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@plot@mark@count=\count357
+\pgfplotmarksize=\dimen297
+)
+\tikz@lastx=\dimen298
+\tikz@lasty=\dimen299
+\tikz@lastxsaved=\dimen300
+\tikz@lastysaved=\dimen301
+\tikz@lastmovetox=\dimen302
+\tikz@lastmovetoy=\dimen303
+\tikzleveldistance=\dimen304
+\tikzsiblingdistance=\dimen305
+\tikz@figbox=\box115
+\tikz@figbox@bg=\box116
+\tikz@tempbox=\box117
+\tikz@tempbox@bg=\box118
+\tikztreelevel=\count358
+\tikznumberofchildren=\count359
+\tikznumberofcurrentchild=\count360
+\tikz@fig@count=\count361
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodulematrix.code.tex
+File: pgfmodulematrix.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfmatrixcurrentrow=\count362
+\pgfmatrixcurrentcolumn=\count363
+\pgf@matrix@numberofcolumns=\count364
+)
+\tikz@expandcount=\count365
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibrarytopaths.code.tex
+File: tikzlibrarytopaths.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibrarypositioning.code.tex
+File: tikzlibrarypositioning.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
+Package: geometry 2026/03/07 v6.0 Page Geometry
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
+Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
+)
+\Gm@cnth=\count366
+\Gm@cntv=\count367
+\c@Gm@tempcnt=\count368
+\Gm@bindingoffset=\dimen306
+\Gm@wd@mp=\dimen307
+\Gm@odd@mp=\dimen308
+\Gm@even@mp=\dimen309
+\Gm@layoutwidth=\dimen310
+\Gm@layoutheight=\dimen311
+\Gm@layouthoffset=\dimen312
+\Gm@layoutvoffset=\dimen313
+\Gm@dimlist=\toks45
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/titlesec\titlesec.sty
+Package: titlesec 2025/01/04 v2.17 Sectioning titles
+\ttl@box=\box119
+\beforetitleunit=\skip76
+\aftertitleunit=\skip77
+\ttl@plus=\dimen314
+\ttl@minus=\dimen315
+\ttl@toksa=\toks46
+\titlewidth=\dimen316
+\titlewidthlast=\dimen317
+\titlewidthfirst=\dimen318
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.sty
+Package: csquotes 2024-04-04 v5.2o context-sensitive quotations (JAW)
+\csq@reset=\count369
+\csq@gtype=\count370
+\csq@glevel=\count371
+\csq@qlevel=\count372
+\csq@maxlvl=\count373
+\csq@tshold=\count374
+\csq@ltx@everypar=\toks47
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.def
+File: csquotes.def 2024-04-04 v5.2o csquotes generic definitions (JAW)
+)
+Package csquotes Info: Trying to load configuration file 'csquotes.cfg'...
+Package csquotes Info: ... configuration file loaded successfully.
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.cfg
+File: csquotes.cfg 
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pdfpages\pdfpages.sty
+Package: pdfpages 2026/03/30 v0.6h Insert pages of external PDF documents (AM)
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\ifthen.sty
+Package: ifthen 2024/03/16 v1.1e Standard LaTeX ifthen package (DPC)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/eso-pic\eso-pic.sty
+Package: eso-pic 2025/12/10 v3.0d eso-pic (RN)
+\ESO@tempdima=\dimen319
+\ESO@tempdimb=\dimen320
+)
+\AM@pagewidth=\dimen321
+\AM@pageheight=\dimen322
+\AM@fboxrule=\dimen323
  (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pdfpages\pppdftex.def
 File: pppdftex.def 2026/03/30 v0.6h Pdfpages driver for pdfTeX (AM)
 )
-\pdfpages@includegraphics@status=\count354
-\AM@pagebox=\box109
-\AM@global@opts=\toks36
-\AM@pagecnt=\count355
-\AM@toc@title=\toks37
-\AM@lof@heading=\toks38
-\c@AM@survey=\count356
-\AM@templatesizebox=\box110
+\pdfpages@includegraphics@status=\count375
+\AM@pagebox=\box120
+\AM@global@opts=\toks48
+\AM@pagecnt=\count376
+\AM@toc@title=\toks49
+\AM@lof@heading=\toks50
+\c@AM@survey=\count377
+\AM@templatesizebox=\box121
 ) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/lipsum\lipsum.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/l3packages/l3keys2e\l3keys2e.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\expl3.sty
 Package: expl3 2026-03-20 L3 programming layer (loader) 
  (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdftex.def
 File: l3backend-pdftex.def 2026-02-18 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count357
+\l__color_backend_stack_int=\count378
 ))
 Package: l3keys2e 2025-10-09 LaTeX2e option processing using LaTeX3 keys
 )
 Package: lipsum 2021-09-20 v2.7 150 paragraphs of Lorem Ipsum dummy text
-\g__lipsum_par_int=\count358
-\l__lipsum_a_int=\count359
-\l__lipsum_b_int=\count360
+\g__lipsum_par_int=\count379
+\l__lipsum_a_int=\count380
+\l__lipsum_b_int=\count381
  (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/lipsum\lipsum.ltd.tex)))
 
 LaTeX Warning: \include should only be used after \begin{document} on input line 464.
@@ -610,7 +789,7 @@ Package: fancyhdr 2025/02/07 v5.2 Extensive control of page headers and footers
 \f@nch@widthL=\skip89
 \f@nch@widthC=\skip90
 \f@nch@widthR=\skip91
-\@temptokenb=\toks39
+\@temptokenb=\toks51
 ))
 
 LaTeX Warning: \include should only be used after \begin{document} on input line 467.
@@ -625,23 +804,23 @@ LaTeX Warning: \include should only be used after \begin{document} on input line
 
 (TeXiS/TeXiS_bib.tex)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/booktabs\booktabs.sty
 Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
-\heavyrulewidth=\dimen274
-\lightrulewidth=\dimen275
-\cmidrulewidth=\dimen276
-\belowrulesep=\dimen277
-\belowbottomsep=\dimen278
-\aboverulesep=\dimen279
-\abovetopsep=\dimen280
-\cmidrulesep=\dimen281
-\cmidrulekern=\dimen282
-\defaultaddspace=\dimen283
-\@cmidla=\count361
-\@cmidlb=\count362
-\@aboverulesep=\dimen284
-\@belowrulesep=\dimen285
-\@thisruleclass=\count363
-\@lastruleclass=\count364
-\@thisrulewidth=\dimen286
+\heavyrulewidth=\dimen324
+\lightrulewidth=\dimen325
+\cmidrulewidth=\dimen326
+\belowrulesep=\dimen327
+\belowbottomsep=\dimen328
+\aboverulesep=\dimen329
+\abovetopsep=\dimen330
+\cmidrulesep=\dimen331
+\cmidrulekern=\dimen332
+\defaultaddspace=\dimen333
+\@cmidla=\count382
+\@cmidlb=\count383
+\@aboverulesep=\dimen334
+\@belowrulesep=\dimen335
+\@thisruleclass=\count384
+\@lastruleclass=\count385
+\@thisrulewidth=\dimen336
 )
 
 LaTeX Warning: \include should only be used after \begin{document} on input line 83.
@@ -687,27 +866,27 @@ LaTeX Info: Redefining \. on input line 107.
 LaTeX Info: Redefining \% on input line 107.
 Package hyperref Info: Link coloring OFF on input line 107.
  (TFGTeXiS.out) (TFGTeXiS.out)
-\@outlinefile=\write5
-\openout5 = `TFGTeXiS.out'.
+\@outlinefile=\write6
+\openout6 = `TFGTeXiS.out'.
 
 Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: subfig package v1.3 is loaded.
 Package caption Info: listings package is loaded.
 Package caption Info: End \AtBeginDocument code.
-\c@lstlisting=\count365
+\c@lstlisting=\count386
  (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count366
-\scratchdimen=\dimen287
-\scratchbox=\box111
-\nofMPsegments=\count367
-\nofMParguments=\count368
-\everyMPshowfont=\toks40
-\MPscratchCnt=\count369
-\MPscratchDim=\dimen288
-\MPnumerator=\count370
-\makeMPintoPDFobject=\count371
-\everyMPtoPDFconversion=\toks41
+\scratchcounter=\count387
+\scratchdimen=\dimen337
+\scratchbox=\box122
+\nofMPsegments=\count388
+\nofMParguments=\count389
+\everyMPshowfont=\toks52
+\MPscratchCnt=\count390
+\MPscratchDim=\dimen338
+\MPnumerator=\count391
+\makeMPintoPDFobject=\count392
+\everyMPtoPDFconversion=\toks53
 ) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
@@ -766,12 +945,12 @@ Package pdflscape Info: Auto-detected driver: pdftex on input line 81.
 \evensidemarginOriginal=\skip95
 \oddsidemarginOriginal=\skip96
 \longTitulo=\skip97
-<Imagenes/Bitmap/escudoUCMcolor.png, id=295, 600.3228pt x 678.3744pt>
+<Imagenes/Bitmap/escudoUCMcolor.png, id=310, 600.3228pt x 678.3744pt>
 File: Imagenes/Bitmap/escudoUCMcolor.png Graphic file (type png)
 <use Imagenes/Bitmap/escudoUCMcolor.png>
 Package pdftex.def Info: Imagenes/Bitmap/escudoUCMcolor.png  used on input line 191.
 (pdftex.def)             Requested size: 120.06242pt x 135.67247pt.
-\c@lastyear=\count372
+\c@lastyear=\count393
  [1
 
 
@@ -844,15 +1023,12 @@ LaTeX Info: Redefining \. on input line 1.
 LaTeX Info: Redefining \% on input line 1.
 LaTeX Info: Redefining \. on input line 3.
 LaTeX Info: Redefining \% on input line 3.
- [13]
-Underfull \vbox (badness 2426) has occurred while \output is active []
-
- [14]
-LaTeX Info: Redefining \. on input line 82.
-LaTeX Info: Redefining \% on input line 82.
+ [13] [14]
+LaTeX Info: Redefining \. on input line 85.
+LaTeX Info: Redefining \% on input line 85.
 )
-\tf@toc=\write6
-\openout6 = `TFGTeXiS.toc'.
+\tf@toc=\write7
+\openout7 = `TFGTeXiS.toc'.
 
  [15] [16
 
@@ -861,26 +1037,30 @@ LaTeX Info: Redefining \. on input line 1.
 LaTeX Info: Redefining \% on input line 1.
 LaTeX Info: Redefining \. on input line 3.
 LaTeX Info: Redefining \% on input line 3.
-LaTeX Info: Redefining \. on input line 23.
-LaTeX Info: Redefining \% on input line 23.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [17]
+LaTeX Info: Redefining \. on input line 26.
+LaTeX Info: Redefining \% on input line 26.
 )
-\tf@lof=\write7
-\openout7 = `TFGTeXiS.lof'.
+\tf@lof=\write8
+\openout8 = `TFGTeXiS.lof'.
 
- [17] [18
-
-] (TFGTeXiS.lot
+ [18] (TFGTeXiS.lot
 LaTeX Info: Redefining \. on input line 1.
 LaTeX Info: Redefining \% on input line 1.
 LaTeX Info: Redefining \. on input line 3.
 LaTeX Info: Redefining \% on input line 3.
-LaTeX Info: Redefining \. on input line 11.
-LaTeX Info: Redefining \% on input line 11.
+LaTeX Info: Redefining \. on input line 12.
+LaTeX Info: Redefining \% on input line 12.
 )
-\tf@lot=\write8
-\openout8 = `TFGTeXiS.lot'.
+\tf@lot=\write9
+\openout9 = `TFGTeXiS.lot'.
 
- [19]) [20
+ [19
+
+]) [20
 
 
 
@@ -896,18 +1076,14 @@ File: ot1phv.fd 2020/03/25 scalable font definitions for OT1/phv.
 LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 1.
  (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1ptm.fd
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
-)
-
-Package natbib Warning: Citation `GrandViewAR' on page 1 undefined on input line 31.
-
-[1
+) [1
 
 
 {C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}]
-LaTeX Info: Redefining \. on input line 58.
-LaTeX Info: Redefining \% on input line 58.
+LaTeX Info: Redefining \. on input line 59.
+LaTeX Info: Redefining \% on input line 59.
 Package babel Info: 'spanish' activates 'spanish' shorthands.
-(babel)             Reported on input line 58.
+(babel)             Reported on input line 59.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -937,27 +1113,9 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 
 ]
 Cap\'itulo 2.
-
-Package natbib Warning: Citation `Azuma1997' on page 5 undefined on input line 21.
-
-
-Package natbib Warning: Citation `Billinghurst2015' on page 5 undefined on input line 23.
-
-
-Package natbib Warning: Citation `Olsson2012' on page 5 undefined on input line 25.
-
-
-Package natbib Warning: Citation `Casco2018' on page 5 undefined on input line 25.
-
-
-Package natbib Warning: Citation `Azuma1997' on page 5 undefined on input line 27.
-
-
-Package natbib Warning: Citation `AzumaBishop1994' on page 5 undefined on input line 29.
-
 [5]
-LaTeX Info: Redefining \. on input line 45.
-LaTeX Info: Redefining \% on input line 45.
+LaTeX Info: Redefining \. on input line 44.
+LaTeX Info: Redefining \% on input line 44.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1001,23 +1159,11 @@ Underfull \hbox (badness 10000) in paragraph at lines 68--68
 []|\T1/cmr/bx/n/8 RA Ba-sa-da en
  []
 
-
-Package natbib Warning: Citation `Deloitte_RA_Broadcasting' on page 7 undefined on input line 81.
-
-
-Package natbib Warning: Citation `Ericsson_2020' on page 7 undefined on input line 81.
-
-
-Package natbib Warning: Citation `Enicomp2023' on page 7 undefined on input line 87.
-
-<Imagenes/Vectorial/Eventosenvivo.jpg, id=540, 953.5625pt x 537.00626pt>
+<Imagenes/Vectorial/Eventosenvivo.jpg, id=598, 953.5625pt x 537.00626pt>
 File: Imagenes/Vectorial/Eventosenvivo.jpg Graphic file (type jpg)
 <use Imagenes/Vectorial/Eventosenvivo.jpg>
 Package pdftex.def Info: Imagenes/Vectorial/Eventosenvivo.jpg  used on input line 91.
 (pdftex.def)             Requested size: 320.81677pt x 180.67499pt.
-
-Package natbib Warning: Citation `Panorama2024' on page 7 undefined on input line 97.
-
 LaTeX Info: Redefining \. on input line 98.
 LaTeX Info: Redefining \% on input line 98.
 
@@ -1028,17 +1174,14 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [7]
-<Imagenes/Vectorial/noticias.png, id=547, 470.50781pt x 297.36093pt>
+<Imagenes/Vectorial/noticias.png, id=610, 470.50781pt x 297.36093pt>
 File: Imagenes/Vectorial/noticias.png Graphic file (type png)
 <use Imagenes/Vectorial/noticias.png>
 Package pdftex.def Info: Imagenes/Vectorial/noticias.png  used on input line 101.
 (pdftex.def)             Requested size: 285.875pt x 180.67499pt.
+LaTeX Info: Redefining \. on input line 110.
+LaTeX Info: Redefining \% on input line 110.
 
-
-Package natbib Warning: Citation `SnapchatGenZ2022' on page 8 undefined on input line 108.
-
-LaTeX Info: Redefining \. on input line 111.
-LaTeX Info: Redefining \% on input line 111.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1047,33 +1190,24 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [8 <./Imagenes/Vectorial/Eventosenvivo.jpg> <./Imagenes/Vectorial/noticias.png>]
-
-Package natbib Warning: Citation `SnapchatGenZ2022' on page 9 undefined on input line 112.
-
-
-Package natbib Warning: Citation `BrandXR2025' on page 9 undefined on input line 115.
-
-
-Package natbib Warning: Citation `BrandXR2025' on page 9 undefined on input line 117.
-
-<Imagenes/Vectorial/rrss.png, id=553, 566.86781pt x 286.06876pt>
+<Imagenes/Vectorial/rrss.png, id=625, 566.86781pt x 286.06876pt>
 File: Imagenes/Vectorial/rrss.png Graphic file (type png)
 <use Imagenes/Vectorial/rrss.png>
 Package pdftex.def Info: Imagenes/Vectorial/rrss.png  used on input line 123.
 (pdftex.def)             Requested size: 358.02818pt x 180.67499pt.
-
-Package natbib Warning: Citation `ESTV2022' on page 9 undefined on input line 129.
-
-<Imagenes/Vectorial/sports.png, id=554, 536.0025pt x 290.58563pt>
+<Imagenes/Vectorial/sports.png, id=628, 536.0025pt x 290.58563pt>
 File: Imagenes/Vectorial/sports.png Graphic file (type png)
 <use Imagenes/Vectorial/sports.png>
-Package pdftex.def Info: Imagenes/Vectorial/sports.png  used on input line 133.
+Package pdftex.def Info: Imagenes/Vectorial/sports.png  used on input line 132.
 (pdftex.def)             Requested size: 333.26685pt x 180.67499pt.
+<Imagenes/Vectorial/education.png, id=631, 481.8pt x 304.88907pt>
+File: Imagenes/Vectorial/education.png Graphic file (type png)
+<use Imagenes/Vectorial/education.png>
+Package pdftex.def Info: Imagenes/Vectorial/education.png  used on input line 141.
+(pdftex.def)             Requested size: 285.51666pt x 180.67499pt.
+LaTeX Info: Redefining \. on input line 145.
+LaTeX Info: Redefining \% on input line 145.
 
-Package natbib Warning: Citation `Radianti2020' on page 9 undefined on input line 139.
-
-LaTeX Info: Redefining \. on input line 140.
-LaTeX Info: Redefining \% on input line 140.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1082,22 +1216,10 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [9 <./Imagenes/Vectorial/rrss.png>]
+Underfull \vbox (badness 1552) has occurred while \output is active []
 
-Package natbib Warning: Citation `Radianti2020' on page 10 undefined on input line 141.
-
-
-Package natbib Warning: Citation `Radianti2020' on page 10 undefined on input line 143.
-
-<Imagenes/Vectorial/education.png, id=560, 481.8pt x 304.88907pt>
-File: Imagenes/Vectorial/education.png Graphic file (type png)
-<use Imagenes/Vectorial/education.png>
-Package pdftex.def Info: Imagenes/Vectorial/education.png  used on input line 146.
-(pdftex.def)             Requested size: 285.51666pt x 180.67499pt.
-
-Underfull \vbox (badness 3735) has occurred while \output is active []
-
-LaTeX Info: Redefining \. on input line 161.
-LaTeX Info: Redefining \% on input line 161.
+LaTeX Info: Redefining \. on input line 148.
+LaTeX Info: Redefining \% on input line 148.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1106,12 +1228,10 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[10 <./Imagenes/Vectorial/sports.png>]
+[10 <./Imagenes/Vectorial/sports.png> <./Imagenes/Vectorial/education.png>]
+LaTeX Info: Redefining \. on input line 167.
+LaTeX Info: Redefining \% on input line 167.
 
-Package natbib Warning: Citation `Vuforia' on page 11 undefined on input line 165.
-
-LaTeX Info: Redefining \. on input line 171.
-LaTeX Info: Redefining \% on input line 171.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1119,15 +1239,10 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[11 <./Imagenes/Vectorial/education.png>]
+[11]
+LaTeX Info: Redefining \. on input line 186.
+LaTeX Info: Redefining \% on input line 186.
 
-Package natbib Warning: Citation `ARToolkit' on page 12 undefined on input line 178.
-
-
-Package natbib Warning: Citation `OpenCV' on page 12 undefined on input line 189.
-
-LaTeX Info: Redefining \. on input line 190.
-LaTeX Info: Redefining \% on input line 190.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1136,14 +1251,9 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [12]
+LaTeX Info: Redefining \. on input line 207.
+LaTeX Info: Redefining \% on input line 207.
 
-Package natbib Warning: Citation `SDK_NVIDIA' on page 13 undefined on input line 200.
-
-
-Package natbib Warning: Citation `DeepAR' on page 13 undefined on input line 211.
-
-LaTeX Info: Redefining \. on input line 212.
-LaTeX Info: Redefining \% on input line 212.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1152,15 +1262,12 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [13]
-Underfull \hbox (badness 10000) in paragraph at lines 233--233
+Underfull \hbox (badness 10000) in paragraph at lines 228--228
 []|\T1/cmr/m/n/10.95 Seguimiento ba-sa-do en
  []
 
-
-Package natbib Warning: Citation `OBS' on page 14 undefined on input line 240.
-
-LaTeX Info: Redefining \. on input line 241.
-LaTeX Info: Redefining \% on input line 241.
+LaTeX Info: Redefining \. on input line 236.
+LaTeX Info: Redefining \% on input line 236.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1169,24 +1276,24 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [14]
-<Imagenes/Vectorial/escenas.png, id=586, 287.57437pt x 140.02313pt>
+<Imagenes/Vectorial/escenas.png, id=684, 287.57437pt x 140.02313pt>
 File: Imagenes/Vectorial/escenas.png Graphic file (type png)
 <use Imagenes/Vectorial/escenas.png>
-Package pdftex.def Info: Imagenes/Vectorial/escenas.png  used on input line 251.
+Package pdftex.def Info: Imagenes/Vectorial/escenas.png  used on input line 246.
 (pdftex.def)             Requested size: 222.64842pt x 108.405pt.
-<Imagenes/Vectorial/fuentes.png, id=587, 289.83281pt x 191.9672pt>
+<Imagenes/Vectorial/fuentes.png, id=685, 289.83281pt x 191.9672pt>
 File: Imagenes/Vectorial/fuentes.png Graphic file (type png)
 <use Imagenes/Vectorial/fuentes.png>
-Package pdftex.def Info: Imagenes/Vectorial/fuentes.png  used on input line 266.
+Package pdftex.def Info: Imagenes/Vectorial/fuentes.png  used on input line 261.
 (pdftex.def)             Requested size: 163.6718pt x 108.405pt.
 
 
 Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 267.
+(caption)                particular \caption on input line 262.
 See the caption package documentation for explanation.
 
-LaTeX Info: Redefining \. on input line 267.
-LaTeX Info: Redefining \% on input line 267.
+LaTeX Info: Redefining \. on input line 262.
+LaTeX Info: Redefining \% on input line 262.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1194,40 +1301,40 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[15 <./Imagenes/Vectorial/escenas.png> <./Imagenes/Vectorial/fuentes.png>]
-<Imagenes/Vectorial/filtros.png, id=595, 216.05719pt x 296.60812pt>
+[15 <./Imagenes/Vectorial/escenas.png>]
+<Imagenes/Vectorial/filtros.png, id=692, 216.05719pt x 296.60812pt>
 File: Imagenes/Vectorial/filtros.png Graphic file (type png)
 <use Imagenes/Vectorial/filtros.png>
-Package pdftex.def Info: Imagenes/Vectorial/filtros.png  used on input line 276.
+Package pdftex.def Info: Imagenes/Vectorial/filtros.png  used on input line 271.
 (pdftex.def)             Requested size: 131.61336pt x 180.67499pt.
 
 
 Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 277.
+(caption)                particular \caption on input line 272.
 See the caption package documentation for explanation.
 
-<Imagenes/Vectorial/transiciones.png, id=596, 225.09094pt x 195.73125pt>
+<Imagenes/Vectorial/transiciones.png, id=693, 225.09094pt x 195.73125pt>
 File: Imagenes/Vectorial/transiciones.png Graphic file (type png)
 <use Imagenes/Vectorial/transiciones.png>
-Package pdftex.def Info: Imagenes/Vectorial/transiciones.png  used on input line 282.
+Package pdftex.def Info: Imagenes/Vectorial/transiciones.png  used on input line 277.
 (pdftex.def)             Requested size: 124.66591pt x 108.405pt.
 
 Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 283.
+(caption)                particular \caption on input line 278.
 See the caption package documentation for explanation.
 
-<Imagenes/Vectorial/audio.png, id=597, 376.40625pt x 195.73125pt>
+<Imagenes/Vectorial/audio.png, id=694, 376.40625pt x 195.73125pt>
 File: Imagenes/Vectorial/audio.png Graphic file (type png)
 <use Imagenes/Vectorial/audio.png>
-Package pdftex.def Info: Imagenes/Vectorial/audio.png  used on input line 288.
+Package pdftex.def Info: Imagenes/Vectorial/audio.png  used on input line 283.
 (pdftex.def)             Requested size: 208.47142pt x 108.405pt.
 
 Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 289.
+(caption)                particular \caption on input line 284.
 See the caption package documentation for explanation.
 
-LaTeX Info: Redefining \. on input line 297.
-LaTeX Info: Redefining \% on input line 297.
+LaTeX Info: Redefining \. on input line 284.
+LaTeX Info: Redefining \% on input line 284.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1235,9 +1342,9 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[16 <./Imagenes/Vectorial/filtros.png> <./Imagenes/Vectorial/transiciones.png> <./Imagenes/Vectorial/audio.png>]
-LaTeX Info: Redefining \. on input line 319.
-LaTeX Info: Redefining \% on input line 319.
+[16 <./Imagenes/Vectorial/fuentes.png> <./Imagenes/Vectorial/filtros.png> <./Imagenes/Vectorial/transiciones.png>]
+LaTeX Info: Redefining \. on input line 304.
+LaTeX Info: Redefining \% on input line 304.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1246,23 +1353,23 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[17]
-Overfull \hbox (9.91876pt too wide) in paragraph at lines 319--320
+[17 <./Imagenes/Vectorial/audio.png>]
+Overfull \hbox (9.91876pt too wide) in paragraph at lines 314--315
 []\T1/cmr/bx/n/12 Carpeta de bi-na-rios: \T1/cmr/m/n/12 los bi-na-rios com-pi-la-dos se co-lo-can en $\T1/cmtt/m/n/12 obs-[]plugins /
  []
 
 
-Overfull \hbox (6.39102pt too wide) in paragraph at lines 319--320
+Overfull \hbox (6.39102pt too wide) in paragraph at lines 314--315
 \T1/cmtt/m/n/12 arquitectura$ \T1/cmr/m/n/12 den-tro de la ins-ta-la-ciÛn de OBS (por ejem-plo $\T1/cmtt/m/n/12 obs-[]plugins /
  []
 
 
-Overfull \hbox (39.29639pt too wide) in paragraph at lines 320--321
+Overfull \hbox (39.29639pt too wide) in paragraph at lines 315--316
 []\T1/cmr/bx/n/12 Carpeta de da-tos: \T1/cmr/m/n/12 los re-cur-sos adi-cio-na-les de-ben re-si-dir en $\T1/cmtt/m/n/12 data / obs-[]plugins /
  []
 
-LaTeX Info: Redefining \. on input line 336.
-LaTeX Info: Redefining \% on input line 336.
+LaTeX Info: Redefining \. on input line 328.
+LaTeX Info: Redefining \% on input line 328.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1271,13 +1378,11 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [18]
-
-Package natbib Warning: Citation `assimp2025' on page 19 undefined on input line 343.
-
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 348.
-LaTeX Info: Redefining \. on input line 364.
-LaTeX Info: Redefining \% on input line 364.
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 343.
+LaTeX Info: Redefining \. on input line 353.
+LaTeX Info: Redefining \% on input line 353.
+
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1286,8 +1391,8 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [19]
-LaTeX Info: Redefining \. on input line 386.
-LaTeX Info: Redefining \% on input line 386.
+LaTeX Info: Redefining \. on input line 373.
+LaTeX Info: Redefining \% on input line 373.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1297,8 +1402,8 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [20]
-LaTeX Info: Redefining \. on input line 418.
-LaTeX Info: Redefining \% on input line 418.
+LaTeX Info: Redefining \. on input line 406.
+LaTeX Info: Redefining \% on input line 406.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1308,19 +1413,17 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [21]
-Overfull \hbox (17.04335pt too wide) in paragraph at lines 430--431
+Overfull \hbox (17.04335pt too wide) in paragraph at lines 425--426
 \T1/cmr/m/n/12 ders, tex-tu-ras, bi-na-rios com-pi-la-dos (\T1/cmtt/m/n/12 .dll \T1/cmr/m/n/12 en Win-dows, \T1/cmtt/m/n/12 .so \T1/cmr/m/n/12 en Li-nux/macOS)
  []
 
 
-Overfull \hbox (14.87766pt too wide) in paragraph at lines 431--432
+Overfull \hbox (14.87766pt too wide) in paragraph at lines 426--427
 []\T1/cmr/m/n/12 La ins-ta-la-ciÛn se rea-li-za en la car-pe-ta de plu-gins de OBS ($\T1/cmtt/m/n/12 C : \ProgramFiles \
  []
 
-)
-LaTeX Info: Redefining \. on input line 143.
-LaTeX Info: Redefining \% on input line 143.
-
+LaTeX Info: Redefining \. on input line 443.
+LaTeX Info: Redefining \% on input line 443.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1328,7 +1431,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[22]
+[22])
 LaTeX Info: Redefining \. on input line 143.
 LaTeX Info: Redefining \% on input line 143.
 
@@ -1355,17 +1458,9 @@ Overfull \hbox (29.3747pt too wide) in paragraph at lines 1--1
  []
 
 [25]
-Overfull \hbox (1.43062pt too wide) in paragraph at lines 54--55
-[]\T1/cmr/bx/n/12 ASSIMP: \T1/cmr/m/n/12 Pa-ra la im-por-ta-ciÛn y nor-ma-li-za-ciÛn de mo-de-los 3D (OBJ,
- []
+LaTeX Info: Redefining \. on input line 69.
+LaTeX Info: Redefining \% on input line 69.
 
-<Imagenes/Vectorial/ciclo_vida_plugin.png, id=655, 1413.28pt x 770.88pt>
-File: Imagenes/Vectorial/ciclo_vida_plugin.png Graphic file (type png)
-<use Imagenes/Vectorial/ciclo_vida_plugin.png>
-Package pdftex.def Info: Imagenes/Vectorial/ciclo_vida_plugin.png  used on input line 75.
-(pdftex.def)             Requested size: 341.43437pt x 186.2383pt.
-LaTeX Info: Redefining \. on input line 79.
-LaTeX Info: Redefining \% on input line 79.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1374,12 +1469,18 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [26]
+<Imagenes/Vectorial/ciclo_vida_plugin.png, id=767, 1413.28pt x 770.88pt>
+File: Imagenes/Vectorial/ciclo_vida_plugin.png Graphic file (type png)
+<use Imagenes/Vectorial/ciclo_vida_plugin.png>
+Package pdftex.def Info: Imagenes/Vectorial/ciclo_vida_plugin.png  used on input line 75.
+(pdftex.def)             Requested size: 341.43437pt x 186.2383pt.
+
 Overfull \hbox (0.3849pt too wide) in paragraph at lines 86--87
 []\T1/cmr/bx/n/12 SincronizaciÛn: \T1/cmr/m/n/12 Pro-ce-sa-mien-to asÌn-crono de los da-tos re-ci-bi-dos vÌa Web. 
  []
 
-LaTeX Info: Redefining \. on input line 105.
-LaTeX Info: Redefining \% on input line 105.
+LaTeX Info: Redefining \. on input line 104.
+LaTeX Info: Redefining \% on input line 104.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1388,20 +1489,142 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [27 <./Imagenes/Vectorial/ciclo_vida_plugin.png>]
-LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <14.4> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 111.
+Capitulos/DescripcionTrabajo.tex:119: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.119 ...tealth, font=\small, node distance=1.2cm]
+                                                  
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
 
-Capitulos/DescripcionTrabajo.tex:123: Undefined control sequence.
-l.123 \cuadro
-             {
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:119: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.119 ...tealth, font=\small, node distance=1.2cm]
+                                                  
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
 
-LaTeX Info: Redefining \. on input line 140.
-LaTeX Info: Redefining \% on input line 140.
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:119: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.119 ...tealth, font=\small, node distance=1.2cm]
+                                                  
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Capitulos/DescripcionTrabajo.tex:119: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.119 ...tealth, font=\small, node distance=1.2cm]
+                                                  
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:119: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.119 ...tealth, font=\small, node distance=1.2cm]
+                                                  
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:119: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.119 ...tealth, font=\small, node distance=1.2cm]
+                                                  
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+Capitulos/DescripcionTrabajo.tex:125: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.125   \draw[<->, thick]
+                          (main) -- node[right, align=left, font=\scriptsize]
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:125: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.125   \draw[<->, thick]
+                          (main) -- node[right, align=left, font=\scriptsize]
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Runaway argument?
+<-
+Capitulos/DescripcionTrabajo.tex:125: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.125   \draw[<->, thick]
+                          (main) -- node[right, align=left, font=\scriptsize]
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Capitulos/DescripcionTrabajo.tex:125: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.125   \draw[<->, thick]
+                          (main) -- node[right, align=left, font=\scriptsize]
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:125: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.125   \draw[<->, thick]
+                          (main) -- node[right, align=left, font=\scriptsize]
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:125: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.125   \draw[<->, thick]
+                          (main) -- node[right, align=left, font=\scriptsize]
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Runaway argument?
+<-
+Capitulos/DescripcionTrabajo.tex:125: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.125   \draw[<->, thick]
+                          (main) -- node[right, align=left, font=\scriptsize]
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+LaTeX Info: Redefining \. on input line 132.
+LaTeX Info: Redefining \% on input line 132.
+
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1410,9 +1633,17 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [28]
-LaTeX Info: Redefining \. on input line 173.
-LaTeX Info: Redefining \% on input line 173.
+Capitulos/DescripcionTrabajo.tex:149: Undefined control sequence.
+l.149 \cuadro
+             {
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
 
+LaTeX Info: Redefining \. on input line 162.
+LaTeX Info: Redefining \% on input line 162.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1421,18 +1652,9 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [29]
-<Imagenes/Vectorial/CamaraDistorsion.png, id=693, 1413.28pt x 770.88pt>
-File: Imagenes/Vectorial/CamaraDistorsion.png Graphic file (type png)
-<use Imagenes/Vectorial/CamaraDistorsion.png>
-Package pdftex.def Info: Imagenes/Vectorial/CamaraDistorsion.png  used on input line 194.
-(pdftex.def)             Requested size: 256.07741pt x 139.66989pt.
+LaTeX Info: Redefining \. on input line 185.
+LaTeX Info: Redefining \% on input line 185.
 
-Overfull \hbox (31.7326pt too wide) in paragraph at lines 202--203
-[]\T1/cmr/m/n/12 Una vez lo-ca-li-za-do el mar-ca-dor, el sis-te-ma de-be re-sol-ver el pro-ble-ma de \T1/cmr/bx/n/12 Perspectiva-
- []
-
-LaTeX Info: Redefining \. on input line 203.
-LaTeX Info: Redefining \% on input line 203.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1440,15 +1662,35 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[30 <./Imagenes/Vectorial/CamaraDistorsion.png>]
-<Imagenes/Vectorial/codigoAruco.png, id=699, 269.005pt x 192.72pt>
-File: Imagenes/Vectorial/codigoAruco.png Graphic file (type png)
-<use Imagenes/Vectorial/codigoAruco.png>
-Package pdftex.def Info: Imagenes/Vectorial/codigoAruco.png  used on input line 231.
-(pdftex.def)             Requested size: 256.07741pt x 183.45935pt.
-LaTeX Info: Redefining \. on input line 236.
-LaTeX Info: Redefining \% on input line 236.
+[30]
 
+LaTeX Warning: Command \textdegree invalid in math mode on input line 189.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 189.
+
+Missing character: There is no ∞ in font cmr12!
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 189.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 189.
+
+Missing character: There is no ∞ in font cmr12!
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 190.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 190.
+
+Missing character: There is no ∞ in font cmr12!
+
+Overfull \hbox (28.47523pt too wide) in paragraph at lines 193--194
+\T1/cmr/m/n/12 ca-men-te con el va-lor que re-por-ta el ser-vi-dor me-dian-te \T1/cmtt/m/n/12 countdown_clock_sync_full\T1/cmr/m/n/12 ,
+ []
+
+LaTeX Info: Redefining \. on input line 204.
+LaTeX Info: Redefining \% on input line 204.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1457,8 +1699,13 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [31]
-LaTeX Info: Redefining \. on input line 258.
-LaTeX Info: Redefining \% on input line 258.
+<Imagenes/Vectorial/CamaraDistorsion.png, id=802, 1413.28pt x 770.88pt>
+File: Imagenes/Vectorial/CamaraDistorsion.png Graphic file (type png)
+<use Imagenes/Vectorial/CamaraDistorsion.png>
+Package pdftex.def Info: Imagenes/Vectorial/CamaraDistorsion.png  used on input line 224.
+(pdftex.def)             Requested size: 256.07741pt x 139.66989pt.
+LaTeX Info: Redefining \. on input line 234.
+LaTeX Info: Redefining \% on input line 234.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1467,13 +1714,18 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[32 <./Imagenes/Vectorial/codigoAruco.png>]
-Overfull \hbox (25.57188pt too wide) in paragraph at lines 265--266
-[]\T1/cmr/bx/n/12 Estados de Co-ne-xiÛn: \T1/cmr/m/n/12 El sis-te-ma tran-si-ta en-tre \T1/cmtt/m/n/12 DISCONNECTED\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 CONNECTING\T1/cmr/m/n/12 ,
+[32 <./Imagenes/Vectorial/CamaraDistorsion.png>]
+Overfull \hbox (6.06163pt too wide) in paragraph at lines 240--241
+\T1/cmr/m/n/12 El script de-tec-ta las es-qui-nas del ta-ble-ro con \T1/cmtt/m/n/12 cv2.findChessboardCorners
  []
 
-LaTeX Info: Redefining \. on input line 287.
-LaTeX Info: Redefining \% on input line 287.
+
+Overfull \hbox (31.7326pt too wide) in paragraph at lines 249--250
+[]\T1/cmr/m/n/12 Una vez lo-ca-li-za-do el mar-ca-dor, el sis-te-ma de-be re-sol-ver el pro-ble-ma de \T1/cmr/bx/n/12 Perspectiva-
+ []
+
+LaTeX Info: Redefining \. on input line 260.
+LaTeX Info: Redefining \% on input line 260.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1482,13 +1734,43 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [33]
-<Imagenes/Vectorial/juez2.png, id=715, 1416.29124pt x 548.0475pt>
+<Imagenes/Vectorial/codigoAruco.png, id=817, 269.005pt x 192.72pt>
+File: Imagenes/Vectorial/codigoAruco.png Graphic file (type png)
+<use Imagenes/Vectorial/codigoAruco.png>
+Package pdftex.def Info: Imagenes/Vectorial/codigoAruco.png  used on input line 279.
+(pdftex.def)             Requested size: 256.07741pt x 183.45935pt.
+
+Underfull \vbox (badness 1735) has occurred while \output is active []
+
+LaTeX Info: Redefining \. on input line 283.
+LaTeX Info: Redefining \% on input line 283.
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
+
+[34]
+LaTeX Info: Redefining \. on input line 299.
+LaTeX Info: Redefining \% on input line 299.
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
+
+[35 <./Imagenes/Vectorial/codigoAruco.png>]
+<Imagenes/Vectorial/juez2.png, id=830, 1416.29124pt x 548.0475pt>
 File: Imagenes/Vectorial/juez2.png Graphic file (type png)
 <use Imagenes/Vectorial/juez2.png>
-Package pdftex.def Info: Imagenes/Vectorial/juez2.png  used on input line 305.
+Package pdftex.def Info: Imagenes/Vectorial/juez2.png  used on input line 316.
 (pdftex.def)             Requested size: 256.07741pt x 99.0875pt.
-LaTeX Info: Redefining \. on input line 317.
-LaTeX Info: Redefining \% on input line 317.
+LaTeX Info: Redefining \. on input line 324.
+LaTeX Info: Redefining \% on input line 324.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1497,32 +1779,13 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[34 <./Imagenes/Vectorial/juez2.png>]
-LaTeX Info: Redefining \. on input line 352.
-LaTeX Info: Redefining \% on input line 352.
+[36 <./Imagenes/Vectorial/juez2.png>]
+Overfull \hbox (21.8228pt too wide) in paragraph at lines 336--337
+[]\T1/cmr/bx/n/12 Estados de co-ne-xiÛn: \T1/cmr/m/n/12 El sis-te-ma tran-si-ta en-tre \T1/cmtt/m/n/12 DISCONNECTED\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 CONNECTING\T1/cmr/m/n/12 ,
+ []
 
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 14.49998pt, for example:
-(fancyhdr)                \setlength{\headheight}{14.49998pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
-
-[35]
-LaTeX Info: Redefining \. on input line 374.
-LaTeX Info: Redefining \% on input line 374.
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 14.49998pt, for example:
-(fancyhdr)                \setlength{\headheight}{14.49998pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
-
-[36]
-LaTeX Info: Redefining \. on input line 396.
-LaTeX Info: Redefining \% on input line 396.
-
+LaTeX Info: Redefining \. on input line 348.
+LaTeX Info: Redefining \% on input line 348.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1531,8 +1794,8 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [37]
-LaTeX Info: Redefining \. on input line 413.
-LaTeX Info: Redefining \% on input line 413.
+LaTeX Info: Redefining \. on input line 378.
+LaTeX Info: Redefining \% on input line 378.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1542,22 +1805,351 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [38]
+Capitulos/DescripcionTrabajo.tex:401: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.401 ...ture}[>=stealth, font=\small, scale=0.95]
+                                                  
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
 
-LaTeX Warning: Command \textdegree invalid in math mode on input line 426.
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:401: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.401 ...ture}[>=stealth, font=\small, scale=0.95]
+                                                  
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
 
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:401: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.401 ...ture}[>=stealth, font=\small, scale=0.95]
+                                                  
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
 
-LaTeX Warning: Command \textdegree invalid in math mode on input line 426.
+Capitulos/DescripcionTrabajo.tex:401: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.401 ...ture}[>=stealth, font=\small, scale=0.95]
+                                                  
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
 
-Missing character: There is no ∞ in font cmr12!
+Capitulos/DescripcionTrabajo.tex:401: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.401 ...ture}[>=stealth, font=\small, scale=0.95]
+                                                  
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
 
-LaTeX Warning: Command \textdegree invalid in math mode on input line 426.
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:401: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.401 ...ture}[>=stealth, font=\small, scale=0.95]
+                                                  
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
 
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+Capitulos/DescripcionTrabajo.tex:404: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.404   \draw[->, ultra thick, red!70!black]
+                                             (0,0) -- (1.8,0) node[right] {$...
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
 
-LaTeX Warning: Command \textdegree invalid in math mode on input line 426.
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:404: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.404   \draw[->, ultra thick, red!70!black]
+                                             (0,0) -- (1.8,0) node[right] {$...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
 
-Missing character: There is no ∞ in font cmr12!
-LaTeX Info: Redefining \. on input line 438.
-LaTeX Info: Redefining \% on input line 438.
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:404: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.404   \draw[->, ultra thick, red!70!black]
+                                             (0,0) -- (1.8,0) node[right] {$...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Capitulos/DescripcionTrabajo.tex:404: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.404   \draw[->, ultra thick, red!70!black]
+                                             (0,0) -- (1.8,0) node[right] {$...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:404: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.404   \draw[->, ultra thick, red!70!black]
+                                             (0,0) -- (1.8,0) node[right] {$...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:404: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.404   \draw[->, ultra thick, red!70!black]
+                                             (0,0) -- (1.8,0) node[right] {$...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:404: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.404   \draw[->, ultra thick, red!70!black]
+                                             (0,0) -- (1.8,0) node[right] {$...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+Capitulos/DescripcionTrabajo.tex:405: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.405   \draw[->, ultra thick, blue!70!black]
+                                              (0,0) -- (0,-1.8) node[left] {...
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:405: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.405   \draw[->, ultra thick, blue!70!black]
+                                              (0,0) -- (0,-1.8) node[left] {...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:405: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.405   \draw[->, ultra thick, blue!70!black]
+                                              (0,0) -- (0,-1.8) node[left] {...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Capitulos/DescripcionTrabajo.tex:405: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.405   \draw[->, ultra thick, blue!70!black]
+                                              (0,0) -- (0,-1.8) node[left] {...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:405: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.405   \draw[->, ultra thick, blue!70!black]
+                                              (0,0) -- (0,-1.8) node[left] {...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:405: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.405   \draw[->, ultra thick, blue!70!black]
+                                              (0,0) -- (0,-1.8) node[left] {...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:405: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.405   \draw[->, ultra thick, blue!70!black]
+                                              (0,0) -- (0,-1.8) node[left] {...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+Capitulos/DescripcionTrabajo.tex:414: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.414   \draw[->, ultra thick, red!70!black]
+                                             (4.6,-2.2) -- (6.4,-2.2) node[r...
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:414: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.414   \draw[->, ultra thick, red!70!black]
+                                             (4.6,-2.2) -- (6.4,-2.2) node[r...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:414: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.414   \draw[->, ultra thick, red!70!black]
+                                             (4.6,-2.2) -- (6.4,-2.2) node[r...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Capitulos/DescripcionTrabajo.tex:414: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.414   \draw[->, ultra thick, red!70!black]
+                                             (4.6,-2.2) -- (6.4,-2.2) node[r...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:414: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.414   \draw[->, ultra thick, red!70!black]
+                                             (4.6,-2.2) -- (6.4,-2.2) node[r...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:414: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.414   \draw[->, ultra thick, red!70!black]
+                                             (4.6,-2.2) -- (6.4,-2.2) node[r...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:414: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.414   \draw[->, ultra thick, red!70!black]
+                                             (4.6,-2.2) -- (6.4,-2.2) node[r...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+Capitulos/DescripcionTrabajo.tex:415: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.415   \draw[->, ultra thick, blue!70!black]
+                                              (4.6,-2.2) -- (4.6,-0.4) node[...
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:415: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.415   \draw[->, ultra thick, blue!70!black]
+                                              (4.6,-2.2) -- (4.6,-0.4) node[...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:415: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.415   \draw[->, ultra thick, blue!70!black]
+                                              (4.6,-2.2) -- (4.6,-0.4) node[...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Capitulos/DescripcionTrabajo.tex:415: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.415   \draw[->, ultra thick, blue!70!black]
+                                              (4.6,-2.2) -- (4.6,-0.4) node[...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:415: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.415   \draw[->, ultra thick, blue!70!black]
+                                              (4.6,-2.2) -- (4.6,-0.4) node[...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:415: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.415   \draw[->, ultra thick, blue!70!black]
+                                              (4.6,-2.2) -- (4.6,-0.4) node[...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:415: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.415   \draw[->, ultra thick, blue!70!black]
+                                              (4.6,-2.2) -- (4.6,-0.4) node[...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+LaTeX Info: Redefining \. on input line 432.
+LaTeX Info: Redefining \% on input line 432.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1566,36 +2158,9 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [39]
+LaTeX Info: Redefining \. on input line 441.
+LaTeX Info: Redefining \% on input line 441.
 
-LaTeX Warning: Command \textdegree invalid in math mode on input line 447.
-
-
-LaTeX Warning: Command \textdegree invalid in math mode on input line 447.
-
-Missing character: There is no ∞ in font cmr12!
-
-LaTeX Warning: Command \textdegree invalid in math mode on input line 447.
-
-
-LaTeX Warning: Command \textdegree invalid in math mode on input line 447.
-
-Missing character: There is no ∞ in font cmr12!
-
-LaTeX Warning: Command \textdegree invalid in math mode on input line 447.
-
-
-LaTeX Warning: Command \textdegree invalid in math mode on input line 447.
-
-Missing character: There is no ∞ in font cmr12!
-
-LaTeX Warning: Command \textdegree invalid in math mode on input line 447.
-
-
-LaTeX Warning: Command \textdegree invalid in math mode on input line 447.
-
-Missing character: There is no ∞ in font cmr12!
-LaTeX Info: Redefining \. on input line 460.
-LaTeX Info: Redefining \% on input line 460.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1604,8 +2169,30 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [40]
-LaTeX Info: Redefining \. on input line 483.
-LaTeX Info: Redefining \% on input line 483.
+Underfull \hbox (badness 1852) in paragraph at lines 469--470
+[]|\T1/cmr/m/n/12 Planos Y, U, V se-pa-ra-dos.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 471--472
+[]|\T1/cmr/m/n/12 PatrÛn Y0 U0 Y1 V0.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 472--473
+[]|\T1/cmr/m/n/12 Variante con cro-mi-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 472--473
+\T1/cmr/m/n/12 nan-cia ade-lan-ta-da.
+ []
+
+
+Underfull \vbox (badness 4193) has occurred while \output is active []
+
+LaTeX Info: Redefining \. on input line 481.
+LaTeX Info: Redefining \% on input line 481.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1614,7 +2201,754 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[41])
+[41]
+Capitulos/DescripcionTrabajo.tex:508: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:508: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:508: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Capitulos/DescripcionTrabajo.tex:508: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:508: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:508: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:508: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+Capitulos/DescripcionTrabajo.tex:508: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:508: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:508: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Capitulos/DescripcionTrabajo.tex:508: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:508: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:508: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+
+Capitulos/DescripcionTrabajo.tex:508: Package pgfkeys Error: I do not know the key '\par ', to which you passed 'stealth', and I am going to ignore it. Perhaps you misspelled it.
+
+See the pgfkeys package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.508   \draw[arr]
+                   (rvec)  -- node[above, font=\scriptsize] {Rodrigues} (R);
+This error message was generated by an \errmessage
+command, so I can't give any explicit help.
+Pretend that you're Hercule Poirot: Examine all clues,
+and deduce the truth by order and method.
+
+Capitulos/DescripcionTrabajo.tex:509: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:509: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:509: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Capitulos/DescripcionTrabajo.tex:509: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:509: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:509: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:509: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+Capitulos/DescripcionTrabajo.tex:509: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:509: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:509: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Capitulos/DescripcionTrabajo.tex:509: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:509: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:509: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+
+Capitulos/DescripcionTrabajo.tex:509: Package pgfkeys Error: I do not know the key '\par ', to which you passed 'stealth', and I am going to ignore it. Perhaps you misspelled it.
+
+See the pgfkeys package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.509   \draw[arr]
+                   (R)     -- node[above, font=\scriptsize] {extracci√≥n} (e...
+(That was another \errmessage.)
+
+Capitulos/DescripcionTrabajo.tex:510: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:510: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:510: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Capitulos/DescripcionTrabajo.tex:510: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:510: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:510: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Runaway argument?
+-
+Capitulos/DescripcionTrabajo.tex:510: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+Capitulos/DescripcionTrabajo.tex:510: Argument of \language@active@arg> has an extra }.
+<inserted text> 
+                \par 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:510: Paragraph ended before \language@active@arg> was complete.
+<to be read again> 
+                   \par 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:510: Paragraph ended before \pgfkeys@addpath was complete.
+<to be read again> 
+                   \par 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Capitulos/DescripcionTrabajo.tex:510: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Capitulos/DescripcionTrabajo.tex:510: Missing \endcsname inserted.
+<to be read again> 
+                   \scan_stop: 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+The control sequence marked <to be read again> should
+not appear between \csname and \endcsname.
+
+Runaway argument?
+Capitulos/DescripcionTrabajo.tex:510: Paragraph ended before \pgfkeys@splitter was complete.
+<to be read again> 
+                   \par 
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+Missing character: There is no / in font nullfont!
+Missing character: There is no / in font nullfont!
+
+Capitulos/DescripcionTrabajo.tex:510: Package pgfkeys Error: I do not know the key '\par ', to which you passed 'stealth', and I am going to ignore it. Perhaps you misspelled it.
+
+See the pgfkeys package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.510   \draw[arr]
+                   (euler) -- node[above, font=\scriptsize] {aplicaci√≥n} (p...
+(That was another \errmessage.)
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+LaTeX Info: Redefining \. on input line 517.
+LaTeX Info: Redefining \% on input line 517.
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
+
+[42]
+LaTeX Info: Redefining \. on input line 537.
+LaTeX Info: Redefining \% on input line 537.
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
+
+[43]
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 569.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 569.
+
+Missing character: There is no ∞ in font cmr12!
+LaTeX Info: Redefining \. on input line 570.
+LaTeX Info: Redefining \% on input line 570.
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
+
+[44]
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 572.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 572.
+
+Missing character: There is no ∞ in font cmr12!
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 582.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 582.
+
+Missing character: There is no ∞ in font cmr12!
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 585.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 585.
+
+Missing character: There is no ∞ in font cmr12!
+LaTeX Info: Redefining \. on input line 604.
+LaTeX Info: Redefining \% on input line 604.
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
+
+[45]
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 604.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 604.
+
+Missing character: There is no ∞ in font cmr12!
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 604.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 604.
+
+Missing character: There is no ∞ in font cmr12!
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 604.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 604.
+
+Missing character: There is no ∞ in font cmr12!
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 604.
+
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 604.
+
+Missing character: There is no ∞ in font cmr12!
+LaTeX Info: Redefining \. on input line 625.
+LaTeX Info: Redefining \% on input line 625.
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
+
+[46]
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@
+         ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@
+            ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@^^@
+               ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@^^@^^@
+                  ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@^^@^^@^^@
+                     ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@^^@^^@^^@^^@
+                        ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@^^@^^@^^@^^@^^@
+                           ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@^^@^^@^^@^^@^^@^^@
+                              ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                 ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                    ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                       ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                          ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                             ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                ^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@^^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@^^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@^^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@^^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@^^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@^^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@^^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@^^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@^^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@^^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@^^...
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@^^@
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@^^@
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@^^@
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@^^@
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@^^@
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@^^@
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@^^@
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@^^@
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  ^^@
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
+l.649 ...^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@
+                                                  
+A funny symbol that I can't read has just been input.
+Continue, and I'll forget that it ever happened.
+
+)
 LaTeX Info: Redefining \. on input line 144.
 LaTeX Info: Redefining \% on input line 144.
 
@@ -1625,22 +2959,40 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[42]
+[47]
 \openout2 = `Capitulos/ConclusionesTrabajoFuturo.aux'.
 
- (Capitulos/ConclusionesTrabajoFuturo.tex
+ (Capitulos/ConclusionesTrabajoFuturo.tex [48
+
+
+
+
+]
 Cap\'itulo 4.
 
 Overfull \hbox (29.3747pt too wide) in paragraph at lines 1--1
 [][]  
  []
 
-[43
+
+LaTeX Warning: Command \textdegree invalid in math mode on input line 12.
 
 
+LaTeX Warning: Command \textdegree invalid in math mode on input line 12.
+
+Missing character: There is no ∞ in font cmr12!
+[49]
+LaTeX Info: Redefining \. on input line 27.
+LaTeX Info: Redefining \% on input line 27.
 
 
-])
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
+
+[50])
 LaTeX Info: Redefining \. on input line 147.
 LaTeX Info: Redefining \% on input line 147.
 
@@ -1651,17 +3003,17 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[44]
+[51]
 LaTeX Info: Redefining \. on input line 154.
 LaTeX Info: Redefining \% on input line 154.
 \openout2 = `Capitulos/ContribucionesPersonales.aux'.
 
- (Capitulos/ContribucionesPersonales.tex [45
+ (Capitulos/ContribucionesPersonales.tex [52
 
 
 
 
-])
+] [53])
 LaTeX Info: Redefining \. on input line 157.
 LaTeX Info: Redefining \% on input line 157.
 
@@ -1672,26 +3024,144 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[46]
+[54]
 \openout2 = `Cascaras/bibliografia.aux'.
 
- (Cascaras/bibliografia.tex
-No file TFGTeXiS.bbl.
-)
+ (Cascaras/bibliografia.tex (TFGTeXiS.bbl
+Underfull \hbox (badness 3364) in paragraph at lines 17--24
+[]\T1/cmr/m/sc/12 Audiovisual, P.  \T1/cmr/m/n/12 In-for-ma-ti-vos te-le-cin-co des-plie-ga el po-ten-cial de
+ []
+
+
+Underfull \hbox (badness 7504) in paragraph at lines 17--24
+\T1/cmr/m/n/12 la reali-dad au-men-ta-da y ex-ten-di-da con tec-no-lo-gÌas inÈ-di-tas en
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 17--24
+\T1/cmr/m/n/12 es-pa-Òa.  []$\T1/cmtt/m/n/12 https : / / www . panoramaaudiovisual . com / 2024 / 10 / 29 /
+ []
+
+
+Overfull \hbox (359.7419pt too wide) in paragraph at lines 17--24
+\T1/cmtt/m/n/12 informativos-[]telecinco-[]despliegan-[]el-[]potencial-[]de-[]la-[]realidad-[]aumentada-[]y-[]extendida-[]con-[]tecnologias-[]ineditas-[]en-[]espana/$[]\T1/cmr/m/n/12 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--52
+[]\T1/cmr/m/sc/12 BrandXR\T1/cmr/m/n/12 .  Brands un-lock roi with ar ex-pe-rien-ces
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--52
+\T1/cmr/m/n/12 on snap-chat and tik-tok.  []$\T1/cmtt/m/n/12 https : / / www . brandxr . io /
+ []
+
+
+Overfull \hbox (204.40459pt too wide) in paragraph at lines 46--52
+\T1/cmtt/m/n/12 beyond-[]filters-[]brands-[]unlock-[]460-[]roi-[]with-[]augmented-[]reality-[]experiences-[]on-[]snapchat-[]and-[]tiktok$[]\T1/cmr/m/n/12 ,
+ []
+
+
+Underfull \hbox (badness 3514) in paragraph at lines 60--66
+[]\T1/cmr/m/sc/12 Deloitte\T1/cmr/m/n/12 .  Tech trends 2023: Aug-men-ted reality in broad-cas-ting.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--66
+[]$\T1/cmtt/m/n/12 https : / / www2 . deloitte . com / us / en / insights / tech-[]trends / 2023 /
+ []
+
+[55
+
+
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 74--80
+[]\T1/cmr/m/sc/12 Ericsson\T1/cmr/m/n/12 .  How 5g and ed-ge com-pu-ting can en-han-ce vir-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--80
+\T1/cmr/m/n/12 tual reality.  []$\T1/cmtt/m/n/12 https : / / www . ericsson . com / en / blog / 2020 / 4 /
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--80
+\T1/cmtt/m/n/12 how-[]5g-[]and-[]edge-[]computing-[]can-[]enhance-[]virtual-[]reality$[]\T1/cmr/m/n/12 , 2020.
+ []
+
+
+Underfull \hbox (badness 3148) in paragraph at lines 82--88
+[]\T1/cmr/m/sc/12 ESTV, A. .  \T1/cmr/m/n/12 How estv uses aug-men-ted reality to en-ga-ge strea-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 82--88
+\T1/cmr/m/n/12 ming vie-wers.  []$\T1/cmtt/m/n/12 https : / / www . newscaststudio . com / 2022 / 01 / 19 /
+ []
+
+
+Underfull \hbox (badness 1342) in paragraph at lines 82--88
+\T1/cmtt/m/n/12 augmented-[]reality-[]esports-[]arti/$[]\T1/cmr/m/n/12 , 2022.  Ac-ce-di-do el 21 de ju-lio
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 108--114
+[]\T1/cmr/m/sc/12 Media, E.  \T1/cmr/m/n/12 Aug-men-ted reality in sports broad-cas-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 108--114
+\T1/cmr/m/n/12 ting -- a new pers-pec-ti-ve.  []$\T1/cmtt/m/n/12 https : / / enicomp . com /
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 108--114
+\T1/cmtt/m/n/12 augmented-[]reality-[]in-[]sports-[]broadcasting-[]a-[]new-[]perspective/$[]\T1/cmr/m/n/12 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 116--122
+\T1/cmtt/m/n/12 / / docs . nvidia . com / deeplearning / maxine / ar-[]sdk-[]system-[]guide /
+ []
+
+LaTeX Info: Redefining \. on input line 155.
+LaTeX Info: Redefining \% on input line 155.
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 14.61858pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.61858pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-0.61858pt}.
+
+[56]
+Overfull \hbox (135.99617pt too wide) in paragraph at lines 157--164
+\T1/cmtt/m/n/12 how-[]gen-[]z-[]is-[]reshaping-[]communication-[]and-[]redefining-[]the-[]shopping-[]experience-[]with-[]ar$[]\T1/cmr/m/n/12 ,
+ []
+
+))
+LaTeX Info: Redefining \. on input line 163.
+LaTeX Info: Redefining \% on input line 163.
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 14.61858pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.61858pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-0.61858pt}.
+
+[57] [58
+
+
+
+]
 \openout2 = `Cascaras/fin.aux'.
 
- (Cascaras/fin.tex [47
+ (Cascaras/fin.tex [59
 
-
-
-
-
-
-
-] [48])
-
-Package natbib Warning: There were undefined citations.
-
+] [60])
 
 c:/Users/josem/Desktop/jose/tfg/TFG/obs-plugintemplate-master/Sheila_Jose_TFG/TFGTeXiS.tex:213: LaTeX Error: \begin{itemize} on input line 86 ended by \end{document}.
 
@@ -1720,24 +3190,24 @@ LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
  ***********
 Package rerunfilecheck Info: File `TFGTeXiS.out' has not changed.
-(rerunfilecheck)             Checksum: 62ACC965B667331D391C6FD04A725AB3;16695.
+(rerunfilecheck)             Checksum: 639139EAD6EB6488A2E5BE8608504257;13536.
  )
 (\end occurred inside a group at level 1)
 
 ### semi simple group (level 1) entered at line 86 (\begingroup)
 ### bottom level 
 Here is how much of TeX's memory you used:
- 19633 strings out of 467691
- 329820 string characters out of 5414987
- 859919 words of memory out of 5000000
- 47836 multiletter control sequences out of 15000+600000
- 650973 words of font info for 83 fonts, out of 8000000 for 9000
+ 29865 strings out of 467691
+ 555828 string characters out of 5414987
+ 1048931 words of memory out of 5000000
+ 57815 multiletter control sequences out of 15000+600000
+ 652448 words of font info for 88 fonts, out of 8000000 for 9000
  1379 hyphenation exceptions out of 8191
- 97i,12n,109p,1432b,1438s stack positions out of 10000i,1000n,20000p,200000b,200000s
- <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2488.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1728.pk><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvr8a.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb>
-Output written on TFGTeXiS.pdf (68 pages, 5366715 bytes).
+ 106i,12n,123p,1365b,1579s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2488.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1728.pk><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvr8a.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb>
+Output written on TFGTeXiS.pdf (80 pages, 5488561 bytes).
 PDF statistics:
- 1598 PDF objects out of 1728 (max. 8388607)
- 200 named destinations out of 1000 (max. 500000)
- 660 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1902 PDF objects out of 2073 (max. 8388607)
+ 242 named destinations out of 1000 (max. 500000)
+ 696 words of extra memory for PDF output out of 10000 (max. 10000000)
 

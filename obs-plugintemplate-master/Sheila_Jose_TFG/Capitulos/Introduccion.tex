@@ -26,7 +26,7 @@
 
 % Todo el material no original, ya sea texto o figuras, deberá ser convenientemente citado y referenciado. En el caso de material complementario se deben respetar las licencias y \emph{copyrights} asociados al software y hardware que se emplee. En caso contrario no se autorizará la defensa, sin menoscabo de otras acciones que correspondan.
 
-Esta memoria corresponde al estudio, diseño e implementación de una solución tecnológica que permite utilizar \textbf{realidad aumentada (RA)} y técnicas de detección de espacios en retransmisiones en directo, tomando como base la plataforma de código abierto \textbf{OBS Studio}. El proyecto se enmarca en un contexto en el que el mundo audiovisual evoluciona rápidamente, combinando la creación de contenido en tiempo real con tecnologías inmersivas que transforman la forma en la que se comunican y consumen contenidos digitales.
+Esta memoria corresponde al estudio, diseño e implementación de una solución tecnológica que permite utilizar \textbf{realidad aumentada (RA)} mediante detección de marcadores visuales en retransmisiones en directo, tomando como base la plataforma de código abierto \textbf{OBS Studio}. El proyecto se enmarca en un contexto en el que el mundo audiovisual evoluciona rápidamente, combinando la creación de contenido en tiempo real con tecnologías inmersivas que transforman la forma en la que se comunican y consumen contenidos digitales.
 
 El punto de partida de este trabajo está en cómo la RA ha pasado de ser una curiosidad experimental a convertirse en una herramienta habitual dentro de la producción audiovisual. Un ejemplo  es el dato de \textbf{\cite{GrandViewAR}}, que en 2023 valoró el mercado global de la RA en unos \textbf{70,2 mil millones de dólares}. Hoy en día ya no sorprende ver cómo informativos, retransmisiones deportivas o programas de entretenimiento incluyen gráficos en 3D, animaciones y elementos interactivos que se superponen en el escenario real, creando una experiencia mucho más visual y atractiva para el espectador.
 
@@ -43,24 +43,25 @@ La motivación de este proyecto surge precisamente de esta carencia: explorar la
 
 \section{Objetivos}
 
-El objetivo principal de este proyecto es incorporar funcionalidades de \textbf{realidad aumentada (RA)} en tiempo real dentro de \textbf{OBS Studio}. Para ello se busca desarrollar una extensión que permita añadir una fuente específica de RA capaz de integrar contenido sintético generado mediante técnicas de RA directamente en el flujo de vídeo que se retransmite.
+El objetivo principal de este proyecto es incorporar funcionalidades de \textbf{realidad aumentada (RA)} en tiempo real dentro de \textbf{OBS Studio}. Para ello se busca desarrollar un filtro nativo de OBS Studio capaz de integrar contenido sintético generado mediante técnicas de RA directamente en el flujo de vídeo que se retransmite.
 
 Este planteamiento implica resolver retos técnicos como la detección y modelado del espacio físico, el seguimiento de cámaras u objetos en movimiento y el renderizado de elementos 3D en tiempo real, todo ello manteniendo la calidad y fluidez de la transmisión.
 
 De manera complementaria, se contempla la posibilidad de que los elementos de RA puedan modificarse o configurarse en directo, de modo que el contenido proyectado pueda adaptarse dinámicamente a las necesidades de la retransmisión.
 
-En una fase futura, esta base tecnológica podría especializarse para ámbitos concretos, como la visualización de datos en retransmisiones técnicas o educativas, ampliando así el impacto y la utilidad del sistema en distintos contextos de comunicación digital en vivo.
+Como especialización concreta de esa base tecnológica, el sistema se ha orientado a la retransmisión de concursos de programación, integrando conectividad con la plataforma de juez automático \textbf{DOMjudge} para mostrar clasificaciones y tiempos en tiempo real sobre el vídeo. Esta aplicación específica demuestra la viabilidad del enfoque en un contexto técnico real y abre la puerta a su adaptación a otros tipos de retransmisión en directo.
 
 \section{Plan de trabajo}
-El desarrollo del  Trabajo de Fin de Grado se articulará en torno a una estructura secuencial dividida en cuatro fases fundamentales, cada una de las cuales abordará un conjunto específico de actividades técnicas y analíticas. Esta organización metodológica tiene como propósito garantizar una progresión lógica y coherente hacia la consecución de los objetivos establecidos, permitiendo así una gestión eficaz del tiempo y los recursos disponibles a lo largo del proceso de investigación y desarrollo.
 
-La primera fase, está centrada en la revisión crítica de una investigación documental exhaustiva. En esta etapa inicial se recopilarán y analizarán fuentes académicas, estudios de caso relevantes y ejemplos aplicados de sistemas de realidad aumentada empleados en contextos de retransmisión en vivo. Asimismo, se llevará a cabo una evaluación comparativa de tecnologías y herramientas disponibles en la actualidad, con el objetivo de seleccionar aquellas más adecuadas para la posterior implementación en el prototipo.
+El desarrollo se organizó en cuatro fases que siguieron la progresión natural de un proyecto de investigación aplicada.
 
-En la segunda fase, se aborda el diseño conceptual y técnico del sistema, así como el desarrollo progresivo de un prototipo funcional. Esta etapa incluye la definición precisa de los requisitos técnicos y operativos, la elección de los entornos de desarrollo y plataformas de integración, así como la programación e implementación de las primeras versiones del sistema de realidad aumentada adaptado a entornos de streaming. Se plantea como una etapa de prueba, con el objetivo de facilitar la familiarización con las diversas herramientas que han sido investigadas previamente.
+La primera fase se dedicó al estudio del estado del arte: análisis de sistemas de RA en retransmisiones, evaluación comparativa de SDKs disponibles (Vuforia, ARToolKit, OpenCV, NVIDIA Maxine, DeepAR) y exploración de la API de plugins de OBS Studio. Como resultado de esta fase se tomó la decisión de usar OpenCV con marcadores ArUco como sistema de detección y ASSIMP como cargador de modelos 3D, por su compatibilidad con C, su licencia abierta y la ausencia de dependencias con motores externos.
 
-La tercera fase, está dedicada a la implementación y validación experimental del prototipo en condiciones controladas. Se ejecutan  pruebas de rendimiento, estabilidad y calidad visual, así como evaluaciones centradas en la experiencia del usuario y las pruebas en concursos de programación dirigidos.
+La segunda fase abarcó el diseño de la arquitectura del plugin y el desarrollo del prototipo inicial. Se estableció el modelo de filtro nativo de OBS, se implementó la cadena de transformación de coordenadas OpenCV-OBS y se logró la primera superposición de un modelo 3D anclado a un marcador ArUco en tiempo real. En esta fase también se diseñó la arquitectura de dos hilos para separar la red del renderizado.
 
-Finalmente, la cuarta y última fase,  se enfonca en la elaboración y formalización del documento final del Trabajo de Fin de Grado. Esta fase incluye la redacción del informe técnico, la sistematización de los resultados obtenidos, la revisión y corrección del contenido, y la preparación de los materiales necesarios para la presentación pública y defensa académica del proyecto ante el tribunal evaluador.
+La tercera fase se centró en la implementación de los cuatro modos de operación (modelo 3D, cronómetro, scoreboard y team info), la integración con la API REST de DOMjudge mediante libcurl, el desarrollo de la herramienta de calibración de cámara y la aplicación del filtro de suavizado del overlay. También se añadió el soporte para los siete formatos de vídeo que OBS puede entregar.
+
+La cuarta fase correspondió a la redacción de la memoria, la revisión técnica del código, las pruebas de estabilidad del sistema y la preparación de la defensa.
 
 
 % \section{Explicaciones adicionales sobre el uso de esta plantilla}

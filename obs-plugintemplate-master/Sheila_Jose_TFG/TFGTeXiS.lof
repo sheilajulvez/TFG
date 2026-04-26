@@ -7,17 +7,20 @@
 \contentsline {figure}{\numberline {2.2}{\ignorespaces Aplicación de la realidad aumentada (RA) en informativos televisivos para la visualización de datos y escenarios virtuales.}}{8}{figure.caption.17}%
 \contentsline {figure}{\numberline {2.3}{\ignorespaces Ejemplo de filtro con realidad aumentada (RA) en la red social Snapchat, utilizado para superponer elementos virtuales sobre el rostro del usuario en tiempo real.}}{9}{figure.caption.18}%
 \contentsline {figure}{\numberline {2.4}{\ignorespaces Uso de la realidad aumentada (RA) en retransmisiones en vivo de competiciones de \textit {eSports}, donde se integran elementos virtuales en la escena para mejorar la visualización y el análisis del evento.}}{10}{figure.caption.19}%
-\contentsline {figure}{\numberline {2.5}{\ignorespaces Ejemplo de aplicación de la realidad aumentada (RA) en el ámbito educativo, utilizada para el aprendizaje de anatomía y procedimientos médicos mediante la visualización interactiva de modelos tridimensionales.}}{11}{figure.caption.20}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Ejemplo de aplicación de la realidad aumentada (RA) en el ámbito educativo, utilizada para el aprendizaje de anatomía y procedimientos médicos mediante la visualización interactiva de modelos tridimensionales.}}{10}{figure.caption.20}%
 \contentsline {figure}{\numberline {2.6}{\ignorespaces Vista de la pestaña \textit {Escenas} en OBS Studio.}}{15}{figure.caption.31}%
-\contentsline {figure}{\numberline {2.7}{\ignorespaces Vista de la pestaña \textit {Fuentes} en OBS Studio.}}{15}{figure.32}%
+\contentsline {figure}{\numberline {2.7}{\ignorespaces Vista de la pestaña \textit {Fuentes} en OBS Studio.}}{16}{figure.32}%
 \contentsline {figure}{\numberline {2.8}{\ignorespaces Interfaz de gestión de filtros en OBS Studio.}}{16}{figure.33}%
 \contentsline {figure}{\numberline {2.9}{\ignorespaces Ejemplo de configuración de transiciones en OBS Studio.}}{16}{figure.34}%
-\contentsline {figure}{\numberline {2.10}{\ignorespaces Panel del mezclador de audio en OBS Studio.}}{16}{figure.35}%
+\contentsline {figure}{\numberline {2.10}{\ignorespaces Panel del mezclador de audio en OBS Studio.}}{17}{figure.35}%
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {3.1}{\ignorespaces Diagrama detallado del ciclo de vida del plugin}}{27}{figure.caption.61}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Diagrama geométrico del modelo de cámara \textit {pinhole}. Se ilustra cómo un punto $P$ en el espacio real (coordenadas $X,Y,Z$) se proyecta a través del centro óptico (lente) hasta impactar en el plano del sensor (coordenadas de píxel $u,v$). Esta proyección ideal justifica la necesidad de la calibración para corregir las distorsiones de las lentes reales.}}{30}{figure.caption.82}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Código Aruco }}{32}{figure.caption.89}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces DOMJuez Demo Web}}{34}{figure.caption.98}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Arquitectura de dos hilos del plugin. El hilo principal de OBS gestiona renderizado y detección; el hilo secundario realiza las peticiones HTTP de forma asíncrona.}}{29}{figure.caption.70}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Diagrama geométrico del modelo de cámara \textit {pinhole}. Un punto $P$ en el espacio real se proyecta a través del centro óptico hasta el plano del sensor, produciendo la coordenada de píxel $(u,v)$. La calibración corrige las desviaciones que introducen las lentes reales respecto a este modelo ideal.}}{32}{figure.caption.81}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Ejemplo de marcador ArUco del diccionario 4$\times $4. El patrón binario interior codifica el identificador del marcador; el borde negro exterior facilita la detección del contorno.}}{35}{figure.caption.92}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Interfaz web de DOMjudge, cuya API REST es la fuente de datos del plugin.}}{36}{figure.caption.96}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Convenios de coordenadas 2D. OBS se configura para usar el convenio de OpenCV, de forma que las coordenadas del detector se pueden usar sin transformación adicional.}}{40}{figure.caption.109}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Pipeline de conversión de la representación de Rodrigues a la orientación del overlay.}}{43}{figure.caption.115}%
 \addvspace {10\p@ }
 \babel@toc {english}{}\relax 
 \babel@toc {spanish}{}\relax 

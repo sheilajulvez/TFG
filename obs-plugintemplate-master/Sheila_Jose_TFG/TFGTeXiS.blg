@@ -1,0 +1,60 @@
+This is BibTeX, Version 0.99d (TeX Live 2022/dev/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: TFGTeXiS.aux
+A level-1 auxiliary file: Cascaras/cover.aux
+A level-1 auxiliary file: Cascaras/autorizacion.aux
+A level-1 auxiliary file: Cascaras/dedicatoria.aux
+A level-1 auxiliary file: Cascaras/agradecimientos.aux
+A level-1 auxiliary file: Cascaras/resumen.aux
+A level-1 auxiliary file: Cascaras/abstract.aux
+A level-1 auxiliary file: TeXiS/TeXiS_toc.aux
+A level-1 auxiliary file: Capitulos/Introduccion.aux
+A level-1 auxiliary file: Capitulos/EstadoDeLaCuestion.aux
+A level-1 auxiliary file: Capitulos/DescripcionTrabajo.aux
+A level-1 auxiliary file: Capitulos/ConclusionesTrabajoFuturo.aux
+A level-1 auxiliary file: Capitulos/ContribucionesPersonales.aux
+A level-1 auxiliary file: Cascaras/bibliografia.aux
+The style file: TeXiS/TeXiS.bst
+A level-1 auxiliary file: Cascaras/fin.aux
+Database file #1: biblio.bib
+You've used 22 entries,
+            2962 wiz_defined-function locations,
+            1229 strings with 16842 characters,
+and the built_in function-call counts, 10880 in all, are:
+= -- 963
+> -- 303
+< -- 29
++ -- 125
+- -- 97
+* -- 624
+:= -- 1690
+add.period$ -- 84
+call.type$ -- 22
+change.case$ -- 162
+chr.to.int$ -- 22
+cite$ -- 22
+duplicate$ -- 890
+empty$ -- 803
+format.name$ -- 133
+if$ -- 2180
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 164
+newline$ -- 130
+num.names$ -- 89
+pop$ -- 317
+preamble$ -- 1
+purify$ -- 120
+quote$ -- 0
+skip$ -- 383
+stack$ -- 0
+substring$ -- 473
+swap$ -- 432
+text.length$ -- 10
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 220
+warning$ -- 0
+while$ -- 84
+width$ -- 0
+write$ -- 306

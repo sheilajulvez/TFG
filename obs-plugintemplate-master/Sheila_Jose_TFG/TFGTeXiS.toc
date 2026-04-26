@@ -22,61 +22,65 @@
 \contentsline {section}{\numberline {2.5}Realidad Aumentada en OBS Studio}{21}{section.47}%
 \contentsline {subsection}{\numberline {2.5.1}Aplicación externa}{21}{subsection.48}%
 \contentsline {paragraph}{Ventajas}{21}{subsection.48}%
-\contentsline {paragraph}{Limitaciones}{21}{subsection.48}%
+\contentsline {paragraph}{Limitaciones}{22}{subsection.48}%
 \contentsline {subsection}{\numberline {2.5.2}Integración nativa mediante plugin}{22}{subsection.49}%
 \contentsline {paragraph}{Consideraciones de implementación}{22}{subsection.49}%
 \contentsline {subsection}{\numberline {2.5.3}Flujo conceptual de la Realidad Aumentada}{22}{subsection.50}%
 \contentsline {chapter}{\numberline {3}Descripción del Trabajo}{25}{chapter.53}%
-\contentsline {section}{\numberline {3.1}Sistema de Construcción y Ciclo de Ejecución}{26}{section.54}%
-\contentsline {subsection}{\numberline {3.1.1}Infraestructura de Compilación y Dependencias}{26}{subsection.55}%
-\contentsline {subsection}{\numberline {3.1.2}Ciclo de Vida del Plugin}{26}{subsection.56}%
+\contentsline {section}{\numberline {3.1}Construcción y ciclo de vida}{26}{section.54}%
+\contentsline {subsection}{\numberline {3.1.1}Dependencias y compilación}{26}{subsection.55}%
+\contentsline {subsection}{\numberline {3.1.2}Ciclo de vida del plugin}{26}{subsection.56}%
 \contentsline {subsubsection}{\numberline {3.1.2.1}Inicialización}{26}{subsubsection.57}%
-\contentsline {subsubsection}{\numberline {3.1.2.2}Actualización de Lógica }{27}{subsubsection.62}%
-\contentsline {subsubsection}{\numberline {3.1.2.3}Renderizado Gráfico }{27}{subsubsection.63}%
-\contentsline {subsection}{\numberline {3.1.3}Configuración Dinámica }{27}{subsection.68}%
-\contentsline {section}{\numberline {3.2}Carga y Gestión de Modelos 3D}{28}{section.69}%
-\contentsline {subsection}{\numberline {3.2.1}Módulo \texttt {SJ\_3DModel}: Gestión de Geometría Poligonal}{28}{subsection.70}%
-\contentsline {subsubsection}{\numberline {3.2.1.1}Estructura de datos de Malla (\textit {Mesh})}{28}{subsubsection.71}%
-\contentsline {subsection}{\numberline {3.2.2}Transformaciones Espaciales y Control de Usuario}{28}{subsection.72}%
-\contentsline {subsection}{\numberline {3.2.3}Sistema de Texto 3D y Overlays}{29}{subsection.73}%
-\contentsline {subsubsection}{\numberline {3.2.3.1}Texto Proyectado en el Espacio 3D}{29}{subsubsection.74}%
-\contentsline {subsubsection}{\numberline {3.2.3.2}Overlays de Información (HUD)}{29}{subsubsection.78}%
-\contentsline {section}{\numberline {3.3}Detección ArUco y Calibración de Cámara}{29}{section.79}%
-\contentsline {subsection}{\numberline {3.3.1}Módulo Detector Aruco: Integración con OpenCV}{30}{subsection.80}%
-\contentsline {subsection}{\numberline {3.3.2}Calibración de la Cámara y Parámetros Intrínsecos}{30}{subsection.81}%
-\contentsline {subsection}{\numberline {3.3.3}Estimación de Pose: El Problema PnP}{31}{subsection.83}%
-\contentsline {subsection}{\numberline {3.3.4}Robustez y Seguimiento Temporal}{31}{subsection.84}%
-\contentsline {section}{\numberline {3.4}Propiedades de Modo AR y Configuración}{31}{section.87}%
-\contentsline {subsection}{\numberline {3.4.1}Configuración del Detector: Diccionario e Identificador}{31}{subsection.88}%
-\contentsline {subsection}{\numberline {3.4.2}Ajustes Finos: Offsets de Posición y Rotación}{32}{subsection.90}%
-\contentsline {subsection}{\numberline {3.4.3}Modos de Visualización Especiales}{32}{subsection.91}%
-\contentsline {section}{\numberline {3.5}Sincronización Web y Conectividad Remota}{33}{section.92}%
-\contentsline {subsection}{\numberline {3.5.1}Gestión de Conexión y Máquina de Estados}{33}{subsection.93}%
-\contentsline {subsection}{\numberline {3.5.2}Configuración de la API y Seguridad}{33}{subsection.94}%
-\contentsline {subsection}{\numberline {3.5.3}Optimización del Tráfico y Latencia}{33}{subsection.95}%
-\contentsline {subsection}{\numberline {3.5.4}Presentación Visual: El \textit {Scoreboard} 3D}{34}{subsection.96}%
-\contentsline {section}{\numberline {3.6}Integración con la API de DOMjudge}{34}{section.97}%
-\contentsline {subsection}{\numberline {3.6.1}Arquitectura de Red Asíncrona (\texttt {libcurl})}{34}{subsection.99}%
-\contentsline {subsection}{\numberline {3.6.2}Consumo de Endpoints y Procesamiento JSON}{35}{subsection.100}%
-\contentsline {subsection}{\numberline {3.6.3}Sincronización AR: Mapeo de Marcadores a Equipos}{35}{subsection.104}%
-\contentsline {subsection}{\numberline {3.6.4}Presentación de Datos y Modos de Visualización}{35}{subsection.105}%
-\contentsline {section}{\numberline {3.7}Renderizado de Overlays 2D Anclados al Marcador}{36}{section.106}%
-\contentsline {subsection}{\numberline {3.7.1}El Sistema de Coordenadas: Por Qué Todo Funciona con el Origen Arriba}{36}{subsection.107}%
-\contentsline {subsection}{\numberline {3.7.2}Qué se Quiere Lograr Visualmente y Cómo se Consigue}{36}{subsection.108}%
-\contentsline {subsection}{\numberline {3.7.3}El Módulo de Detección en los Modos de Texto}{37}{subsection.109}%
-\contentsline {subsubsection}{\numberline {3.7.3.1}De la Rotación Detectada a la Orientación del Overlay}{37}{subsubsection.110}%
-\contentsline {subsection}{\numberline {3.7.4}Selección del Marcador en el Modo Team Info}{38}{subsection.111}%
-\contentsline {subsection}{\numberline {3.7.5}La Composición Visual del Scoreboard}{38}{subsection.112}%
-\contentsline {subsection}{\numberline {3.7.6}La Cadena de Transformaciones para Anclar el Texto al Marcador}{39}{subsection.113}%
-\contentsline {subsection}{\numberline {3.7.7}Suavizado del Overlay para Evitar el Temblor}{40}{subsection.114}%
-\contentsline {subsection}{\numberline {3.7.8}Fondo Visual del Overlay}{40}{subsection.115}%
-\contentsline {subsection}{\numberline {3.7.9}El JSON de Mapeo en el Modo Team Info}{41}{subsection.116}%
-\contentsline {section}{\numberline {3.8}Liberación de Recursos y Finalización}{41}{section.117}%
-\contentsline {subsection}{\numberline {3.8.1}Seguridad y Persistencia de Estado}{41}{subsection.118}%
-\contentsline {subsection}{\numberline {3.8.2}Gestión de Memoria GPU (Mallas y Texturas)}{42}{subsection.121}%
-\contentsline {subsection}{\numberline {3.8.3}Cleanup del Módulo de Detección (OpenCV)}{42}{subsection.122}%
-\contentsline {subsection}{\numberline {3.8.4}Cierre de Conexiones de Red y Sincronización}{42}{subsection.123}%
-\contentsline {chapter}{\numberline {4}Conclusiones y Trabajo Futuro}{43}{chapter.124}%
-\contentsline {chapter}{Contribuciones Personales}{45}{chapter*.125}%
+\contentsline {subsubsection}{\numberline {3.1.2.2}Actualización de lógica}{27}{subsubsection.62}%
+\contentsline {subsubsection}{\numberline {3.1.2.3}Renderizado gráfico}{27}{subsubsection.63}%
+\contentsline {subsection}{\numberline {3.1.3}Configuración dinámica}{28}{subsection.68}%
+\contentsline {subsection}{\numberline {3.1.4}Arquitectura de hilos}{28}{subsection.69}%
+\contentsline {section}{\numberline {3.2}Modelos 3D y overlays}{29}{section.71}%
+\contentsline {subsection}{\numberline {3.2.1}Gestión de geometría poligonal}{29}{subsection.72}%
+\contentsline {subsubsection}{\numberline {3.2.1.1}Estructura de malla}{29}{subsubsection.73}%
+\contentsline {subsection}{\numberline {3.2.2}Transformaciones y control de usuario}{30}{subsection.74}%
+\contentsline {subsection}{\numberline {3.2.3}Texto 3D y overlays}{30}{subsection.75}%
+\contentsline {subsubsection}{\numberline {3.2.3.1}Texto proyectado en 3D}{30}{subsubsection.76}%
+\contentsline {subsection}{\numberline {3.2.4}El modo cronómetro 3D}{30}{subsection.77}%
+\contentsline {section}{\numberline {3.3}Detección ArUco y calibración de cámara}{31}{section.78}%
+\contentsline {subsection}{\numberline {3.3.1}Integración con OpenCV}{31}{subsection.79}%
+\contentsline {subsection}{\numberline {3.3.2}Calibración de la cámara}{32}{subsection.80}%
+\contentsline {subsubsection}{\numberline {3.3.2.1}Proceso de calibración}{33}{subsubsection.82}%
+\contentsline {subsection}{\numberline {3.3.3}Estimación de pose}{33}{subsection.86}%
+\contentsline {subsection}{\numberline {3.3.4}Robustez y seguimiento temporal}{34}{subsection.87}%
+\contentsline {section}{\numberline {3.4}Configuración del modo AR}{34}{section.90}%
+\contentsline {subsection}{\numberline {3.4.1}Diccionario e identificador del detector}{34}{subsection.91}%
+\contentsline {subsection}{\numberline {3.4.2}Offsets de posición y rotación}{35}{subsection.93}%
+\contentsline {subsection}{\numberline {3.4.3}Modos de visualización}{36}{subsection.94}%
+\contentsline {section}{\numberline {3.5}Conectividad y sincronización con DOMjudge}{36}{section.95}%
+\contentsline {subsection}{\numberline {3.5.1}Red asíncrona con libcurl}{37}{subsection.97}%
+\contentsline {subsection}{\numberline {3.5.2}Máquina de estados de conexión}{37}{subsection.98}%
+\contentsline {subsection}{\numberline {3.5.3}Configuración y seguridad}{37}{subsection.99}%
+\contentsline {subsection}{\numberline {3.5.4}Endpoints y procesado JSON}{38}{subsection.100}%
+\contentsline {subsection}{\numberline {3.5.5}Optimización de tráfico y latencia}{38}{subsection.104}%
+\contentsline {subsection}{\numberline {3.5.6}Mapeo de marcadores a equipos}{38}{subsection.105}%
+\contentsline {subsection}{\numberline {3.5.7}El \textit {scoreboard} visual}{39}{subsection.106}%
+\contentsline {section}{\numberline {3.6}Overlays 2D anclados al marcador}{39}{section.107}%
+\contentsline {subsection}{\numberline {3.6.1}El sistema de coordenadas}{39}{subsection.108}%
+\contentsline {subsection}{\numberline {3.6.2}El efecto visual buscado}{40}{subsection.110}%
+\contentsline {subsection}{\numberline {3.6.3}Detección en los modos de texto}{41}{subsection.111}%
+\contentsline {subsubsection}{\numberline {3.6.3.1}Conversión de formatos de vídeo de entrada}{41}{subsubsection.112}%
+\contentsline {subsubsection}{\numberline {3.6.3.2}De la rotación detectada a la orientación del overlay}{42}{subsubsection.114}%
+\contentsline {subsection}{\numberline {3.6.4}Selección y mapeo de marcadores en Team Info}{43}{subsection.116}%
+\contentsline {subsection}{\numberline {3.6.5}Composición del scoreboard}{44}{subsection.117}%
+\contentsline {subsection}{\numberline {3.6.6}Cadena de transformaciones}{44}{subsection.118}%
+\contentsline {subsection}{\numberline {3.6.7}Suavizado del overlay}{45}{subsection.119}%
+\contentsline {subsection}{\numberline {3.6.8}Fondo del overlay}{46}{subsection.120}%
+\contentsline {section}{\numberline {3.7}Liberación de recursos}{46}{section.121}%
+\contentsline {subsection}{\numberline {3.7.1}Persistencia de estado}{46}{subsection.122}%
+\contentsline {subsection}{\numberline {3.7.2}Memoria GPU}{47}{subsection.125}%
+\contentsline {subsection}{\numberline {3.7.3}Limpieza del detector}{47}{subsection.126}%
+\contentsline {subsection}{\numberline {3.7.4}Cierre de conexiones}{47}{subsection.127}%
+\contentsline {chapter}{\numberline {4}Conclusiones y Trabajo Futuro}{49}{chapter.128}%
+\contentsline {section}{\numberline {4.1}Conclusiones}{49}{section.129}%
+\contentsline {section}{\numberline {4.2}Limitaciones}{50}{section.130}%
+\contentsline {section}{\numberline {4.3}Trabajo Futuro}{50}{section.131}%
+\contentsline {chapter}{Contribuciones Personales}{53}{chapter*.132}%
 \babel@toc {english}{}\relax 
 \babel@toc {spanish}{}\relax 
+\contentsline {chapter}{Bibliograf\'{\i }a}{55}{chapter*.133}%
