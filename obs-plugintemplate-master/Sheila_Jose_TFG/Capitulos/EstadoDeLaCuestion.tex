@@ -152,64 +152,42 @@ El valor de la RA en estos contextos radica en mejorar la comprensión y la expe
 \section{APIs y SDKs de Realidad Aumentada}
 \label{sec:apis_ra}
 
-Antes de abordar la integración de experiencias de Realidad Aumentada (RA) en aplicaciones prácticas, es importante describir de forma clara y separada las capacidades y limitaciones de las principales bibliotecas y SDKs disponibles en este campo.
+Para decidir qué herramienta emplear en este proyecto, se analizaron los principales SDKs y bibliotecas disponibles para implementar RA en tiempo real. A continuación se describe cada uno, destacando los aspectos que resultaron más relevantes para la toma de decisiones.
 
 \subsection{Vuforia}
 \label{subsec:vuforia}
 
-Vuforia \citep{Vuforia} es uno de los \textit{Software Development Kits} (SDK) más consolidados en el ámbito de la RA. Desarrollado originalmente por Qualcomm y actualmente mantenido por PTC Inc., está orientado al reconocimiento y seguimiento de imágenes, objetos y entornos en tiempo real. Su principal objetivo es facilitar la integración de experiencias de RA en aplicaciones móviles y de escritorio, con un énfasis especial en la compatibilidad con el motor de videojuegos Unity.
+Vuforia \citep{Vuforia} es posiblemente el SDK de RA más extendido en el sector comercial. Desarrollado originalmente por Qualcomm y actualmente mantenido por PTC Inc., su propuesta de valor gira en torno a una integración muy estrecha con el motor Unity: proporciona prefabs, un flujo de trabajo propio dentro del editor y un servicio web (\textit{Target Manager}) que simplifica la creación de bases de datos de marcadores. Esto permite que equipos sin experiencia en visión por computador monten prototipos funcionales con rapidez.
 
-Una de las características distintivas de Vuforia es su \textbf{robustez en el seguimiento visual}. El SDK permite detectar y rastrear múltiples tipos de elementos: desde imágenes planas (\textit{Image Targets}) hasta objetos tridimensionales, cilindros o incluso entornos más complejos mediante \textit{Model Targets}. Para gestionar estos elementos, ofrece un sistema de creación de bases de datos de marcadores (\textit{Target Manager}), que simplifica la preparación de activos para ser usados dentro de proyectos de RA.
-
-\textbf{Entre sus principales ventajas} se encuentra la integración profunda con Unity, que no solo proporciona librerías y prefabs listos para usar, sino también un flujo de trabajo optimizado para importar, configurar y desplegar elementos de realidad aumentada. Además, Vuforia ofrece funcionalidades avanzadas como reconocimiento de texto, detección de planos y soporte para experiencias multiusuario.
-
-\textbf{En cuanto a sus limitaciones}, Vuforia presenta un modelo de licenciamiento que restringe ciertas funcionalidades en proyectos comerciales. Asimismo, aunque dispone de soporte para desarrollo en C++ y aplicaciones nativas, su orientación principal hacia Unity y dispositivos móviles lo aleja de ser un SDK completamente flexible para aplicaciones de escritorio más especializadas.
-
-En resumen, Vuforia se posiciona como una solución madura y ampliamente adoptada para proyectos de RA en entornos móviles y en el ecosistema Unity. Su facilidad de uso y robustez lo hacen ideal para prototipado rápido y despliegue en aplicaciones comerciales, aunque sus restricciones de licencia lo diferencian de alternativas abiertas como ARToolKit o OpenCV.
+El SDK va más allá del simple reconocimiento de imágenes planas: admite \textit{Model Targets} para rastrear objetos tridimensionales, detección de planos, reconocimiento de texto y soporte para experiencias multiusuario. Sin embargo, esa solidez tiene un coste: fuera del ecosistema Unity, Vuforia resulta incómodo de integrar en aplicaciones nativas de escritorio, y su modelo de licenciamiento limita las funcionalidades disponibles en proyectos comerciales sin suscripción de pago. Para un plugin de OBS escrito en C/C++ sin dependencia de motores gráficos externos, esta orientación tan ligada a Unity lo descartó desde el principio.
 
 \subsection{ARToolKit}
 \label{subsec:artoolkit}
 
-ARToolKit \citep{ARToolkit} es uno de los SDK más veteranos y representativos en el campo de la RA, ampliamente reconocido por haber introducido el \textbf{tracking por marcadores} como técnica fundamental en los primeros sistemas. Se trata de un software de \textit{código abierto}, disponible con APIs en C y C++, y diseñado desde sus inicios con un enfoque multiplataforma. Su simplicidad conceptual y su carácter abierto lo han convertido en una herramienta muy utilizada en el ámbito académico y en proyectos de investigación.
+ARToolKit \citep{ARToolkit} es el SDK de RA de mayor antigüedad entre los evaluados y tiene un lugar destacado en la historia de la disciplina: fue uno de los primeros sistemas en formalizar el \textit{tracking} mediante marcadores cuadrados impresos, estableciendo una base conceptual que siguen muchas soluciones posteriores, incluyendo los marcadores ArUco que se usan en este proyecto.
 
-\textbf{La principal aportación de ARToolKit} radica en la detección y el seguimiento de patrones visuales impresos (marcadores), que permiten calcular en tiempo real la posición y orientación de la cámara respecto a ellos.
-
-\textbf{Entre sus ventajas}, destaca la licencia libre que elimina restricciones comerciales y facilita su adopción en proyectos experimentales. También proporciona un control granular sobre el pipeline de visión, ya que el desarrollador puede modificar o extender directamente el código fuente. Esto lo convierte en una opción idónea para prototipos rápidos, entornos académicos y proyectos de investigación.
-
-\textbf{En cuanto a limitaciones}, ARToolKit requiere un mayor esfuerzo de integración en comparación con SDK comerciales como Vuforia, pues no ofrece flujos de trabajo optimizados ni integración directa con motores gráficos modernos. Además, su enfoque centrado en el uso de marcadores lo hace menos versátil frente a soluciones actuales que incorporan detección de objetos, planos o entornos completos. La calibración manual de cámaras es también un requisito frecuente para alcanzar un rendimiento óptimo.
+Su principal atractivo es el código abierto con API en C y C++, sin restricciones comerciales, lo que lo hace especialmente común en prototipos académicos y trabajos de investigación. El acceso directo al código fuente permite entender y modificar el pipeline completo de visión, algo difícil con SDKs propietarios. La contrapartida es que no ofrece integración nativa con ningún motor gráfico moderno, la calibración de cámara debe gestionarse manualmente y su ecosistema no ha evolucionado al mismo ritmo que herramientas más recientes. Para un uso en producción que requiera, por ejemplo, detección de superficies o tracking sin marcadores, ARToolKit se queda corto frente a las alternativas actuales.
 
 \subsection{OpenCV}
 \label{subsec:opencv}
 
-OpenCV \citep{OpenCV} es una biblioteca de visión por computador de \textit{código abierto}, ampliamente utilizada en el procesamiento de imágenes y vídeo en tiempo real. Aunque no es un SDK de RA completo, proporciona un conjunto muy extenso de algoritmos y utilidades que permiten construir soluciones de RA de manera modular y personalizada.
+OpenCV \citep{OpenCV} ocupa una categoría diferente al resto: no es propiamente un SDK de RA, sino una biblioteca de visión por computador de propósito general. Esta distinción es importante porque implica que no existe un sistema de RA listo para usar, sino un conjunto extensísimo de algoritmos entre los que se encuentran la detección de características, la estimación de pose, el procesamiento de flujos de vídeo y la calibración de cámara, sobre los que se puede construir una solución a medida.
 
-\textbf{La principal aportación de OpenCV} consiste en sus herramientas para la detección de características visuales, la estimación de pose y el procesamiento eficiente de flujos de vídeo, lo que lo convierte en un recurso fundamental para implementar sistemas de tracking y análisis visual sobre los que se pueden superponer contenidos sintéticos.
-
-\textbf{Entre sus ventajas}, destaca su carácter abierto y gratuito, la gran comunidad de desarrolladores que asegura mantenimiento y documentación abundante, así como su disponibilidad multiplataforma. Además, ofrece gran flexibilidad para integrar algoritmos propios y optimizar el rendimiento en función de las necesidades específicas del proyecto.
-
-\textbf{En cuanto a limitaciones}, OpenCV no ofrece directamente un sistema de tracking listo para producción ni incluye componentes gráficos o de gestión de activos de RA. Su uso exige un esfuerzo adicional de desarrollo, incluyendo la calibración de cámaras, la integración con GPU si se requiere alto rendimiento, y la implementación de capas adicionales para generar experiencias completas de RA.
+Eso es precisamente lo que lo hace atractivo para este proyecto. Su licencia Apache 2.0, su disponibilidad en Windows, Linux y macOS, la compatibilidad con C y C++, y la existencia de un módulo específico para marcadores ArUco (integrado en \texttt{opencv\_aruco}) hicieron de OpenCV la opción más natural para implementar el pipeline de detección sin depender de un motor externo. El coste de esa flexibilidad es que toda la capa de renderizado, gestión de activos y superposición de contenido sintético debe construirse desde cero, algo que en este proyecto se resolvió apoyándose en la API gráfica de OBS Studio y en Assimp para la carga de modelos.
 
 \subsection{SDKs de NVIDIA}
 \label{subsec:nvidia_sdk}
 
-Los SDKs de NVIDIA, entre los que destacan \textit{Maxine} y diversas librerías de inferencia aceleradas por GPU \citep{SDK_NVIDIA}, proporcionan un conjunto de herramientas orientadas al procesamiento visual mediante inteligencia artificial. Estos SDKs están optimizados para aprovechar los \textbf{Tensor Cores} de las tarjetas gráficas RTX, ofreciendo un alto rendimiento en tareas intensivas como el \textbf{seguimiento facial}, la \textbf{detección de puntos clave} o la \textbf{segmentación de vídeo}.
+NVIDIA ofrece, a través de su suite Maxine \citep{SDK_NVIDIA}, un conjunto de herramientas de procesamiento visual aceleradas por GPU. El enfoque es radicalmente distinto al de las demás opciones: en lugar de tracking basado en marcadores o geometría clásica, emplea modelos de aprendizaje profundo ejecutados sobre los \textit{Tensor Cores} de las GPUs RTX para tareas como seguimiento facial de alta precisión, detección de puntos clave, segmentación de vídeo en tiempo real o reconstrucción facial 3D. Los resultados en estas tareas específicas son difícilmente igualables por alternativas más tradicionales.
 
-\textbf{La principal aportación de los SDKs de NVIDIA} consiste en permitir el uso de modelos de visión por computador e IA en tiempo real con baja latencia. Su enfoque se centra especialmente en aplicaciones de análisis facial y manipulación de vídeo asistida por inteligencia artificial.
-
-\textbf{Entre sus ventajas}, destacan la precisión y velocidad de sus algoritmos, el soporte para tareas avanzadas como reconstrucción facial 3D o sustitución de fondo, y la integración con frameworks de desarrollo actuales.
-
-\textbf{En cuanto a limitaciones}, el uso de estos SDKs está restringido a sistemas con hardware compatible (GPUs NVIDIA RTX), lo que limita su accesibilidad en entornos heterogéneos. Además, presentan diferencias en soporte multiplataforma: ciertos SDKs, como Maxine, tienen compatibilidad reducida en Linux en comparación con Windows. A ello se suman las \textbf{restricciones de licencia} y distribución que condicionan su utilización en proyectos comerciales, lo que los diferencia de alternativas abiertas como OpenCV o ARToolKit.
+No obstante, esta potencia tiene un requisito ineludible: hardware NVIDIA compatible. El SDK no funciona en sistemas con GPU de otro fabricante, y el soporte en Linux es notablemente más limitado que en Windows. Además, su licencia de distribución introduce restricciones que complican el uso en proyectos de código abierto. Para el presente trabajo, desarrollado con OBS Studio (que se ejecuta en entornos heterogéneos) y sin un foco en análisis facial, esta dependencia de hardware específico lo descartó como opción viable.
 
 \subsection{DeepAR}
 \label{subsec:deepar}
 
-DeepAR \citep{DeepAR} es un SDK orientado específicamente a la generación de \textbf{efectos faciales en tiempo real}, ofreciendo funcionalidades como maquillaje virtual, embellecimiento automático, aplicación de filtros visuales y \textbf{reemplazo de fondo}. A diferencia de bibliotecas más generales, su propuesta se centra en proporcionar un conjunto de herramientas listas para usar, acompañadas de una amplia colección de \textit{assets} predefinidos.
+DeepAR \citep{DeepAR} se diferencia del resto por su especialización: está diseñado específicamente para generar efectos visuales sobre rostros en tiempo real. Ofrece funcionalidades como maquillaje virtual, filtros animados, embellecimiento automático y sustitución de fondo, todo ello con una biblioteca de \textit{assets} predefinidos y una API que reduce considerablemente el trabajo de integración. Es la opción más inmediata para quien necesite enriquecer vídeo de personas sin construir un pipeline de visión propio.
 
-\textbf{Su principal aportación} radica en simplificar el desarrollo de aplicaciones con efectos visuales sobre rostros, reduciendo el tiempo de implementación mediante librerías optimizadas y recursos gráficos integrados.
-
-\textbf{Entre sus ventajas}, destacan la facilidad de integración, la disponibilidad de efectos listos para producción y el enfoque directo a experiencias de RA aplicadas a presentadores o participantes en contextos interactivos. Esto permite obtener resultados rápidos sin necesidad de diseñar desde cero el pipeline de visión o los modelos faciales.
-
-\textbf{En cuanto a limitaciones}, el SDK mantiene un \textbf{enfoque centrado en rostros}, por lo que resulta menos adecuado para tareas de RA que requieran seguimiento de objetos, planos o entornos completos. Además, se distribuye bajo un \textbf{modelo comercial de licenciamiento}, lo cual restringe su uso gratuito a fases de prueba o prototipado y puede implicar costes adicionales en proyectos de producción.
+El problema es que esa especialización también es su límite. DeepAR no está pensado para seguimiento de objetos arbitrarios, detección de marcadores en una escena o RA de propósito general: su ámbito es el rostro humano. A esto se añade que funciona bajo un modelo de licenciamiento comercial, con un tier gratuito orientado a pruebas pero con restricciones para uso en producción. Ambos factores, el foco demasiado estrecho para las necesidades del proyecto y los costes asociados, llevaron a descartarlo.
 
 \subsection{Comparativa de todas las herramientas}
 \begin{table}[H]
@@ -239,7 +217,7 @@ OBS Studio \cite{OBS} es un software libre y de código abierto para la grabaci�
 
 Para entender el funcionamiento de OBS Studio desde la perspectiva del usuario, es útil analizar sus componentes principales y cómo interactúan en una retransmisión en directo:
 
-
+\begin{itemize}
     \item \textbf{Escenas:} Son la unidad principal de organización en OBS. Cada escena combina múltiples fuentes de audio y video en una composición completa que puede emitirse en directo. Se pueden crear escenas ilimitadas y cambiar entre ellas mediante transiciones predefinidas o personalizadas.
 \begin{figure}[htbp]
   \centering
@@ -256,7 +234,7 @@ Para entender el funcionamiento de OBS Studio desde la perspectiva del usuario, 
         \item archivos multimedia (video, audio, imágenes)
         \item navegador (contenido web o elementos HTML/CSS/JavaScript)
         \item texto (estático o dinámico)
-   
+    \end{itemize}
     \begin{center}
         \includegraphics[height=1.5in]{Imagenes/Vectorial/fuentes.png}
         \captionof{figure}{Vista de la pestaña \textit{Fuentes} en OBS Studio.}
@@ -327,7 +305,7 @@ Estas convenciones de despliegue no sólo garantizan que OBS detecte el plugin, 
 En la práctica los desarrolladores usan CMake como sistema de configuración y generación de proyectos para producir soluciones/Makefiles compatibles con los entornos de desarrollo de cada plataforma. El flujo típico consiste en configurar el proyecto (generar la solución), compilar en modo \emph{Debug} o \emph{Release} y copiar los artefactos a las carpetas de prueba de OBS. Estas convenciones hacen que el proceso sea reproducible y portátil entre Windows, Linux y macOS sin requerir cambios en el código base de OBS.
 
 \subsubsection*{Decisiones de diseño: C vs C++ y tipos de componente}
-OBS expone una API en C; eso favorece la compatibilidad si se escribe el plugin en C puro. No obstante, muchos desarrollos modernos emplean C++ para beneficiarse de abstracciones (RAII, punteros inteligentes, encapsulación), siempre que se respeten las reglas de ABI (por ejemplo declarar funciones externas con \texttt{extern "C"} cuando procede). Conceptualmente, un plugin en OBS puede exponer dos tipos de componentes principales: \emph{fuentes} (generan frames) y \emph{filtros} (procesan frames existentes). La elección entre ambos tiene implicaciones arquitectónicas importantes —por ejemplo el acceso directo a los píxeles de la cámara es más natural desde un filtro— y condiciona el diseño para aplicaciones de visión por computador o realidad aumentada.
+OBS expone una API en C; eso favorece la compatibilidad si se escribe el plugin en C puro. No obstante, muchos desarrollos modernos emplean C++ para beneficiarse de abstracciones (RAII, punteros inteligentes, encapsulación), siempre que se respeten las reglas de ABI (por ejemplo declarar funciones externas con \texttt{extern "C"} cuando procede). Conceptualmente, un plugin en OBS puede exponer dos tipos de componentes principales: \emph{fuentes} (generan frames) y \emph{filtros} (procesan frames existentes). La elección entre ambos tiene implicaciones arquitectónicas importantes (por ejemplo, el acceso directo a los píxeles de la cámara es más natural desde un filtro) y condiciona el diseño para aplicaciones de visión por computador o realidad aumentada.
 
 \subsection{Modelos 3D}
 

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.4.25)  26 APR 2026 22:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.4.25)  27 APR 2026 19:08
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1229,8 +1229,8 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [10 <./Imagenes/Vectorial/sports.png> <./Imagenes/Vectorial/education.png>]
-LaTeX Info: Redefining \. on input line 167.
-LaTeX Info: Redefining \% on input line 167.
+LaTeX Info: Redefining \. on input line 168.
+LaTeX Info: Redefining \% on input line 168.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1240,8 +1240,8 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [11]
-LaTeX Info: Redefining \. on input line 186.
-LaTeX Info: Redefining \% on input line 186.
+LaTeX Info: Redefining \. on input line 184.
+LaTeX Info: Redefining \% on input line 184.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1251,8 +1251,15 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [12]
-LaTeX Info: Redefining \. on input line 207.
-LaTeX Info: Redefining \% on input line 207.
+Underfull \hbox (badness 10000) in paragraph at lines 206--206
+[]|\T1/cmr/m/n/10.95 Seguimiento ba-sa-do en
+ []
+
+
+Underfull \vbox (badness 1137) has occurred while \output is active []
+
+LaTeX Info: Redefining \. on input line 214.
+LaTeX Info: Redefining \% on input line 214.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1262,12 +1269,24 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [13]
-Underfull \hbox (badness 10000) in paragraph at lines 228--228
-[]|\T1/cmr/m/n/10.95 Seguimiento ba-sa-do en
- []
+<Imagenes/Vectorial/escenas.png, id=680, 287.57437pt x 140.02313pt>
+File: Imagenes/Vectorial/escenas.png Graphic file (type png)
+<use Imagenes/Vectorial/escenas.png>
+Package pdftex.def Info: Imagenes/Vectorial/escenas.png  used on input line 224.
+(pdftex.def)             Requested size: 222.64842pt x 108.405pt.
+<Imagenes/Vectorial/fuentes.png, id=681, 289.83281pt x 191.9672pt>
+File: Imagenes/Vectorial/fuentes.png Graphic file (type png)
+<use Imagenes/Vectorial/fuentes.png>
+Package pdftex.def Info: Imagenes/Vectorial/fuentes.png  used on input line 239.
+(pdftex.def)             Requested size: 163.6718pt x 108.405pt.
 
-LaTeX Info: Redefining \. on input line 236.
-LaTeX Info: Redefining \% on input line 236.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 240.
+See the caption package documentation for explanation.
+
+LaTeX Info: Redefining \. on input line 240.
+LaTeX Info: Redefining \% on input line 240.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1275,18 +1294,33 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[14]
-<Imagenes/Vectorial/escenas.png, id=684, 287.57437pt x 140.02313pt>
-File: Imagenes/Vectorial/escenas.png Graphic file (type png)
-<use Imagenes/Vectorial/escenas.png>
-Package pdftex.def Info: Imagenes/Vectorial/escenas.png  used on input line 246.
-(pdftex.def)             Requested size: 222.64842pt x 108.405pt.
-<Imagenes/Vectorial/fuentes.png, id=685, 289.83281pt x 191.9672pt>
-File: Imagenes/Vectorial/fuentes.png Graphic file (type png)
-<use Imagenes/Vectorial/fuentes.png>
-Package pdftex.def Info: Imagenes/Vectorial/fuentes.png  used on input line 261.
-(pdftex.def)             Requested size: 163.6718pt x 108.405pt.
+[14 <./Imagenes/Vectorial/escenas.png>]
+<Imagenes/Vectorial/filtros.png, id=689, 216.05719pt x 296.60812pt>
+File: Imagenes/Vectorial/filtros.png Graphic file (type png)
+<use Imagenes/Vectorial/filtros.png>
+Package pdftex.def Info: Imagenes/Vectorial/filtros.png  used on input line 249.
+(pdftex.def)             Requested size: 131.61336pt x 180.67499pt.
 
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 250.
+See the caption package documentation for explanation.
+
+<Imagenes/Vectorial/transiciones.png, id=690, 225.09094pt x 195.73125pt>
+File: Imagenes/Vectorial/transiciones.png Graphic file (type png)
+<use Imagenes/Vectorial/transiciones.png>
+Package pdftex.def Info: Imagenes/Vectorial/transiciones.png  used on input line 255.
+(pdftex.def)             Requested size: 124.66591pt x 108.405pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 256.
+See the caption package documentation for explanation.
+
+<Imagenes/Vectorial/audio.png, id=691, 376.40625pt x 195.73125pt>
+File: Imagenes/Vectorial/audio.png Graphic file (type png)
+<use Imagenes/Vectorial/audio.png>
+Package pdftex.def Info: Imagenes/Vectorial/audio.png  used on input line 261.
+(pdftex.def)             Requested size: 208.47142pt x 108.405pt.
 
 Package caption Warning: The option `hypcap=true' will be ignored for this
 (caption)                particular \caption on input line 262.
@@ -1301,50 +1335,9 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[15 <./Imagenes/Vectorial/escenas.png>]
-<Imagenes/Vectorial/filtros.png, id=692, 216.05719pt x 296.60812pt>
-File: Imagenes/Vectorial/filtros.png Graphic file (type png)
-<use Imagenes/Vectorial/filtros.png>
-Package pdftex.def Info: Imagenes/Vectorial/filtros.png  used on input line 271.
-(pdftex.def)             Requested size: 131.61336pt x 180.67499pt.
-
-
-Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 272.
-See the caption package documentation for explanation.
-
-<Imagenes/Vectorial/transiciones.png, id=693, 225.09094pt x 195.73125pt>
-File: Imagenes/Vectorial/transiciones.png Graphic file (type png)
-<use Imagenes/Vectorial/transiciones.png>
-Package pdftex.def Info: Imagenes/Vectorial/transiciones.png  used on input line 277.
-(pdftex.def)             Requested size: 124.66591pt x 108.405pt.
-
-Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 278.
-See the caption package documentation for explanation.
-
-<Imagenes/Vectorial/audio.png, id=694, 376.40625pt x 195.73125pt>
-File: Imagenes/Vectorial/audio.png Graphic file (type png)
-<use Imagenes/Vectorial/audio.png>
-Package pdftex.def Info: Imagenes/Vectorial/audio.png  used on input line 283.
-(pdftex.def)             Requested size: 208.47142pt x 108.405pt.
-
-Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 284.
-See the caption package documentation for explanation.
-
-LaTeX Info: Redefining \. on input line 284.
-LaTeX Info: Redefining \% on input line 284.
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 14.49998pt, for example:
-(fancyhdr)                \setlength{\headheight}{14.49998pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
-
-[16 <./Imagenes/Vectorial/fuentes.png> <./Imagenes/Vectorial/filtros.png> <./Imagenes/Vectorial/transiciones.png>]
-LaTeX Info: Redefining \. on input line 304.
-LaTeX Info: Redefining \% on input line 304.
+[15 <./Imagenes/Vectorial/fuentes.png> <./Imagenes/Vectorial/filtros.png> <./Imagenes/Vectorial/transiciones.png>]
+LaTeX Info: Redefining \. on input line 282.
+LaTeX Info: Redefining \% on input line 282.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1353,23 +1346,36 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[17 <./Imagenes/Vectorial/audio.png>]
-Overfull \hbox (9.91876pt too wide) in paragraph at lines 314--315
+[16 <./Imagenes/Vectorial/audio.png>]
+Overfull \hbox (9.91876pt too wide) in paragraph at lines 292--293
 []\T1/cmr/bx/n/12 Carpeta de bi-na-rios: \T1/cmr/m/n/12 los bi-na-rios com-pi-la-dos se co-lo-can en $\T1/cmtt/m/n/12 obs-[]plugins /
  []
 
 
-Overfull \hbox (6.39102pt too wide) in paragraph at lines 314--315
+Overfull \hbox (6.39102pt too wide) in paragraph at lines 292--293
 \T1/cmtt/m/n/12 arquitectura$ \T1/cmr/m/n/12 den-tro de la ins-ta-la-ción de OBS (por ejem-plo $\T1/cmtt/m/n/12 obs-[]plugins /
  []
 
 
-Overfull \hbox (39.29639pt too wide) in paragraph at lines 315--316
+Overfull \hbox (39.29639pt too wide) in paragraph at lines 293--294
 []\T1/cmr/bx/n/12 Carpeta de da-tos: \T1/cmr/m/n/12 los re-cur-sos adi-cio-na-les de-ben re-si-dir en $\T1/cmtt/m/n/12 data / obs-[]plugins /
  []
 
-LaTeX Info: Redefining \. on input line 328.
-LaTeX Info: Redefining \% on input line 328.
+LaTeX Info: Redefining \. on input line 306.
+LaTeX Info: Redefining \% on input line 306.
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
+
+[17]
+LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 321.
+LaTeX Info: Redefining \. on input line 331.
+LaTeX Info: Redefining \% on input line 331.
+
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1378,10 +1384,8 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [18]
-LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 343.
-LaTeX Info: Redefining \. on input line 353.
-LaTeX Info: Redefining \% on input line 353.
+LaTeX Info: Redefining \. on input line 351.
+LaTeX Info: Redefining \% on input line 351.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1391,8 +1395,8 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [19]
-LaTeX Info: Redefining \. on input line 373.
-LaTeX Info: Redefining \% on input line 373.
+LaTeX Info: Redefining \. on input line 384.
+LaTeX Info: Redefining \% on input line 384.
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -1402,28 +1406,17 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
 [20]
-LaTeX Info: Redefining \. on input line 406.
-LaTeX Info: Redefining \% on input line 406.
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 14.49998pt, for example:
-(fancyhdr)                \setlength{\headheight}{14.49998pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
-
-[21]
-Overfull \hbox (17.04335pt too wide) in paragraph at lines 425--426
+Overfull \hbox (17.04335pt too wide) in paragraph at lines 403--404
 \T1/cmr/m/n/12 ders, tex-tu-ras, bi-na-rios com-pi-la-dos (\T1/cmtt/m/n/12 .dll \T1/cmr/m/n/12 en Win-dows, \T1/cmtt/m/n/12 .so \T1/cmr/m/n/12 en Li-nux/macOS)
  []
 
 
-Overfull \hbox (14.87766pt too wide) in paragraph at lines 426--427
+Overfull \hbox (14.87766pt too wide) in paragraph at lines 404--405
 []\T1/cmr/m/n/12 La ins-ta-la-ción se rea-li-za en la car-pe-ta de plu-gins de OBS ($\T1/cmtt/m/n/12 C : \ProgramFiles \
  []
 
-LaTeX Info: Redefining \. on input line 443.
-LaTeX Info: Redefining \% on input line 443.
+LaTeX Info: Redefining \. on input line 421.
+LaTeX Info: Redefining \% on input line 421.
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -1431,7 +1424,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[22])
+[21])
 LaTeX Info: Redefining \. on input line 143.
 LaTeX Info: Redefining \% on input line 143.
 
@@ -1442,22 +1435,22 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[23]
+[22]
 \openout2 = `Capitulos/DescripcionTrabajo.aux'.
 
- (Capitulos/DescripcionTrabajo.tex [24
-
-
-
-
-]
+ (Capitulos/DescripcionTrabajo.tex
 Cap\'itulo 3.
 
 Overfull \hbox (29.3747pt too wide) in paragraph at lines 1--1
 [][]  
  []
 
-[25]
+[23
+
+
+
+
+]
 LaTeX Info: Redefining \. on input line 69.
 LaTeX Info: Redefining \% on input line 69.
 
@@ -1468,8 +1461,8 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[26]
-<Imagenes/Vectorial/ciclo_vida_plugin.png, id=767, 1413.28pt x 770.88pt>
+[24]
+<Imagenes/Vectorial/ciclo_vida_plugin.png, id=759, 1413.28pt x 770.88pt>
 File: Imagenes/Vectorial/ciclo_vida_plugin.png Graphic file (type png)
 <use Imagenes/Vectorial/ciclo_vida_plugin.png>
 Package pdftex.def Info: Imagenes/Vectorial/ciclo_vida_plugin.png  used on input line 75.
@@ -1488,7 +1481,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[27 <./Imagenes/Vectorial/ciclo_vida_plugin.png>]
+[25 <./Imagenes/Vectorial/ciclo_vida_plugin.png>]
 Capitulos/DescripcionTrabajo.tex:119: Argument of \language@active@arg> has an extra }.
 <inserted text> 
                 \par 
@@ -1632,7 +1625,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[28]
+[26]
 Capitulos/DescripcionTrabajo.tex:149: Undefined control sequence.
 l.149 \cuadro
              {
@@ -1651,7 +1644,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[29]
+[27]
 LaTeX Info: Redefining \. on input line 185.
 LaTeX Info: Redefining \% on input line 185.
 
@@ -1662,7 +1655,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[30]
+[28]
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 189.
 
@@ -1698,8 +1691,8 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[31]
-<Imagenes/Vectorial/CamaraDistorsion.png, id=802, 1413.28pt x 770.88pt>
+[29]
+<Imagenes/Vectorial/CamaraDistorsion.png, id=794, 1413.28pt x 770.88pt>
 File: Imagenes/Vectorial/CamaraDistorsion.png Graphic file (type png)
 <use Imagenes/Vectorial/CamaraDistorsion.png>
 Package pdftex.def Info: Imagenes/Vectorial/CamaraDistorsion.png  used on input line 224.
@@ -1714,7 +1707,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[32 <./Imagenes/Vectorial/CamaraDistorsion.png>]
+[30 <./Imagenes/Vectorial/CamaraDistorsion.png>]
 Overfull \hbox (6.06163pt too wide) in paragraph at lines 240--241
 \T1/cmr/m/n/12 El script de-tec-ta las es-qui-nas del ta-ble-ro con \T1/cmtt/m/n/12 cv2.findChessboardCorners
  []
@@ -1733,8 +1726,8 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[33]
-<Imagenes/Vectorial/codigoAruco.png, id=817, 269.005pt x 192.72pt>
+[31]
+<Imagenes/Vectorial/codigoAruco.png, id=809, 269.005pt x 192.72pt>
 File: Imagenes/Vectorial/codigoAruco.png Graphic file (type png)
 <use Imagenes/Vectorial/codigoAruco.png>
 Package pdftex.def Info: Imagenes/Vectorial/codigoAruco.png  used on input line 279.
@@ -1752,7 +1745,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[34]
+[32]
 LaTeX Info: Redefining \. on input line 299.
 LaTeX Info: Redefining \% on input line 299.
 
@@ -1763,8 +1756,8 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[35 <./Imagenes/Vectorial/codigoAruco.png>]
-<Imagenes/Vectorial/juez2.png, id=830, 1416.29124pt x 548.0475pt>
+[33 <./Imagenes/Vectorial/codigoAruco.png>]
+<Imagenes/Vectorial/juez2.png, id=821, 1416.29124pt x 548.0475pt>
 File: Imagenes/Vectorial/juez2.png Graphic file (type png)
 <use Imagenes/Vectorial/juez2.png>
 Package pdftex.def Info: Imagenes/Vectorial/juez2.png  used on input line 316.
@@ -1779,7 +1772,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[36 <./Imagenes/Vectorial/juez2.png>]
+[34 <./Imagenes/Vectorial/juez2.png>]
 Overfull \hbox (21.8228pt too wide) in paragraph at lines 336--337
 []\T1/cmr/bx/n/12 Estados de co-ne-xión: \T1/cmr/m/n/12 El sis-te-ma tran-si-ta en-tre \T1/cmtt/m/n/12 DISCONNECTED\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 CONNECTING\T1/cmr/m/n/12 ,
  []
@@ -1793,7 +1786,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[37]
+[35]
 LaTeX Info: Redefining \. on input line 378.
 LaTeX Info: Redefining \% on input line 378.
 
@@ -1804,7 +1797,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[38]
+[36]
 Capitulos/DescripcionTrabajo.tex:401: Argument of \language@active@arg> has an extra }.
 <inserted text> 
                 \par 
@@ -2157,7 +2150,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[39]
+[37]
 LaTeX Info: Redefining \. on input line 441.
 LaTeX Info: Redefining \% on input line 441.
 
@@ -2168,7 +2161,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[40]
+[38]
 Underfull \hbox (badness 1852) in paragraph at lines 469--470
 []|\T1/cmr/m/n/12 Planos Y, U, V se-pa-ra-dos.
  []
@@ -2201,7 +2194,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[41]
+[39]
 Capitulos/DescripcionTrabajo.tex:508: Argument of \language@active@arg> has an extra }.
 <inserted text> 
                 \par 
@@ -2640,7 +2633,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[42]
+[40]
 LaTeX Info: Redefining \. on input line 537.
 LaTeX Info: Redefining \% on input line 537.
 
@@ -2651,7 +2644,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[43]
+[41]
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 569.
 
@@ -2668,7 +2661,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[44]
+[42]
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 572.
 
@@ -2699,7 +2692,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[45]
+[43]
 
 LaTeX Warning: Command \textdegree invalid in math mode on input line 604.
 
@@ -2737,7 +2730,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[46]
+[44]
 Capitulos/DescripcionTrabajo.tex:649: Text line contains an invalid character.
 l.649 ^^@
          ^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^...
@@ -2959,10 +2952,10 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[47]
+[45]
 \openout2 = `Capitulos/ConclusionesTrabajoFuturo.aux'.
 
- (Capitulos/ConclusionesTrabajoFuturo.tex [48
+ (Capitulos/ConclusionesTrabajoFuturo.tex [46
 
 
 
@@ -2981,7 +2974,7 @@ LaTeX Warning: Command \textdegree invalid in math mode on input line 12.
 LaTeX Warning: Command \textdegree invalid in math mode on input line 12.
 
 Missing character: There is no ° in font cmr12!
-[49]
+[47]
 LaTeX Info: Redefining \. on input line 27.
 LaTeX Info: Redefining \% on input line 27.
 
@@ -2992,7 +2985,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[50])
+[48])
 LaTeX Info: Redefining \. on input line 147.
 LaTeX Info: Redefining \% on input line 147.
 
@@ -3003,17 +2996,17 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[51]
+[49]
 LaTeX Info: Redefining \. on input line 154.
 LaTeX Info: Redefining \% on input line 154.
 \openout2 = `Capitulos/ContribucionesPersonales.aux'.
 
- (Capitulos/ContribucionesPersonales.tex [52
+ (Capitulos/ContribucionesPersonales.tex [50
 
 
 
 
-] [53])
+] [51])
 LaTeX Info: Redefining \. on input line 157.
 LaTeX Info: Redefining \% on input line 157.
 
@@ -3024,7 +3017,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[54]
+[52]
 \openout2 = `Cascaras/bibliografia.aux'.
 
  (Cascaras/bibliografia.tex (TFGTeXiS.bbl
@@ -3072,7 +3065,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 60--66
 []$\T1/cmtt/m/n/12 https : / / www2 . deloitte . com / us / en / insights / tech-[]trends / 2023 /
  []
 
-[55
+[53
 
 
 
@@ -3136,7 +3129,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.61858pt}.
 
-[56]
+[54]
 Overfull \hbox (135.99617pt too wide) in paragraph at lines 157--164
 \T1/cmtt/m/n/12 how-[]gen-[]z-[]is-[]reshaping-[]communication-[]and-[]redefining-[]the-[]shopping-[]experience-[]with-[]ar$[]\T1/cmr/m/n/12 ,
  []
@@ -3152,16 +3145,16 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.61858pt}.
 
-[57] [58
+[55] [56
 
 
 
 ]
 \openout2 = `Cascaras/fin.aux'.
 
- (Cascaras/fin.tex [59
+ (Cascaras/fin.tex [57
 
-] [60])
+] [58])
 
 c:/Users/josem/Desktop/jose/tfg/TFG/obs-plugintemplate-master/Sheila_Jose_TFG/TFGTeXiS.tex:213: LaTeX Error: \begin{itemize} on input line 86 ended by \end{document}.
 
@@ -3197,17 +3190,17 @@ Package rerunfilecheck Info: File `TFGTeXiS.out' has not changed.
 ### semi simple group (level 1) entered at line 86 (\begingroup)
 ### bottom level 
 Here is how much of TeX's memory you used:
- 29865 strings out of 467691
- 555828 string characters out of 5414987
+ 29863 strings out of 467691
+ 555814 string characters out of 5414987
  1048931 words of memory out of 5000000
  57815 multiletter control sequences out of 15000+600000
  652448 words of font info for 88 fonts, out of 8000000 for 9000
  1379 hyphenation exceptions out of 8191
  106i,12n,123p,1365b,1579s stack positions out of 10000i,1000n,20000p,200000b,200000s
- <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2488.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1728.pk><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvr8a.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb>
-Output written on TFGTeXiS.pdf (80 pages, 5488561 bytes).
+ <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2488.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1728.pk><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvr8a.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb>
+Output written on TFGTeXiS.pdf (78 pages, 5483728 bytes).
 PDF statistics:
- 1902 PDF objects out of 2073 (max. 8388607)
- 242 named destinations out of 1000 (max. 500000)
+ 1889 PDF objects out of 2073 (max. 8388607)
+ 240 named destinations out of 1000 (max. 500000)
  696 words of extra memory for PDF output out of 10000 (max. 10000000)
 
