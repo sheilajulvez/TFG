@@ -84,3 +84,5 @@
 \babel@toc {english}{}\relax 
 \babel@toc {spanish}{}\relax 
 \contentsline {chapter}{Bibliograf\'{\i }a}{53}{chapter*.133}%
+\contentsline {chapter}{\numberline {A}Manual de Instalación del Plugin}{57}{appendix.134}%
+\contentsline {chapter}{\numberline {B}Manual de Configuración del Plugin}{61}{appendix.135}%
