@@ -251,6 +251,51 @@ static void rotation_to_euler(const cv::Mat &R, float &pitch, float &yaw,
 	roll = static_cast<float>(roll * 180.0 / M_PI);
 }
 
+static void compute_normal_tip_screen(const ArucoDetector *det,
+				      const cv::Vec3d &rvec,
+				      const cv::Vec3d &tvec,
+				      int frame_w, int frame_h,
+				      int base_w, int base_h,
+				      int out_w, int out_h,
+				      float *out_tip_x,
+				      float *out_tip_y,
+				      bool *out_valid)
+{
+	if (!out_tip_x || !out_tip_y || !out_valid || !det || frame_w <= 0 ||
+	    frame_h <= 0 || base_w <= 0 || base_h <= 0 || out_w <= 0 || out_h <= 0) {
+		if (out_valid)
+			*out_valid = false;
+		return;
+	}
+
+	/* Proyectamos el eje Z local del marcador para orientar el texto "hacia arriba".
+	 * Se usa -Z para tomar la dirección que sale del papel según convención de ArUco. */
+	std::vector<cv::Point3f> obj_pts;
+	obj_pts.emplace_back(0.0f, 0.0f, 0.0f);
+	obj_pts.emplace_back(0.0f, 0.0f, -det->marker_size);
+
+	std::vector<cv::Point2f> img_pts;
+	cv::projectPoints(obj_pts, rvec, tvec, det->camera_matrix, det->dist_coeffs, img_pts);
+	if (img_pts.size() < 2) {
+		*out_valid = false;
+		return;
+	}
+
+	const float sx_base = (float)base_w / (float)frame_w;
+	const float sy_base = (float)base_h / (float)frame_h;
+	const float sx_out = (float)out_w / (float)base_w;
+	const float sy_out = (float)out_h / (float)base_h;
+
+	float tip_x = img_pts[1].x * sx_base * sx_out;
+	float tip_y = img_pts[1].y * sy_base * sy_out;
+	tip_x = std::clamp(tip_x, 0.0f, (float)out_w);
+	tip_y = std::clamp(tip_y, 0.0f, (float)out_h);
+
+	*out_tip_x = tip_x;
+	*out_tip_y = tip_y;
+	*out_valid = true;
+}
+
 
 bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 			int base_w, int base_h, int fw, int fh,
@@ -258,6 +303,7 @@ bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 {
 	if (!det || !frame || !res)
 		return false;
+	res->normal_tip_valid = false;
 
 	int w = base_w; // ancho base de referencia
 	int h = base_h; // alto base de referencia
@@ -317,31 +363,40 @@ bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 
 	// Centro del marcador en coords base
 	float im_cx = 0.0f, im_cy = 0.0f;
+	const double scale_x = double(fw) / double(base_w);
+	const double scale_y = double(fh) / double(base_h);
 	for (int i = 0; i < 4; ++i) {
-		float vx = corners[marker_index][i].x * ((float)base_w / frame->width);
-		float vy = corners[marker_index][i].y * ((float)base_h / frame->height);
+		float vx_base = corners[marker_index][i].x * ((float)base_w / frame->width);
+		float vy_base = corners[marker_index][i].y * ((float)base_h / frame->height);
 
-		vx = std::clamp(vx, 0.0f, float(w - 1));
-		vy = std::clamp(vy, 0.0f, float(h - 1));
+		vx_base = std::clamp(vx_base, 0.0f, float(w - 1));
+		vy_base = std::clamp(vy_base, 0.0f, float(h - 1));
 
-		res->corners[i][0] = vx;
-		res->corners[i][1] = vy;
+		const float vx_screen = std::clamp(float(vx_base * scale_x), 0.0f, float(fw));
+		const float vy_screen = std::clamp(float(vy_base * scale_y), 0.0f, float(fh));
 
-		im_cx += vx;
-		im_cy += vy;
+		/* Guardamos esquinas en coordenadas de pantalla OBS para alinear el overlay AR 1:1. */
+		res->corners[i][0] = vx_screen;
+		res->corners[i][1] = vy_screen;
+
+		im_cx += vx_base;
+		im_cy += vy_base;
 	}
 	im_cx /= 4.0f;
 	im_cy /= 4.0f;
 
 	// Escalar al tamano de salida OBS
-	double scale_x = double(fw) / double(base_w);
-	double scale_y = double(fh) / double(base_h);
-
 	res->screen_pos_x = float(im_cx * scale_x);
 	res->screen_pos_y = float(im_cy * scale_y);
 
 	res->screen_pos_x = std::clamp(res->screen_pos_x, 0.0f, float(fw));
 	res->screen_pos_y = std::clamp(res->screen_pos_y, 0.0f, float(fh));
+
+	compute_normal_tip_screen(det, rvecs[marker_index], tvecs[marker_index],
+				  frame->width, frame->height,
+				  base_w, base_h, fw, fh,
+				  &res->normal_tip_x, &res->normal_tip_y,
+				  &res->normal_tip_valid);
 
 	cv::Mat R;
 	cv::Rodrigues(rvecs[marker_index], R);
@@ -391,6 +446,7 @@ bool process_frame_rgba_select_ids(ArucoDetector *det, struct obs_source_frame *
 {
 	if (!det || !frame || !res)
 		return false;
+	res->normal_tip_valid = false;
 
 	if (!allowed_ids || allowed_count == 0) {
 		res->detected = false;
@@ -423,17 +479,12 @@ bool process_frame_rgba_select_ids(ArucoDetector *det, struct obs_source_frame *
 		return false;
 	}
 
-	// Elegir el marcador permitido mas grande en pantalla
+	// Elegir el primer marcador permitido que aparezca en la lista de deteccion
 	int marker_index = -1;
-	float best_area = 0.0f;
 	for (int i = 0; i < (int)ids.size(); ++i) {
-		if (!id_permitido(ids[i], allowed_ids, allowed_count))
-			continue;
-
-		const float a = area_cuadrilatero(corners[i]);
-		if (a > best_area) {
-			best_area = a;
+		if (id_permitido(ids[i], allowed_ids, allowed_count)) {
 			marker_index = i;
+			break;
 		}
 	}
 
@@ -462,31 +513,40 @@ bool process_frame_rgba_select_ids(ArucoDetector *det, struct obs_source_frame *
 
 	// Centro del marcador en coords base
 	float im_cx = 0.0f, im_cy = 0.0f;
+	const double scale_x = double(fw) / double(base_w);
+	const double scale_y = double(fh) / double(base_h);
 	for (int i = 0; i < 4; ++i) {
-		float vx = corners[marker_index][i].x * ((float)base_w / frame->width);
-		float vy = corners[marker_index][i].y * ((float)base_h / frame->height);
+		float vx_base = corners[marker_index][i].x * ((float)base_w / frame->width);
+		float vy_base = corners[marker_index][i].y * ((float)base_h / frame->height);
 
-		vx = std::clamp(vx, 0.0f, float(w - 1));
-		vy = std::clamp(vy, 0.0f, float(h - 1));
+		vx_base = std::clamp(vx_base, 0.0f, float(w - 1));
+		vy_base = std::clamp(vy_base, 0.0f, float(h - 1));
 
-		res->corners[i][0] = vx;
-		res->corners[i][1] = vy;
+		const float vx_screen = std::clamp(float(vx_base * scale_x), 0.0f, float(fw));
+		const float vy_screen = std::clamp(float(vy_base * scale_y), 0.0f, float(fh));
 
-		im_cx += vx;
-		im_cy += vy;
+		/* Guardamos esquinas en coordenadas de pantalla OBS para alinear el overlay AR 1:1. */
+		res->corners[i][0] = vx_screen;
+		res->corners[i][1] = vy_screen;
+
+		im_cx += vx_base;
+		im_cy += vy_base;
 	}
 	im_cx /= 4.0f;
 	im_cy /= 4.0f;
 
 	// Escalar al tamano de salida OBS
-	double scale_x = double(fw) / double(base_w);
-	double scale_y = double(fh) / double(base_h);
-
 	res->screen_pos_x = float(im_cx * scale_x);
 	res->screen_pos_y = float(im_cy * scale_y);
 
 	res->screen_pos_x = std::clamp(res->screen_pos_x, 0.0f, float(fw));
 	res->screen_pos_y = std::clamp(res->screen_pos_y, 0.0f, float(fh));
+
+	compute_normal_tip_screen(det, rvecs[marker_index], tvecs[marker_index],
+				  frame->width, frame->height,
+				  base_w, base_h, fw, fh,
+				  &res->normal_tip_x, &res->normal_tip_y,
+				  &res->normal_tip_valid);
 
 	cv::Mat R;
 	cv::Rodrigues(rvecs[marker_index], R);

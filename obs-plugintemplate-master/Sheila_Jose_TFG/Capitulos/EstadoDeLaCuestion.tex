@@ -1,0 +1,425 @@
+\chapter{Estado de la cuestión}
+
+\label{cap:estadoDeLaCuestion}
+% En este apartado no tengo del todo claro qué contenido específico debería incluir, ya que existe cierta confusión con el capítulo siguiente, dedicado a la Descripción del Trabajo. Entiendo que aquí se debería reflejar el estado actual relacionado con el objeto de estudio, sin embargo, tiendo a mezclarlo con la investigación preliminar que realizamos, la cual corresponde a la fase inicial de la Descripción del Trabajo.
+% En el estado de la cuestión es donde aparecen gran parte de las referencias bibliográficas del trabajo. Una de las formas más cómodas de gestionar la bibliografía en {\LaTeX} es utilizando \textbf{bibtex}. Las entradas bibliográficas deben estar en un fichero con extensión \textit{.bib} (con esta plantilla se proporciona el fichero biblio.bib, donde están las entradas referenciadas más abajo). Cada entrada bibliográfica tiene una clave que permite referenciarla desde cualquier parte del texto con los siguiente comandos:
+
+% \begin{itemize}
+% \item Referencia bibliografica con cite: \cite{ldesc2e}
+% \item Referencia bibliográfica con citep: \citep{notsoshort}
+% \item Referencia bibliográfica con citet: \citet{latexAPrimer}
+% \end{itemize}
+
+% Es posible citar más de una fuente, como por ejemplo \citep{latexCompanion,LaTeXLamport,texKnuth}
+
+% Después, \LaTeX se ocupa de rellenar la sección de bibliografía con las entradas \textbf{que hayan sido citadas} (es decir, no con todas las entradas que hay en el .bib, sino sólo con aquellas que se hayan citado en alguna parte del texto).
+
+% Bibtex es un programa separado de latex, pdflatex o cualquier otra cosa que se use para compilar los .tex, de manera que para que se rellene correctamente la sección de bibliografía es necesario compilar primero el trabajo (a veces es necesario compilarlo dos veces), compilar después con bibtex, y volver a compilar otra vez el trabajo (de nuevo, puede ser necesario compilarlo dos veces). 
+\chapterquote{Somos sentimientos y tenemos seres humanos}{Rajoy}
+
+
+La realidad aumentada (RA) se define como la superposición de información generada por computadora, como imágenes, vídeo o gráficos 3D, sobre el entorno real, con el objetivo de enriquecer la percepción del usuario y permitir la interacción en tiempo real \citep{Azuma1997}.  
+
+A diferencia de la realidad virtual (RV), que sumerge completamente al usuario en un entorno simulado, la RA complementa la realidad existente sin sustituirla, manteniendo al usuario conectado con su entorno físico \citep{Billinghurst2015}.  
+
+Las primeras aplicaciones de RA tuvieron un enfoque militar, como los sistemas HUD (head-up display) en aviones de combate, que proyectaban datos críticos sobre el campo visual del piloto sin bloquear su visión. Posteriormente, esta tecnología se adaptó a la aviación comercial y al sector automotriz, con HUDs que muestran instrucciones de navegación directamente sobre el campo visual del conductor \citep{Olsson2012}.  
+
+En sus inicios, los componentes clave de un sistema de RA incluían un proyector para generar el contenido digital, un combinador que actuaba como superficie de proyección y un computador que procesaba los datos en tiempo real para integrarlos con el entorno físico \citep{Azuma1997}. Actualmente, la RA se implementa de manera mucho más accesible mediante dispositivos de uso cotidiano como smartphones y tablets, que aprovechan la cámara, los sensores integrados y la capacidad de procesamiento para ofrecer experiencias inmersivas.  
+
+Los dispositivos más avanzados, como los HMDs (Head-Mounted Displays), emplean ópticas que superponen gráficos virtuales sobre la visión real. Para mantener la coherencia en la experiencia, incorporan sensores de seis grados de libertad (6DoF), lo que significa que son capaces de detectar tanto la traslación (movimiento en los tres ejes cartesianos) como la rotación (inclinación, giro y orientación) del usuario \citep{AzumaBishop1994}.  
+
+A lo largo de su evolución, la RA ha pasado de depender de hardware especializado y costoso a integrarse en la vida diaria. Su presencia en aplicaciones como los filtros de redes sociales refleja un cambio fundamental: la tecnología se vuelve transparente y lo que prevalece es la experiencia aumentada.  
+
+La RA en la actualidad se encuentra en un punto de madurez tecnológica que permite su aplicación en sectores muy diversos, como la medicina, la industria, la educación o el entretenimiento. Las grandes empresas tecnológicas han impulsado su integración en dispositivos de consumo masivo: Apple y Google han integrado ARKit y ARCore en sus ecosistemas móviles, lo que ha facilitado el desarrollo de aplicaciones accesibles y de gran impacto. La creciente capacidad de los dispositivos móviles y la popularización de herramientas de desarrollo están impulsando la creación de experiencias cada vez más complejas, interactivas y adaptadas a diferentes contextos. Esto convierte a la RA en una tecnología clave dentro de las tendencias actuales de comunicación digital e interacción inmersiva.
+
+\section{Tipos de realidad aumentada}
+
+La realidad aumentada (RA) es una tecnología muy versátil que no puede clasificarse mediante un único criterio, ya que sus aplicaciones y métodos de implementación varían ampliamente. Para entender sus distintas formas, se pueden considerar varios ejes de clasificación que ayudan a describir cómo funciona y cómo se percibe el contenido virtual en el mundo real.  
+
+Un primer eje se centra en cómo el sistema determina la posición y orientación del contenido virtual dentro del entorno físico. En este caso, se distingue entre \textbf{RA basada en marcadores} (\textit{marker-based AR}), que utiliza patrones visuales predefinidos como códigos QR, imágenes o elementos físicos específicos para situar el objeto virtual, y \textbf{RA sin marcadores} (\textit{markerless AR}), que emplea sensores, visión por computador y técnicas como SLAM (Simultaneous Localization and Mapping) para comprender el entorno y colocar los objetos virtuales sin necesidad de marcadores explícitos.  
+
+Un segundo eje se refiere a la forma en que se percibe la realidad y se combina con los elementos virtuales. En los sistemas \textbf{video see-through}, la realidad se observa a través de la cámara de un dispositivo (como un smartphone o tablet) y los elementos virtuales se dibujan sobre la imagen capturada. Por el contrario, en la \textbf{RA óptica} (\textit{optical see-through}) la imagen real se ve directamente a través de un cristal o lente, sobre el que se proyectan los gráficos virtuales, como ocurre en HUDs o en gafas inteligentes. Por último, en la \textbf{RA basada en proyección} (\textit{projection-based AR}) los elementos virtuales se proyectan directamente sobre superficies físicas, de manera que no se necesita una pantalla intermedia para percibir la combinación de realidad y contenido digital.  
+
+Un tercer eje analiza la forma en que se integra el contenido virtual con el mundo real. En la \textbf{RA aditiva} (\textit{additive AR}) los objetos virtuales se suman a la escena real sin modificarla, simplemente enriqueciendo la información visual disponible. En cambio, en la \textbf{RA por superposición} (\textit{superimposition AR}) la vista de un objeto real puede ser reemplazada parcial o totalmente por su versión aumentada, lo que resulta útil en aplicaciones médicas, educativas o industriales donde es necesario sustituir o resaltar elementos específicos de la escena.  
+
+Es importante destacar que estos ejes de clasificación no son excluyentes: una misma aplicación puede combinar características de varios criterios. Por ejemplo, un sistema puede ser markerless, usar superimposition AR y mostrarse mediante video see-through, mientras que otro podría combinar optical see-through con RA aditiva. Este enfoque multidimensional permite analizar con mayor precisión las capacidades y limitaciones de la RA, así como comprender mejor las posibilidades de implementación en diferentes contextos tecnológicos y de usuario.
+
+
+
+
+
+% En el texto, cuando introduzcas la tabla:
+Como se muestra en la Tabla~\ref{tabla:tiposRA}, los distintos tipos de RA se pueden diferenciar según su funcionamiento, requisitos técnicos y ejemplos de aplicación.
+
+
+\begin{table}[H]
+\centering
+\scriptsize % fuente más pequeña
+\setlength{\tabcolsep}{3pt} % reduce espacio entre columnas
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{2.8cm}|p{4cm}|p{3.2cm}|p{3.2cm}|}
+\hline
+\textbf{Tipo de RA} & \textbf{Funcionamiento} & \textbf{Requisitos Técnicos} & \textbf{Ejemplos de Uso} \\ \hline
+
+\textbf{RA Basada en Marcadores} & Detecta patrones visuales (como QR o imágenes) para posicionar contenido digital. & Cámara + marcador visual (impreso o pantalla). & Publicidad interactiva, libros escolares con animaciones, tarjetas promocionales. \\ \hline
+
+\textbf{RA Sin Marcadores} & Usa SLAM para detectar superficies y ubicaciones sin necesidad de marcador. & Sensor de cámara, giroscopio, acelerómetro y procesamiento SLAM. & Juegos como Pokémon GO, filtros de Instagram, decoración virtual. \\ \hline
+
+\textbf{RA Basada en Proyección} & Proyecta luz o imágenes digitales sobre superficies reales. Puede incluir detección táctil por distorsión. & Proyector + sensores de profundidad o detección de contacto. & Teclados virtuales, interfaces proyectadas en mesas o paredes. \\ \hline
+
+\textbf{RA por Superposición} & Sustituye total o parcialmente la vista de un objeto con información aumentada. & Cámara + software de reconocimiento de objetos. & Manuales de reparación en RA, formación médica, visualización de piezas internas. \\ \hline
+
+\end{tabular}
+\caption{Comparativa de tipos de Realidad Aumentada}
+\label{tabla:tiposRA}
+\end{table}
+
+
+
+\section {Realidad Aumentada en Retransmisiones en vivo}
+
+La Realidad Aumentada está experimentando una creciente adopción en la industria del broadcasting, impulsada por la demanda de experiencias más inmersivas e interactivas. Se proyecta que el mercado global de RA en medios y entretenimiento alcance los 12.6 mil millones de dólares para 2025, con una tasa de crecimiento anual compuesta (CAGR) del 21.4\% \cite{Deloitte_RA_Broadcasting}. Además, el despliegue de redes 5G está acelerando esta tendencia, al permitir mayores velocidades de transferencia de datos y una menor latencia, factores cruciales para la implementación de tecnologías de RA y RV en tiempo real \cite{Ericsson_2020}.
+
+
+
+Las aplicaciones específicas de la RA en el broadcasting son amplias y variadas:
+\begin{itemize}
+    \item \textbf{Eventos en Vivo:} Un ejemplo destacado es el uso de RA durante el Super Bowl, donde se superponen en tiempo real estadísticas de los jugadores directamente sobre la imagen en vivo, mejorando la comprensión del juego y la inmersión del espectador \citep{Enicomp2023}.
+   
+   \begin{figure}[htbp]
+  \centering
+  \includegraphics[height=2.5in]{Imagenes/Vectorial/Eventosenvivo.jpg}
+  \caption{Uso de realidad aumentada (RA) en la retransmisión de la Super Bowl.}
+  \label{fig:superbowl-ra}
+\end{figure}
+
+
+    \item \textbf{Noticias:} En una pieza sobre las elecciones en Estados Unidos, el presentador Carlos Franganillo apareció “teletransportado” a escenarios como la Convención de Filadelfia o la Capilla Sixtina usando RA, lo que permitió explicar en directo el proceso de votación con desplazamientos y visualizaciones inmersivas \citep{Panorama2024}.
+    
+ \begin{figure}[htbp]
+  \centering
+  \includegraphics[height=2.5in]{Imagenes/Vectorial/noticias.png}
+  \caption{Aplicación de la realidad aumentada (RA) en informativos televisivos para la visualización de datos y escenarios virtuales.}
+  \label{fig:ra-noticias}
+\end{figure}
+
+
+   
+    \item \textbf{Entretenimiento y Redes Sociales:} Los filtros de Realidad Aumentada (RA) y las pruebas virtuales, como probarse ropa o accesorios, se han convertido en herramientas fundamentales en las principales plataformas sociales como Snapchat, Facebook, Instagram y TikTok. Estas tecnologías han ganado una enorme popularidad, especialmente entre la Generación Z, que busca experiencias digitales cada vez más interactivas y personalizadas. Según Snap Inc., la Generación Z está remodelando la comunicación digital y redefiniendo la experiencia de compra a través de la RA, destacando que un alto porcentaje de usuarios utiliza filtros y lentes AR para probar virtualmente productos antes de tomar una decisión de compra \citep{SnapchatGenZ2022}.
+
+    Este informe señala que:
+    \begin{quote}
+        “Un alto porcentaje de usuarios utiliza filtros y lentes AR para probar virtualmente productos antes de tomar una decisión de compra, lo que aumenta la confianza del consumidor y fomenta la conexión emocional con las marcas, especialmente en audiencias jóvenes” \citep{SnapchatGenZ2022}.
+    \end{quote}
+    
+    Por otro lado, un análisis de \citet{BrandXR2025} resalta la efectividad de estas tecnologías para las marcas, indicando que las experiencias de RA generan un retorno de inversión (ROI) significativo. En dicho estudio se afirma que:
+    \begin{quote}
+        “Un 92\% de los usuarios que interactúan con contenido de RA en plataformas como Snapchat y TikTok realizan alguna acción posterior, como compartir contenido, visitar una página web o concretar una compra” \citep{BrandXR2025}.
+    \end{quote}
+    
+    Además, las transmisiones en vivo en Instagram Live y Facebook Live han incorporado elementos de RA para enriquecer las actuaciones de artistas y la promoción de productos. Estas funciones aportan dinamismo visual a los contenidos y facilitan una mayor interacción en tiempo real, creando un entorno multimedia que fusiona lo digital y lo real, lo que resulta especialmente atractivo para audiencias jóvenes y tecnológicamente conectadas.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[height=2.5in]{Imagenes/Vectorial/rrss.png}
+  \caption{Ejemplo de filtro con realidad aumentada (RA) en la red social Snapchat, utilizado para superponer elementos virtuales sobre el rostro del usuario en tiempo real.}
+  \label{fig:filtro-snapchat}
+\end{figure}
+
+
+    \item \textbf{Esports:} La Realidad Aumentada está transformando la forma en que se transmiten los esports. Plataformas como ESTV integran gráficos AR en transmisiones en vivo, aportando visualizaciones interactivas sobre el presentador y estadísticas del juego que mejoran la narrativa del match \citep{ESTV2022}.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[height=2.5in]{Imagenes/Vectorial/sports.png}
+  \caption{Uso de la realidad aumentada (RA) en retransmisiones en vivo de competiciones de \textit{eSports}, donde se integran elementos virtuales en la escena para mejorar la visualización y el análisis del evento.}
+  \label{fig:ra-esports}
+\end{figure}
+
+
+    \item \textbf{Educación:} La Realidad Aumentada fusiona el entorno físico del estudiante con contenido virtual, ofreciendo experiencias interactivas que mejoran la retención y comprensión de conceptos complejos. Las revisiones sobre tecnologías inmersivas en educación superior constatan que estas herramientas favorecen el aprendizaje activo y mejoran la comprensión de contenidos abstractos \citep{Radianti2020}. En concreto, la RA resulta especialmente valiosa en disciplinas como la medicina, donde permite visualizar modelos anatómicos tridimensionales de forma interactiva, o en ingeniería y ciencias, donde facilita la comprensión espacial de fenómenos difíciles de representar en dos dimensiones. Estas aplicaciones son efectivas desde la educación primaria hasta el nivel universitario.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[height=2.5in]{Imagenes/Vectorial/education.png}
+  \caption{Ejemplo de aplicación de la realidad aumentada (RA) en el ámbito educativo, utilizada para el aprendizaje de anatomía y procedimientos médicos mediante la visualización interactiva de modelos tridimensionales.}
+  \label{fig:ra-medicina}
+\end{figure}
+
+
+La realidad aumentada en eventos en vivo permite superponer información digital sobre el entorno físico, enriqueciendo la experiencia de los asistentes o espectadores sin alterar la realidad subyacente. Entre sus aplicaciones se encuentran la visualización de estadísticas en tiempo real durante retransmisiones deportivas, la incorporación de elementos gráficos en presentaciones de noticias o shows en directo, y la proyección de interfaces interactivas en escenarios o superficies físicas. 
+
+
+El valor de la RA en estos contextos radica en mejorar la comprensión y la experiencia visual del contenido, haciendo más claras las explicaciones o datos mostrados, y en ofrecer elementos gráficos que captan la atención y facilitan la percepción de la información. No se trata de crear interactividad real con la audiencia, sino de enriquecer la visualización de la información de forma coherente y contextualizada.
+
+\section{APIs y SDKs de Realidad Aumentada}
+\label{sec:apis_ra}
+
+Para decidir qué herramienta emplear en este proyecto, se analizaron los principales SDKs y bibliotecas disponibles para implementar RA en tiempo real. A continuación se describe cada uno, destacando los aspectos que resultaron más relevantes para la toma de decisiones.
+
+\subsection{Vuforia}
+\label{subsec:vuforia}
+
+Vuforia \citep{Vuforia} es posiblemente el SDK de RA más extendido en el sector comercial. Desarrollado originalmente por Qualcomm y actualmente mantenido por PTC Inc., su propuesta de valor gira en torno a una integración muy estrecha con el motor Unity: proporciona prefabs, un flujo de trabajo propio dentro del editor y un servicio web (\textit{Target Manager}) que simplifica la creación de bases de datos de marcadores. Esto permite que equipos sin experiencia en visión por computador monten prototipos funcionales con rapidez.
+
+El SDK va más allá del simple reconocimiento de imágenes planas: admite \textit{Model Targets} para rastrear objetos tridimensionales, detección de planos, reconocimiento de texto y soporte para experiencias multiusuario. Sin embargo, esa solidez tiene un coste: fuera del ecosistema Unity, Vuforia resulta incómodo de integrar en aplicaciones nativas de escritorio, y su modelo de licenciamiento limita las funcionalidades disponibles en proyectos comerciales sin suscripción de pago. Para un plugin de OBS escrito en C/C++ sin dependencia de motores gráficos externos, esta orientación tan ligada a Unity lo descartó desde el principio.
+
+\subsection{ARToolKit}
+\label{subsec:artoolkit}
+
+ARToolKit \citep{ARToolkit} es el SDK de RA de mayor antigüedad entre los evaluados y tiene un lugar destacado en la historia de la disciplina: fue uno de los primeros sistemas en formalizar el \textit{tracking} mediante marcadores cuadrados impresos, estableciendo una base conceptual que siguen muchas soluciones posteriores, incluyendo los marcadores ArUco que se usan en este proyecto.
+
+Su principal atractivo es el código abierto con API en C y C++, sin restricciones comerciales, lo que lo hace especialmente común en prototipos académicos y trabajos de investigación. El acceso directo al código fuente permite entender y modificar el pipeline completo de visión, algo difícil con SDKs propietarios. La contrapartida es que no ofrece integración nativa con ningún motor gráfico moderno, la calibración de cámara debe gestionarse manualmente y su ecosistema no ha evolucionado al mismo ritmo que herramientas más recientes. Para un uso en producción que requiera, por ejemplo, detección de superficies o tracking sin marcadores, ARToolKit se queda corto frente a las alternativas actuales.
+
+\subsection{OpenCV}
+\label{subsec:opencv}
+
+OpenCV \citep{OpenCV} ocupa una categoría diferente al resto: no es propiamente un SDK de RA, sino una biblioteca de visión por computador de propósito general. Esta distinción es importante porque implica que no existe un sistema de RA listo para usar, sino un conjunto extensísimo de algoritmos entre los que se encuentran la detección de características, la estimación de pose, el procesamiento de flujos de vídeo y la calibración de cámara, sobre los que se puede construir una solución a medida.
+
+Eso es precisamente lo que lo hace atractivo para este proyecto. Su licencia Apache 2.0, su disponibilidad en Windows, Linux y macOS, la compatibilidad con C y C++, y la existencia de un módulo específico para marcadores ArUco (integrado en \texttt{opencv\_aruco}) hicieron de OpenCV la opción más natural para implementar el pipeline de detección sin depender de un motor externo. El coste de esa flexibilidad es que toda la capa de renderizado, gestión de activos y superposición de contenido sintético debe construirse desde cero, algo que en este proyecto se resolvió apoyándose en la API gráfica de OBS Studio y en Assimp para la carga de modelos.
+
+\subsection{SDKs de NVIDIA}
+\label{subsec:nvidia_sdk}
+
+NVIDIA ofrece, a través de su suite Maxine \citep{SDK_NVIDIA}, un conjunto de herramientas de procesamiento visual aceleradas por GPU. El enfoque es radicalmente distinto al de las demás opciones: en lugar de tracking basado en marcadores o geometría clásica, emplea modelos de aprendizaje profundo ejecutados sobre los \textit{Tensor Cores} de las GPUs RTX para tareas como seguimiento facial de alta precisión, detección de puntos clave, segmentación de vídeo en tiempo real o reconstrucción facial 3D. Los resultados en estas tareas específicas son difícilmente igualables por alternativas más tradicionales.
+
+No obstante, esta potencia tiene un requisito ineludible: hardware NVIDIA compatible. El SDK no funciona en sistemas con GPU de otro fabricante, y el soporte en Linux es notablemente más limitado que en Windows. Además, su licencia de distribución introduce restricciones que complican el uso en proyectos de código abierto. Para el presente trabajo, desarrollado con OBS Studio (que se ejecuta en entornos heterogéneos) y sin un foco en análisis facial, esta dependencia de hardware específico lo descartó como opción viable.
+
+\subsection{DeepAR}
+\label{subsec:deepar}
+
+DeepAR \citep{DeepAR} se diferencia del resto por su especialización: está diseñado específicamente para generar efectos visuales sobre rostros en tiempo real. Ofrece funcionalidades como maquillaje virtual, filtros animados, embellecimiento automático y sustitución de fondo, todo ello con una biblioteca de \textit{assets} predefinidos y una API que reduce considerablemente el trabajo de integración. Es la opción más inmediata para quien necesite enriquecer vídeo de personas sin construir un pipeline de visión propio.
+
+El problema es que esa especialización también es su límite. DeepAR no está pensado para seguimiento de objetos arbitrarios, detección de marcadores en una escena o RA de propósito general: su ámbito es el rostro humano. A esto se añade que funciona bajo un modelo de licenciamiento comercial, con un tier gratuito orientado a pruebas pero con restricciones para uso en producción. Ambos factores, el foco demasiado estrecho para las necesidades del proyecto y los costes asociados, llevaron a descartarlo.
+
+\subsection{Comparativa de todas las herramientas}
+\begin{table}[H]
+\centering
+\small % Fuente más pequeña
+\begin{tabularx}{\textwidth}{X X X} % X hace que las columnas se ajusten al ancho
+\toprule
+\textbf{SDK/Biblioteca} & \textbf{Características} & \textbf{Plataformas} \\
+\midrule
+Vuforia  & Seguimiento de imágenes y objetos 3D & Multiplataforma \\
+ARToolkit & Seguimiento basado en marcadores & Multiplataforma \\
+OpenCV  & Detección y seguimiento de objetos & Multiplataforma \\
+NVIDIA  & Seguimiento facial avanzado & Windows \\
+DeepAR  & Filtros faciales 3D & Web, Android, iOS, Desktop \\
+\bottomrule
+\end{tabularx}
+\caption{Comparativa de SDKs y bibliotecas de RA}
+\label{tab:sampleTable}
+\end{table}
+\section{OBS Studio}
+\label{sec:obs_studio}
+
+OBS Studio \cite{OBS} es un software libre y de código abierto para la grabación de video y la transmisión en vivo. Su popularidad se debe a su versatilidad, facilidad de uso y arquitectura modular, que permite integrar múltiples fuentes de audio y video, realizar transiciones dinámicas entre escenas y aplicar filtros y efectos en tiempo real. Funciona como una mesa de mezclas audiovisual digital, combinando fuentes de diversa naturaleza (pantalla, aplicaciones, cámaras, archivos multimedia) en escenas que se emiten en directo. Su arquitectura modular facilita la extensión mediante plugins, permitiendo añadir funcionalidades avanzadas sin modificar el núcleo del software.
+
+\subsection{OBS Studio como usuario}
+\label{subsec:obs_usuario}
+
+Para entender el funcionamiento de OBS Studio desde la perspectiva del usuario, es útil analizar sus componentes principales y cómo interactúan en una retransmisión en directo:
+
+\begin{itemize}
+    \item \textbf{Escenas:} Son la unidad principal de organización en OBS. Cada escena combina múltiples fuentes de audio y video en una composición completa que puede emitirse en directo. Se pueden crear escenas ilimitadas y cambiar entre ellas mediante transiciones predefinidas o personalizadas.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[height=1.5in]{Imagenes/Vectorial/escenas.png}
+  \caption{Vista de la pestaña \textit{Escenas} en OBS Studio.}
+  \label{fig:obs-escenas}
+\end{figure}
+
+    \item \textbf{Fuentes:} Son los elementos individuales que aportan contenido a una escena. Entre las categorías más comunes se incluyen:
+    \begin{itemize}
+        \item captura de pantalla, ventana o juego
+        \item dispositivo de captura de video (cámaras web o tarjetas de captura)
+        \item entrada de audio (micrófonos o línea)
+        \item archivos multimedia (video, audio, imágenes)
+        \item navegador (contenido web o elementos HTML/CSS/JavaScript)
+        \item texto (estático o dinámico)
+    \end{itemize}
+    \begin{center}
+        \includegraphics[height=1.5in]{Imagenes/Vectorial/fuentes.png}
+        \captionof{figure}{Vista de la pestaña \textit{Fuentes} en OBS Studio.}
+    \end{center}
+
+    \item \textbf{Filtros y efectos:} Permiten optimizar la calidad visual y auditiva de cada fuente. Por ejemplo:
+    \begin{itemize}
+        \item Filtros de vídeo: croma, corrección de color, recorte, desenfoque, nitidez.
+        \item Filtros de audio: reducción de ruido, compresor, ecualización.
+    \end{itemize}
+    \begin{center}
+        \includegraphics[height=2.5in]{Imagenes/Vectorial/filtros.png}
+        \captionof{figure}{Interfaz de gestión de filtros en OBS Studio.}
+    \end{center}
+
+    \item \textbf{Transiciones:} Animaciones que suavizan el paso de una escena a otra, evitando cortes abruptos. OBS incluye transiciones predeterminadas y permite añadir más mediante plugins.
+    \begin{center}
+        \includegraphics[height=1.5in]{Imagenes/Vectorial/transiciones.png}
+        \captionof{figure}{Ejemplo de configuración de transiciones en OBS Studio.}
+    \end{center}
+
+    \item \textbf{Mezclador de audio:} Permite ajustar el volumen de cada fuente de audio, aplicar filtros y sincronizar el audio con el vídeo.
+    \begin{center}
+        \includegraphics[height=1.5in]{Imagenes/Vectorial/audio.png}
+        \captionof{figure}{Panel del mezclador de audio en OBS Studio.}
+    \end{center}
+
+
+\end{itemize}
+
+\subsection{Desarrollo de plugins }
+ Desde el punto de vista del usuario, un plugin es simplemente una biblioteca que OBS carga al inicio; desde el punto de vista técnico, es una extensión que se enlaza a la API pública de OBS y puede declarar nuevas fuentes, filtros y comportamientos gráficos.
+ 
+\subsubsection*{Anatomía de un plugin}
+
+Desde la perspectiva técnica, un plugin para OBS Studio es un paquete de herramientas con responsabilidades  diferenciadas. Es relevante  describir los tipos de archivos que suelen componerlo y la función que desempeña cada uno para un futuro desarrollo:
+
+\begin{itemize}
+  \item \textbf{Binario principal:} la biblioteca compilada (\texttt{.dll}, \texttt{.so} o \texttt{.dylib}) que contiene el código nativo del plugin. Este artefacto exporta las funciones que OBS invoca para registrar y gestionar las fuentes o filtros que el plugin proporciona.
+  \item \textbf{Manifest / descriptor:} fichero que documenta metadatos del plugin (nombre, versión, autor, dependencias opcionales, etc.). Aunque OBS no exige un manifiesto complejo, un descriptor estructurado facilita la instalación, diagnóstico y mantenimiento.
+  \item \textbf{Recursos gráficos y auxiliares:} shaders, texturas, modelos, iconos y otros activos necesarios en tiempo de ejecución. Estos archivos deben organizarse de forma coherente para permitir su localización y posibles traducciones.
+  \item \textbf{Shaders / efectos:} programas de GPU (vertex/fragment/techniques) que el plugin utilizará para procesar y renderizar geometría o imágenes. Separarlos como recursos facilita su edición y reutilización sin recompilar el binario.
+  \item \textbf{Archivos de configuración:} ficheros JSON, INI o similares que almacenan parámetros por defecto, rutas relativas o presets. Permiten personalizar el comportamiento del plugin sin tocar el binario.
+  \item \textbf{Scripts y utilidades auxiliares:} en algunos casos se incluyen scripts de ayuda (por ejemplo para pruebas, generación de assets o herramientas de conversión). Pueden estar escritos en Lua, Python o como simples scripts de shell/batch.
+  \item \textbf{Documentación y licencias:} README, changelog y archivos de licencia que ayudan a la distribución y uso responsable del plugin.
+\end{itemize}
+
+
+
+\subsubsection*{Despliegue y rutas en OBS Studio}
+
+El despliegue define dónde coloca el usuario u OBS los archivos del plugin y cómo OBS los detecta al iniciar. Las convenciones siguientes son las que se recomiendan en el ecosistema OBS y deben aparecer en el estado del arte porque afectan la distribución y pruebas:
+
+\begin{itemize}
+  \item \textbf{Carpeta de binarios:} los binarios compilados se colocan en \path{obs-plugins/arquitectura} dentro de la instalación de OBS (por ejemplo \path{obs-plugins/64bit/}). OBS explora estas rutas al arrancar y carga automáticamente las bibliotecas válidas.
+  \item \textbf{Carpeta de datos:} los recursos adicionales deben residir en \path{data/obs-plugins/<nombre>/}. Aquí se ubican shaders, textos de localización, iconos y cualquier archivo que el plugin cargue en tiempo de ejecución mediante rutas relativas.
+
+
+  \item \textbf{Rutas de usuario para desarrollo:} durante el desarrollo es habitual desplegar versiones en carpetas de usuario (sin privilegios de administrador) que OBS también revisa. Esto facilita pruebas iterativas sin afectar la instalación global.
+  \item \textbf{Carga automática y reinicio:} OBS carga plugins al inicio; por tanto, instalar, actualizar o eliminar un plugin normalmente requiere reiniciar la aplicación para que los cambios tomen efecto. Este comportamiento condiciona procedimientos de prueba y despliegue.
+  \item \textbf{Permisos y empaquetado:} al distribuirse en entornos multiusuario o en máquinas con restricciones, hay que considerar permisos de fichero y firmas/embalajes adecuados para cada plataforma.
+ 
+\end{itemize}
+
+Estas convenciones de despliegue no sólo garantizan que OBS detecte el plugin, sino que también facilitan la reproducibilidad entre desarrolladores, la automatización de pruebas y la creación de paquetes de distribución coherentes. Es importante destacar estas rutas y prácticas para que quede claro cómo se integra un plugin con la estructura esperada por OBS, sin entrar en instrucciones concretas de compilación o scripts (que pueden ir en un anexo técnico).
+
+\subsubsection*{Compilación y flujo de trabajo}
+En la práctica los desarrolladores usan CMake como sistema de configuración y generación de proyectos para producir soluciones/Makefiles compatibles con los entornos de desarrollo de cada plataforma. El flujo típico consiste en configurar el proyecto (generar la solución), compilar en modo \emph{Debug} o \emph{Release} y copiar los artefactos a las carpetas de prueba de OBS. Estas convenciones hacen que el proceso sea reproducible y portátil entre Windows, Linux y macOS sin requerir cambios en el código base de OBS.
+
+\subsubsection*{Decisiones de diseño: C vs C++ y tipos de componente}
+OBS expone una API en C; eso favorece la compatibilidad si se escribe el plugin en C puro. No obstante, muchos desarrollos modernos emplean C++ para beneficiarse de abstracciones (RAII, punteros inteligentes, encapsulación), siempre que se respeten las reglas de ABI (por ejemplo declarar funciones externas con \texttt{extern "C"} cuando procede). Conceptualmente, un plugin en OBS puede exponer dos tipos de componentes principales: \emph{fuentes} (generan frames) y \emph{filtros} (procesan frames existentes). La elección entre ambos tiene implicaciones arquitectónicas importantes (por ejemplo, el acceso directo a los píxeles de la cámara es más natural desde un filtro) y condiciona el diseño para aplicaciones de visión por computador o realidad aumentada.
+
+\subsection{Modelos 3D}
+
+La integración de modelos 3D en una transmisión se puede abordar como un conjunto de bloques conceptuales clave:
+
+\begin{enumerate}
+    \item \textbf{Carga y preparación de activos:} 
+    Incluye la obtención y organización de la información del modelo, como geometría, materiales y texturas. La variedad de formatos 3D hace necesario usar librerías externas que proporcionen estructuras uniformes y accesibles para el plugin. En este proyecto se utiliza \textbf{Assimp (Open Asset Import Library)} \cite{assimp_github}, que abstrae la complejidad de los diferentes formatos 3D y unifica la información en una estructura común, la \texttt{aiScene}. 
+
+    Assimp permite trabajar con:
+
+    \begin{itemize}
+        \item \textbf{Mallas (\texttt{aiMesh}):} contienen vértices, normales, tangentes y coordenadas UV.
+        \item \textbf{Materiales (\texttt{aiMaterial}):} describen propiedades visuales como color, transparencia y rutas a texturas.
+        \item \textbf{Texturas (\texttt{aiTexture}):} incrustadas o externas.
+        \item \textbf{Nodos (\texttt{aiNode}):} organizan la jerarquía de objetos y transformaciones (posición, rotación, escala) de cada parte del modelo.
+    \end{itemize}
+
+    Esta estructura permite procesar modelos de cualquier formato de manera uniforme. Una vez cargada la escena con \texttt{aiImportFile}, se extraen las mallas y se crean los buffers de vértices e índices en la GPU de OBS, aplicando texturas y calculando centros y offsets de rotación según sea necesario.
+
+    \item \textbf{Renderizado en la GPU:} 
+    Consiste en transformar los datos del modelo en píxeles visibles dentro del pipeline gráfico de la aplicación anfitriona. OBS Studio facilita algunas operaciones de renderizado 3D mediante su API, aunque no existen implementaciones estándar para incorporar modelos 3D completos directamente. En este proyecto, los modelos se renderizan con shaders base de OBS, aplicando transformaciones y texturas extraídas de la escena de Assimp.
+
+    \item \textbf{Conceptos de informática gráfica necesarios:} 
+    Para comprender las implicaciones técnicas del renderizado 3D, se deben considerar los siguientes aspectos:
+
+    \begin{enumerate}
+        \item \textbf{Mallas, vértices e índices:} Una malla 3D se representa mediante vértices y caras indexadas mediante un \emph{index buffer}, optimizando memoria y caché de GPU.
+        \item \textbf{Atributos por vértice: normales, tangentes y UVs:} Cada vértice puede incluir normales (iluminación), tangentes/bitangentes (mapas normales, PBR) y coordenadas UV para texturizado.
+        \item \textbf{Transformaciones y espacios de coordenadas:} Se aplican matrices de modelo, vista y proyección para posicionar correctamente el modelo; la coherencia de sistemas de coordenadas y ejes es crítica.
+        \item \textbf{Shaders y parámetros:} Vertex y fragment shaders procesan vértices y píxeles; OBS permite interacción con ellos para aplicar efectos y texturizado.
+        \item \textbf{Depth testing, culling y orden de dibujo:} Z-buffer y backface culling gestionan oclusión y eliminan dibujados innecesarios. OBS compone fuentes individualmente, por lo que la profundidad global requiere planificación.
+        \item \textbf{Performance:} La transferencia frecuente CPU->GPU y cambios de estado afectan la latencia; se recomienda minimizar uploads, mantener buffers persistentes y reducir duplicaciones de cálculo.
+    \end{enumerate}
+\end{enumerate}
+
+
+\subsubsection*{Renderizado en OBS}
+OBS proporciona primitivas gráficas y efectos (shaders) accesibles a través de su API para plugins, permitiendo crear vertex buffers, index buffers y texturas y ejecutar técnicas de dibujo. Esto significa que, en teoría, es posible renderizar modelos 3D nativos dentro de OBS sin recurrir a una aplicación externa. En la práctica, sin embargo, la integración directa del renderizado 3D completo en plugins es relativamente poco habitual: la vía más frecuente en la industria es que una aplicación externa (motor gráfico, Unity, Unreal, app nativa) haga el pipeline de RA y entregue su resultado a OBS como una fuente (cámara virtual, Window/Game Capture). Aunque la API de OBS facilita operaciones gráficas de bajo nivel, existen retos adicionales (coordinación con el pipeline de composición de fuentes de OBS, gestión de profundidad entre fuentes, sincronización y latencia) que explican por qué el renderizado 3D nativo no está extendido.
+
+\subsubsection*{Necesidad de una librería de importación}
+Dado lo anterior, se marcan dos decisiones claras para quien la   integración nativa de modelos 3D en OBS: elegir una librería de carga de modelos (por ejemplo Assimp) para obtener geometría, normales, tangentes, UVs y materiales; y utilizar las primitivas gráficas que OBS expone para subir buffers y texturas a la GPU. La elección de la librería de importación condiciona la flexibilidad frente a formatos y la complejidad de soportar materiales y animaciones.
+
+
+
+
+\section{Realidad Aumentada en OBS Studio}
+\label{sec:integracion_obs}
+
+La incorporación de Realidad Aumentada (RA) en una retransmisión con OBS Studio se puede abordar mediante distintos enfoques, cada uno con implicaciones técnicas y de rendimiento diferentes. Fundamentalmente, existen dos estrategias principales:
+
+\subsection{Aplicación externa}
+
+En este enfoque, la lógica de RA se implementa fuera de OBS, en una aplicación independiente. Esta aplicación se encarga de:
+
+\begin{itemize}
+    \item Capturar la cámara y procesar los frames.
+    \item Ejecutar el pipeline de RA, que puede incluir detección de marcadores, estimación de poses, segmentación de objetos y renderizado de modelos 3D.
+    \item Emitir el resultado como una ventana, un flujo de vídeo o una cámara virtual que OBS puede capturar.
+\end{itemize}
+
+OBS puede integrar esta salida mediante mecanismos estándar como \textit{Window Capture}, \textit{Game Capture} o captura de cámara virtual, tratándola como cualquier otra fuente de entrada de vídeo.
+
+\paragraph{Ventajas}
+
+\begin{itemize}
+    \item Permite desarrollar, probar y depurar la aplicación de RA de manera independiente, sin necesidad de modificar OBS.
+    \item Evita interferir con la instalación de OBS, manteniendo la estabilidad del entorno principal.
+    \item Facilita el uso de herramientas propias de depuración y análisis de rendimiento, por ejemplo las proporcionadas por Unity o frameworks específicos de RA.
+\end{itemize}
+
+\paragraph{Limitaciones}
+
+\begin{itemize}
+    \item Puede generar latencia adicional debido al doble procesamiento de imagen o a la emulación de cámara virtual.
+    \item Incrementa el consumo de recursos si se ejecutan simultáneamente varias aplicaciones externas.
+    \item Requiere sincronización precisa con OBS para garantizar que los frames procesados se integren correctamente en la retransmisión.
+\end{itemize}
+
+\subsection{Integración nativa mediante plugin}
+
+La otra estrategia consiste en desarrollar un \textbf{plugin nativo} para OBS Studio, cargado directamente por la aplicación anfitriona. Este enfoque permite que la RA se ejecute dentro del mismo proceso que OBS, ofreciendo acceso directo a las cámaras y a los frames del pipeline de vídeo.
+
+Un plugin nativo puede:
+
+\begin{itemize}
+    \item Interactuar con la API de OBS para capturar frames en tiempo real.
+    \item Ejecutar el pipeline de RA sin necesidad de aplicaciones intermedias.
+    \item Emitir o modificar frames que se integran directamente en la composición final de la escena.
+\end{itemize}
+
+\paragraph{Consideraciones de implementación}
+
+\begin{itemize}
+    \item Los archivos de un plugin típico incluyen código fuente (\texttt{.c/.cpp}), shaders, texturas, binarios compilados (\texttt{.dll} en Windows, \texttt{.so} en Linux/macOS) y posibles archivos de configuración.
+    \item La instalación se realiza en la carpeta de plugins de OBS (\path{C:\Program Files\obs-studio\obs-plugins\} para instalación global en Windows).
+    \item Al ejecutar dentro de OBS, el plugin comparte recursos con la aplicación principal, reduciendo la latencia y optimizando el uso de memoria y GPU.
+\end{itemize}
+
+\subsection{Flujo conceptual de la Realidad Aumentada}
+
+Independientemente del enfoque elegido, un sistema de RA en transmisión tiene dos tareas fundamentales:
+
+\begin{enumerate}
+    \item \textbf{Detección y estimación:} procesar los píxeles de la cámara para obtener información útil, como la posición y orientación de marcadores, la pose de la cámara o la segmentación de objetos.
+    \item \textbf{Renderizado sintético:} superponer gráficos, modelos 3D u otros elementos virtuales sobre la imagen de la cámara, coherentes con la geometría y perspectiva real.
+\end{enumerate}
+
+El enfoque mediante plugin nativo proporciona ventajas clave:
+
+\begin{itemize}
+    \item Acceso directo a los frames de cámara y del pipeline de OBS, evitando duplicación de datos y latencias innecesarias.
+    \item Procesamiento de la información en el punto óptimo del flujo de vídeo, antes de la composición final, garantizando la precisión de la superposición de elementos virtuales.
+    \item Integración eficiente y coherente dentro del ecosistema de OBS, facilitando la gestión de múltiples fuentes y efectos sin comprometer el rendimiento.
+\end{itemize}
+
+En consecuencia, aunque existen varias estrategias para incorporar RA, la integración nativa mediante plugin se presenta como la opción más sólida y eficiente desde un punto de vista técnico y arquitectónico, ya que permite un control total del flujo de datos, un rendimiento optimizado y una interacción directa con la infraestructura de OBS Studio.

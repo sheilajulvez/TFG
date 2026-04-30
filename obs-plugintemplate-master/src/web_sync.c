@@ -31,7 +31,6 @@ struct web_sync {
 
 	bool has_new_result;
 
-	/* Resultados DOMjudge */
 	bool has_contest_result;
 	double result_elapsed_seconds;
 	double result_remaining_seconds;
@@ -41,7 +40,6 @@ struct web_sync {
 	scoreboard_team_t team_names[100];
 	int cached_team_count;
 
-	/* Autenticación */
 	char *username;
 	char *password;
 
@@ -86,7 +84,6 @@ static size_t header_callback(char *buffer, size_t size, size_t nitems,
 	header_date_t *hdr = (header_date_t *)userdata;
 	size_t total = size * nitems;
 
-	/* Buscar "Date:" al inicio de la línea  */
 	if (total > 6 && (_strnicmp(buffer, "Date:", 5) == 0)) {
 		const char *p = buffer + 5;
 		while (*p == ' ' || *p == '\t')
@@ -105,6 +102,44 @@ static size_t header_callback(char *buffer, size_t size, size_t nitems,
 	return total;
 }
 
+static bool fetch_team_name_by_url(CURL *curl, memory_buffer_t *buf,
+				   const char *team_url, char *out_name,
+				   size_t out_name_size)
+{
+	if (!curl || !buf || !buf->data || !team_url || !team_url[0] ||
+	    !out_name || out_name_size == 0)
+		return false;
+
+	out_name[0] = '\0';
+	buf->size = 0;
+	buf->data[0] = '\0';
+
+	curl_easy_setopt(curl, CURLOPT_URL, team_url);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, buf);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
+	CURLcode res = curl_easy_perform(curl);
+	long http_code = 0;
+	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+	if (res != CURLE_OK || http_code != 200)
+		return false;
+
+	if (parse_json_string(buf->data, "display_name", out_name,
+			      out_name_size) &&
+	    out_name[0]) {
+		return true;
+	}
+	if (parse_json_string(buf->data, "name", out_name, out_name_size) &&
+	    out_name[0]) {
+		return true;
+	}
+	return false;
+}
+
 /**
  * Parsea el JSON del scoreboard de DOMjudge.
  * Según la API: GET /api/v4/contests/{cid}/scoreboard
@@ -114,12 +149,10 @@ static size_t header_callback(char *buffer, size_t size, size_t nitems,
 static int parse_scoreboard_json(const char *json,
 				 scoreboard_team_t *teams, int max_teams)
 {
-	/* Buscar el array "rows" */
 	const char *rows_key = strstr(json, "\"rows\"");
 	if (!rows_key)
 		return 0;
 
-	/* Buscar el inicio del array '[' */
 	const char *arr_start = strchr(rows_key, '[');
 	if (!arr_start)
 		return 0;
@@ -136,7 +169,6 @@ static int parse_scoreboard_json(const char *json,
 		if (!obj_end)
 			break;
 
-		/* Copiar el objeto a un buffer temporal para parseo seguro */
 		size_t obj_len = (size_t)(obj_end - obj + 1);
 		if (obj_len > 2048)
 			obj_len = 2048;
@@ -144,15 +176,21 @@ static int parse_scoreboard_json(const char *json,
 		memcpy(temp, obj, obj_len);
 		temp[obj_len] = '\0';
 
-		/* Extraer campos según la API DOMjudge */
 		uint32_t rank_val = 0;
 		char team_id_str[64] = {0};
+		uint32_t team_id_num = 0;
 		uint32_t num_solved = 0;
 		uint32_t total_time_val = 0;
 
 		parse_json_int(temp, "rank", &rank_val);
-		parse_json_string(temp, "team_id", team_id_str,
-				  sizeof(team_id_str));
+		if (!parse_json_string(temp, "team_id", team_id_str,
+				       sizeof(team_id_str)) ||
+		    !team_id_str[0]) {
+			if (parse_json_int(temp, "team_id", &team_id_num)) {
+				snprintf(team_id_str, sizeof(team_id_str), "%u",
+					 team_id_num);
+			}
+		}
 
 		/* score es un objeto anidado: "score": { "num_solved": X, "total_time": Y } */
 		parse_json_int_nested(temp, "score", "num_solved",
@@ -177,7 +215,6 @@ static int parse_scoreboard_json(const char *json,
 		count++;
 		p = obj_end + 1;
 
-		/* Si encontramos ']' estamos fuera del array */
 		while (*p && (*p == ' ' || *p == '\t' || *p == '\n' ||
 			      *p == '\r' || *p == ','))
 			p++;
@@ -208,13 +245,17 @@ static int parse_teams_json(const char *json, scoreboard_team_t *teams, int max_
 		memcpy(temp, obj, obj_len);
 		temp[obj_len] = '\0';
 		char tid[64] = {0};
+		uint32_t tid_num = 0;
 		char name[128] = {0};
-		parse_json_string(temp, "id", tid, sizeof(tid));
+		if (!parse_json_string(temp, "id", tid, sizeof(tid)) || !tid[0]) {
+			if (parse_json_int(temp, "id", &tid_num)) {
+				snprintf(tid, sizeof(tid), "%u", tid_num);
+			}
+		}
 		if (!parse_json_string(temp, "display_name", name, sizeof(name)) || !name[0]) {
 			parse_json_string(temp, "name", name, sizeof(name));
 		}
 		if (tid[0] && name[0]) {
-			/* Copia segura: garantiza terminador NUL para evitar basura en pantalla/logs. */
 			strncpy(teams[count].team_id, tid, sizeof(teams[count].team_id) - 1);
 			teams[count].team_id[sizeof(teams[count].team_id) - 1] = '\0';
 
@@ -243,7 +284,6 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	bool https_supported = false;
 	const char *const *proto = NULL;
 	
-	/* Variables de bucle y estado */
 	float interval;
 	char contest_url[2048];
 	char scoreboard_url[2048];
@@ -255,13 +295,11 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	long http_code;
 	header_date_t hdr;
 	
-	/* Variables para parseo de contest */
 	double server_time, start_epoch, end_epoch, elapsed, remaining, total_dur;
 	char start_time_str[128];
 	char end_time_str[128];
 	bool got_start, got_end;
 	
-	/* Variables para scoreboard */
 	scoreboard_team_t teams[MAX_SCOREBOARD_TEAMS];
 	int team_count;
 	int tc;
@@ -406,10 +444,58 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 						for (int j = 0; j < sync->cached_team_count; j++) {
 							if (strcmp(teams[i].team_id, sync->team_names[j].team_id) == 0) {
 								strncpy(teams[i].team_name, sync->team_names[j].team_name, sizeof(teams[i].team_name)-1);
+								teams[i].team_name[sizeof(teams[i].team_name) - 1] = '\0';
 								break;
 							}
 						}
 					}
+					LeaveCriticalSection(&sync->mutex);
+
+					char team_url[2048];
+					char fetched_name[128];
+					for (int i = 0; i < team_count; i++) {
+						if (strncmp(teams[i].team_name, "Team ", 5) != 0)
+							continue;
+						if (!contest_url[0] || !teams[i].team_id[0])
+							continue;
+
+						snprintf(team_url, sizeof(team_url), "%s/teams/%s",
+							 contest_url, teams[i].team_id);
+						if (fetch_team_name_by_url(curl, &buf, team_url,
+									 fetched_name, sizeof(fetched_name))) {
+							strncpy(teams[i].team_name, fetched_name,
+								sizeof(teams[i].team_name) - 1);
+							teams[i].team_name[sizeof(teams[i].team_name) - 1] = '\0';
+
+							EnterCriticalSection(&sync->mutex);
+							bool found = false;
+							for (int j = 0; j < sync->cached_team_count; j++) {
+								if (strcmp(sync->team_names[j].team_id,
+									   teams[i].team_id) == 0) {
+									strncpy(sync->team_names[j].team_name,
+										teams[i].team_name,
+										sizeof(sync->team_names[j].team_name) - 1);
+									sync->team_names[j].team_name[sizeof(sync->team_names[j].team_name) - 1] = '\0';
+									found = true;
+									break;
+								}
+							}
+							if (!found && sync->cached_team_count < 100) {
+								strncpy(sync->team_names[sync->cached_team_count].team_id,
+									teams[i].team_id,
+									sizeof(sync->team_names[sync->cached_team_count].team_id) - 1);
+								sync->team_names[sync->cached_team_count].team_id[sizeof(sync->team_names[sync->cached_team_count].team_id) - 1] = '\0';
+								strncpy(sync->team_names[sync->cached_team_count].team_name,
+									teams[i].team_name,
+									sizeof(sync->team_names[sync->cached_team_count].team_name) - 1);
+								sync->team_names[sync->cached_team_count].team_name[sizeof(sync->team_names[sync->cached_team_count].team_name) - 1] = '\0';
+								sync->cached_team_count++;
+							}
+							LeaveCriticalSection(&sync->mutex);
+						}
+					}
+
+					EnterCriticalSection(&sync->mutex);
 					sync->has_scoreboard_result = true;
 					sync->result_team_count = team_count;
 					memcpy(sync->result_teams, teams, sizeof(scoreboard_team_t) * team_count);
@@ -628,7 +714,6 @@ bool web_sync_test_connection(const char *base_url, const char *contest_id,
 	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
 
 	if (res == CURLE_OK) {
-		/* Verificar que el JSON contiene el campo "id" del contest */
 		char id_str[64] = {0};
 		ok = parse_json_string(buf.data, "id", id_str, sizeof(id_str));
 		if (ok) {

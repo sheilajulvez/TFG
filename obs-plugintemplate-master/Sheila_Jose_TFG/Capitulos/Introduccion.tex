@@ -1,0 +1,79 @@
+\chapter{Introducción}
+\label{cap:introduccion}
+
+\chapterquote{Documenta el código}{Pedro Pablo}
+
+% Según la normativa  para Trabajos de Fin de Grado\footnote{\url{https://informatica.ucm.es/file/normativatfg-2021-2022?ver} (ver versión actualizada para cada curso académico)}, la memoria incluirá una portada normalizada con la siguiente información: título en castellano, título en inglés, autores, profesor director, codirector si es el caso, curso
+% académico e identificación de la asignatura (Trabajo de fin de grado del Grado en -
+% nombre del grado correspondiente-, Facultad de Informática, Universidad Complutense de Madrid). Los datos referentes al título y director (y codirector en su caso) deben corresponder a los publicados en la página web de TFG.
+
+% La memoria debe incluir la descripción detallada de la propuesta hardware/software realizada y ha de contener:
+% \begin{enumerate}
+% \renewcommand{\theenumi}{\alph{enumi}}
+% 	\item un índice,
+% 	\item un resumen y una lista de no más de 10 palabras clave para su búsqueda bibliográfica, ambos en castellano e inglés,
+% 	\item una introducción con los antecedentes, objetivos y plan de trabajo,
+% 	\item resultados y discusión crítica y razonada de los mismos, con sus conclusiones,
+% 	\item bibliografía.
+% \end{enumerate}
+% Para facilitar la escritura de la memoria siguiendo esta estructura, el estudiante podrá usar las plantillas en LaTeX o Word preparadas al efecto y publicadas en la página web de TFG.
+
+% La memoria constará de un mínimo de 25 páginas para los proyectos realizados por un único estudiante, y de al menos 5 páginas más por cada integrante adicional del grupo. En este número de páginas solo se tiene en cuenta el contenido correspondiente a los apartados c y d del punto anterior.
+
+% La memoria puede estar escrita en castellano o inglés, pero en el primer caso la introducción y las conclusiones deben aparecer también en inglés. Las memorias de los TFG matriculados en el grupo I deberán estar escritas íntegramente en inglés, excepto por lo especificado en los puntos 1 y 2 anteriores (título, resumen y lista de palabras clave).
+
+% En caso de trabajos no unipersonales, cada participante indicará en la memoria su contribución al proyecto con una extensión de al menos dos páginas por cada uno de los participantes.
+
+% Todo el material no original, ya sea texto o figuras, deberá ser convenientemente citado y referenciado. En el caso de material complementario se deben respetar las licencias y \emph{copyrights} asociados al software y hardware que se emplee. En caso contrario no se autorizará la defensa, sin menoscabo de otras acciones que correspondan.
+
+Esta memoria corresponde al estudio, diseño e implementación de una solución tecnológica que permite utilizar \textbf{realidad aumentada (RA)} mediante detección de marcadores visuales en retransmisiones en directo, tomando como base la plataforma de código abierto \textbf{OBS Studio}. El proyecto se enmarca en un contexto en el que el mundo audiovisual evoluciona rápidamente, combinando la creación de contenido en tiempo real con tecnologías inmersivas que transforman la forma en la que se comunican y consumen contenidos digitales.
+
+El punto de partida de este trabajo está en cómo la RA ha pasado de ser una curiosidad experimental a convertirse en una herramienta habitual dentro de la producción audiovisual. Un ejemplo  es el dato de \textbf{\cite{GrandViewAR}}, que en 2023 valoró el mercado global de la RA en unos \textbf{70,2 mil millones de dólares}. Hoy en día ya no sorprende ver cómo informativos, retransmisiones deportivas o programas de entretenimiento incluyen gráficos en 3D, animaciones y elementos interactivos que se superponen en el escenario real, creando una experiencia mucho más visual y atractiva para el espectador.
+
+Con este proyecto se quiere probar hasta qué punto es posible llevar estas ideas a un entorno concreto: la \textbf{retransmisión de concursos de programación en streaming}. Aunque todavía no es muy común aplicar la RA en este tipo de contenidos, esta tecnología tiene un gran potencial para hacer las emisiones más claras, dinámicas y entretenidas, además de contribuir a poner en valor este tipo de competiciones técnicas.
+
+
+\section{Motivación}
+
+En la actualidad, las retransmisiones profesionales en televisión, especialmente en los informativos que se emiten en directo, utilizan \textbf{realidad aumentada (RA)} como recurso para reforzar y clarificar la información. Esta tendencia evidencia el potencial de la RA como herramienta de comunicación visual en tiempo real, al aportar claridad, dinamismo y un mayor atractivo a los contenidos.
+
+En el ámbito del \textbf{streaming}, una de las herramientas más extendidas es \textbf{OBS Studio}, debido a su carácter de software libre y a la amplia comunidad que lo respalda. Sin embargo, la plataforma no ofrece soporte nativo para integrar efectos avanzados de RA, lo que limita su uso en entornos donde sería deseable disponer de este tipo de recursos.
+
+La motivación de este proyecto surge precisamente de esta carencia: explorar la posibilidad de dotar a OBS Studio de capacidades de RA que permitan enriquecer las retransmisiones en directo. Con ello se busca sentar una base tecnológica que pueda abrir nuevas oportunidades de innovación en la creación de contenidos digitales interactivos y en tiempo real.
+
+\section{Objetivos}
+
+El objetivo principal de este proyecto es incorporar funcionalidades de \textbf{realidad aumentada (RA)} en tiempo real dentro de \textbf{OBS Studio}. Para ello se busca desarrollar un filtro nativo de OBS Studio capaz de integrar contenido sintético generado mediante técnicas de RA directamente en el flujo de vídeo que se retransmite.
+
+Este planteamiento implica resolver retos técnicos como la detección y modelado del espacio físico, el seguimiento de cámaras u objetos en movimiento y el renderizado de elementos 3D en tiempo real, todo ello manteniendo la calidad y fluidez de la transmisión.
+
+De manera complementaria, se contempla la posibilidad de que los elementos de RA puedan modificarse o configurarse en directo, de modo que el contenido proyectado pueda adaptarse dinámicamente a las necesidades de la retransmisión.
+
+Como especialización concreta de esa base tecnológica, el sistema se ha orientado a la retransmisión de concursos de programación, integrando conectividad con la plataforma de juez automático \textbf{DOMjudge} para mostrar clasificaciones y tiempos en tiempo real sobre el vídeo. Esta aplicación específica demuestra la viabilidad del enfoque en un contexto técnico real y abre la puerta a su adaptación a otros tipos de retransmisión en directo.
+
+\section{Plan de trabajo}
+
+El desarrollo se organizó en cuatro fases que siguieron la progresión natural de un proyecto de investigación aplicada.
+
+La primera fase se dedicó al estudio del estado del arte: análisis de sistemas de RA en retransmisiones, evaluación comparativa de SDKs disponibles (Vuforia, ARToolKit, OpenCV, NVIDIA Maxine, DeepAR) y exploración de la API de plugins de OBS Studio. Como resultado de esta fase se tomó la decisión de usar OpenCV con marcadores ArUco como sistema de detección y ASSIMP como cargador de modelos 3D, por su compatibilidad con C, su licencia abierta y la ausencia de dependencias con motores externos.
+
+La segunda fase abarcó el diseño de la arquitectura del plugin y el desarrollo del prototipo inicial. Se estableció el modelo de filtro nativo de OBS, se implementó la cadena de transformación de coordenadas OpenCV-OBS y se logró la primera superposición de un modelo 3D anclado a un marcador ArUco en tiempo real. En esta fase también se diseñó la arquitectura de dos hilos para separar la red del renderizado.
+
+La tercera fase se centró en la implementación de los cuatro modos de operación (modelo 3D, cronómetro, scoreboard y team info), la integración con la API REST de DOMjudge mediante libcurl, el desarrollo de la herramienta de calibración de cámara y la aplicación del filtro de suavizado del overlay. También se añadió el soporte para los siete formatos de vídeo que OBS puede entregar.
+
+La cuarta fase correspondió a la redacción de la memoria, la revisión técnica del código, las pruebas de estabilidad del sistema y la preparación de la defensa.
+
+
+% \section{Explicaciones adicionales sobre el uso de esta plantilla}
+% Si quieres cambiar el \textbf{estilo del título} de los capítulos del documento, edita el fichero \verb|TeXiS\TeXiS_pream.tex| y comenta la línea \verb|\usepackage[Lenny]{fncychap}| para dejar el estilo básico de \LaTeX.
+
+% Si no te gusta que no haya \textbf{espacios entre párrafos} y quieres dejar un pequeño espacio en blanco, no metas saltos de línea (\verb|\\|) al final de los párrafos. En su lugar, busca el comando  \verb|\setlength{\parskip}{0.2ex}| en \verb|TeXiS\TeXiS_pream.tex| y aumenta el valor de $0.2ex$ a, por ejemplo, $1ex$.
+
+% TFGTeXiS se ha elaborado a partir de la plantilla de TeXiS\footnote{\url{http://gaia.fdi.ucm.es/research/texis/}}, creada por Marco Antonio y Pedro Pablo Gómez Martín para escribir su tesis doctoral. Para explicaciones más extensas y detalladas sobre cómo usar esta plantilla, recomendamos la lectura del documento \texttt{TeXiS-Manual-1.0.pdf} que acompaña a esta plantilla.
+
+% El siguiente texto se genera con el comando \verb|\lipsum[2-20]| que viene a continuación en el fichero .tex. El único propósito es mostrar el aspecto de las páginas usando esta plantilla. Quita este comando y, si quieres, comenta o elimina el paquete \textit{lipsum} al final de \verb|TeXiS\TeXiS_pream.tex|
+
+% \subsection{Texto de prueba}
+
+
+% \lipsum[2-20]

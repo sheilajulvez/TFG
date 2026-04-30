@@ -1,6 +1,6 @@
 #include "yuv2bgra.h"
 
-// Función interna para convertir un píxel YUV a BGRA
+// Funcin interna para convertir un pxel YUV a BGRA
 static void yuv_to_bgra(uint8_t y, uint8_t u, uint8_t v, uint8_t *b, uint8_t *g,uint8_t *r)
 {
 	int c = y - 16;
@@ -16,7 +16,7 @@ static void yuv_to_bgra(uint8_t y, uint8_t u, uint8_t v, uint8_t *b, uint8_t *g,
 	*b = (uint8_t)(b_ < 0 ? 0 : b_ > 255 ? 255 : b_);
 }
 
-// Implementaciones específicas para obtener U y V según formato YUV
+// Implementaciones especficas para obtener U y V segn formato YUV
 
 void get_uv_i420(const struct obs_source_frame *frame, int x, int y, uint8_t *u,uint8_t *v)
 {
@@ -82,7 +82,7 @@ void convert_yuy2_to_bgra(const struct obs_source_frame *frame,
 		}
 	}
 }
-// Función genérica para convertir cualquier YUV a BGRA usando función get_uv
+// Funcin genrica para convertir cualquier YUV a BGRA usando funcin get_uv
 void convert_yuv_to_bgra_generic(const struct obs_source_frame *frame,uint8_t *dst_bgra, get_uv_func get_uv)
 {
 	int width = frame->width;
