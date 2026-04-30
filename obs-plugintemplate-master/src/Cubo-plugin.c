@@ -38,15 +38,18 @@ OBS_MODULE_USE_DEFAULT_LOCALE("cube", "en-US")
 
 MODULE_EXPORT const char *obs_module_description(void)
 {
+	/* Returns the module description exposed to OBS. */
 	return "SJ_3D";
 }
 static inline float degrees_to_radians(float degrees)
 {
+	/* Converts an angle from degrees to radians. */
 	return degrees * (float)M_PI / 180.0f;
 }
 
 static inline float clampf(float v, float lo, float hi)
 {
+	/* Clamps a floating-point value to the specified range. */
 	if (v < lo)
 		return lo;
 	if (v > hi)
@@ -56,6 +59,7 @@ static inline float clampf(float v, float lo, float hi)
 
 static inline int clampi(int v, int lo, int hi)
 {
+	/* Clamps an integer value to the specified range. */
 	if (v < lo)
 		return lo;
 	if (v > hi)
@@ -67,6 +71,7 @@ static inline int clampi(int v, int lo, int hi)
  * NOTA: OBS usa UTF-8 en cadenas, pero aqui evitamos depender de librerias externas. */
 static size_t utf8_next_char_len(const char *s)
 {
+	/* Returns the byte length of the next UTF-8 code point. */
 	if (!s || !s[0])
 		return 0;
 
@@ -84,6 +89,7 @@ static size_t utf8_next_char_len(const char *s)
 
 static int utf8_count_codepoints_limit(const char *s, int max_codepoints)
 {
+	/* Counts UTF-8 code points up to the specified limit. */
 	if (!s || max_codepoints <= 0)
 		return 0;
 
@@ -102,6 +108,7 @@ static int utf8_count_codepoints_limit(const char *s, int max_codepoints)
 static int utf8_copy_trunc_ellipsis(const char *in, char *out, size_t out_size,
 				   int max_chars)
 {
+	/* Copies a UTF-8 string and appends an ellipsis when truncation is required. */
 	if (!out || out_size == 0)
 		return 0;
 	out[0] = '\0';
@@ -150,6 +157,7 @@ static int utf8_copy_trunc_ellipsis(const char *in, char *out, size_t out_size,
 
 static void scoreboard_sanitize_name(const char *in, char *out, size_t out_size)
 {
+	/* Replaces control characters with spaces for safe scoreboard rendering. */
 	if (!out || out_size == 0) {
 		return;
 	}
@@ -177,6 +185,7 @@ static void scoreboard_sanitize_name(const char *in, char *out, size_t out_size)
 static void overlay_pick_contrast_rgb(float r, float g, float b, float *out_r,
 				      float *out_g, float *out_b)
 {
+	/* Selects a high-contrast foreground color for the given background color. */
 	const float l = 0.2126f * r + 0.7152f * g + 0.0722f * b;
 	if (l < 0.5f) {
 		*out_r = 1.0f;
@@ -192,6 +201,7 @@ static void overlay_pick_contrast_rgb(float r, float g, float b, float *out_r,
 static size_t utf8_copy_n_codepoints(const char *in, char *out, size_t out_size,
 				     size_t max_codepoints, bool *out_truncated)
 {
+	/* Copies up to the requested number of UTF-8 code points safely. */
 	/* Copia hasta max_codepoints respetando limites de UTF-8 (no corta multibyte).
 	 * Devuelve bytes escritos (sin incluir '\0').
 	 */
@@ -249,6 +259,7 @@ static size_t utf8_copy_n_codepoints(const char *in, char *out, size_t out_size,
 static void utf8_truncate_with_ellipsis(const char *in, char *out, size_t out_size,
 				       size_t max_codepoints)
 {
+	/* Truncates a UTF-8 string and appends an ellipsis when needed. */
 	if (max_codepoints <= 3) {
 		bool dummy = false;
 		utf8_copy_n_codepoints(in, out, out_size, max_codepoints, &dummy);
@@ -282,6 +293,7 @@ static void utf8_truncate_with_ellipsis(const char *in, char *out, size_t out_si
 
 static int count_lines_lf(const char *text)
 {
+	/* Counts lines using LF as the line separator. */
 	if (!text || !text[0])
 		return 0;
 	int lines = 1;
@@ -294,6 +306,7 @@ static int count_lines_lf(const char *text)
 
 static void aruco_rvec_to_rotmat3x3(const float rvec[3], float R[3][3])
 {
+	/* Converts an ArUco rotation vector into a 3x3 rotation matrix. */
 	const float rx = rvec[0];
 	const float ry = rvec[1];
 	const float rz = rvec[2];
@@ -337,6 +350,7 @@ static void aruco_rvec_to_rotmat3x3(const float rvec[3], float R[3][3])
 static void aruco_pose_to_matrix4(const float rvec[3], const float tvec[3],
 				  struct matrix4 *out_pose)
 {
+	/* Builds a 4x4 pose matrix from ArUco rotation and translation vectors. */
 	if (!out_pose)
 		return;
 
@@ -374,6 +388,7 @@ static bool aruco_marker_metrics_2d(const ArucoResult *res,
 				    float *out_center_x,
 				    float *out_center_y)
 {
+	/* Computes stable 2D marker metrics for screen-space alignment. */
 	if (!res || !res->detected || !(screen_h > 1.0f) || !out_edge_px || !out_angle_rad ||
 	    !out_width_px || !out_height_px || !out_center_x || !out_center_y)
 		return false;
@@ -544,6 +559,7 @@ struct cube_filter_data {
 
 static void team_info_clear_mappings(struct cube_filter_data *filter)
 {
+	/* Releases all Team Info mapping buffers and resets their counters. */
 	if (!filter)
 		return;
 
@@ -562,6 +578,7 @@ static void team_info_clear_mappings(struct cube_filter_data *filter)
 
 static void overlay_bg_init_graphics(struct cube_filter_data *filter)
 {
+	/* Creates the base vertex buffer used for the overlay background. */
 	if (!filter)
 		return;
 
@@ -586,6 +603,7 @@ static void overlay_bg_init_graphics(struct cube_filter_data *filter)
 
 static void overlay_bg_free_round_graphics(struct cube_filter_data *filter)
 {
+	/* Destroys the rounded overlay background geometry if it exists. */
 	if (!filter || !filter->overlay_bg_round_vb)
 		return;
 
@@ -598,6 +616,7 @@ static void overlay_bg_free_round_graphics(struct cube_filter_data *filter)
 
 static void overlay_bg_free_graphics(struct cube_filter_data *filter)
 {
+	/* Releases all overlay background GPU resources. */
 	if (!filter)
 		return;
 
@@ -618,6 +637,7 @@ static void overlay_bg_free_graphics(struct cube_filter_data *filter)
 
 static float wrap_angle_delta(float current, float target)
 {
+	/* Returns the shortest signed angular difference in radians. */
 	/* Devuelve el delta mas corto en radianes, en el rango [-pi, pi]. */
 	float d = target - current;
 	while (d > (float)M_PI) d -= 2.0f * (float)M_PI;
@@ -628,6 +648,7 @@ static float wrap_angle_delta(float current, float target)
 static void overlay_bg_update_rounded_geometry(struct cube_filter_data *filter,
 					      float w, float h, int radius_px)
 {
+	/* Regenerates rounded overlay geometry when the dimensions change. */
 	if (!filter)
 		return;
 
@@ -738,6 +759,7 @@ static void overlay_bg_update_rounded_geometry(struct cube_filter_data *filter,
 static const char *team_info_lookup_team_id(struct cube_filter_data *filter,
 					    int aruco_id)
 {
+	/* Looks up the team identifier assigned to an ArUco marker. */
 	if (!filter || !filter->team_info_mappings ||
 	    filter->team_info_mappings_count == 0)
 		return NULL;
@@ -753,6 +775,7 @@ static bool team_info_parse_json_mappings(const char *json,
 					 struct team_info_mapping **out_mappings,
 					 size_t *out_count)
 {
+	/* Parses Team Info mappings from JSON into internal storage. */
 	if (!json || !out_mappings || !out_count)
 		return false;
 
@@ -985,6 +1008,7 @@ static bool team_info_parse_json_mappings(const char *json,
 static bool team_info_load_json_from_path(struct cube_filter_data *filter,
 					 const char *path)
 {
+	/* Loads Team Info mappings from a JSON file on disk. */
 	if (!filter)
 		return false;
 
@@ -1094,6 +1118,7 @@ static bool team_info_load_json_from_path(struct cube_filter_data *filter,
 static struct obs_source_frame *filter_video(void *data,
 					     struct obs_source_frame *frame)
 {
+	/* Processes each video frame and updates AR detection state. */
 	struct cube_filter_data *filter = data;
 
 	if (!frame) {
@@ -1174,15 +1199,18 @@ static struct obs_source_frame *filter_video(void *data,
 
 static uint32_t cube_source_get_width(void *data)
 {
+	/* Returns the current source width in pixels. */
 	struct cube_filter_data *filter = data;
 	return filter->width_screen;
 }
 
 static uint32_t cube_source_get_height(void *data)
 {
+	/* Returns the current source height in pixels. */
 	struct cube_filter_data *filter = data;
 	return filter->height_screen;
 }
+/* Loads a texture from disk and returns the GPU texture handle. */
 gs_texture_t *load_texture_file(const char *path)
 {
 	if (!path || strlen(path) == 0) {
@@ -1208,6 +1236,7 @@ gs_texture_t *load_texture_file(const char *path)
 		return NULL;
 	}
 }
+/* Reloads an OBS image file and rebuilds its texture. */
 void image_source_load(gs_image_file_t *image, const char *file)
 {
 	obs_enter_graphics();
@@ -1225,6 +1254,7 @@ void image_source_load(gs_image_file_t *image, const char *file)
 	}
 }
 
+/* Creates or recreates the render textures used by the filter. */
 void create_texture(struct cube_filter_data *data)
 {
 	obs_enter_graphics();
@@ -1247,12 +1277,14 @@ void create_texture(struct cube_filter_data *data)
 
 static const char *filter_get_name(void *unused)
 {
+	/* Returns the user-facing filter name shown by OBS. */
 	UNUSED_PARAMETER(unused);
 	return "SJ_3D";
 }
 
 static void *filter_create(obs_data_t *settings, obs_source_t *source)
 {
+	/* Allocates and initializes the filter instance state. */
 	struct cube_filter_data *data =
 		bzalloc(sizeof(struct cube_filter_data));
 
@@ -1363,6 +1395,7 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 
 static void filter_destroy(void *data)
 {
+	/* Frees all resources owned by the filter instance. */
 	/*blog(LOG_WARNING, "CERRANDO");*/
 	struct cube_filter_data *filter = (struct cube_filter_data *)data;
 	cleanup_global_meshes(&filter->g_meshes, &filter->g_mesh_count,
@@ -1425,6 +1458,7 @@ static void filter_destroy(void *data)
 
 static void filter_render(void *data, gs_effect_t *effect)
 {
+	/* Renders the filter output for the active mode. */
 	struct cube_filter_data *filter = data;
 	obs_source_t *target = obs_filter_get_target(filter->source);
 	if (!target) {
@@ -2070,6 +2104,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 static bool render_mode_changed(obs_properties_t *props,
 				obs_property_t *property, obs_data_t *settings)
 {
+	/* Updates property visibility according to the selected render mode. */
 	int mode = (int)obs_data_get_int(settings, "render_mode");
 	bool show_3d = (mode == 0);
 	bool show_ar = (mode == 1);
@@ -2179,6 +2214,7 @@ static bool render_mode_changed(obs_properties_t *props,
 static bool test_connection_callback(obs_properties_t *props,
 				     obs_property_t *property, void *data)
 {
+	/* Tests the DOMjudge connection using the current settings. */
 	struct cube_filter_data *filter = data;
 	UNUSED_PARAMETER(props);
 	UNUSED_PARAMETER(property);
@@ -2205,6 +2241,7 @@ static bool test_connection_callback(obs_properties_t *props,
 static bool team_info_reload_json_callback(obs_properties_t *props,
 					  obs_property_t *property, void *data)
 {
+	/* Reloads Team Info mappings from the configured JSON file. */
 	struct cube_filter_data *filter = data;
 	UNUSED_PARAMETER(props);
 	UNUSED_PARAMETER(property);
@@ -2241,6 +2278,7 @@ static bool team_info_reload_json_callback(obs_properties_t *props,
 
 static obs_properties_t *filter_properties(void *data)
 {
+	/* Builds the property list shown in the OBS filter settings panel. */
 
 	obs_properties_t *props = obs_properties_create();
 	obs_property_t *combo = obs_properties_add_list(props, "render_mode",
@@ -2362,6 +2400,7 @@ obs_properties_add_path(props, "calibration_file", "Archivo de Calibracion",
 
 static void filter_update(void *data, obs_data_t *settings)
 {
+	/* Applies updated settings to the live filter state. */
 	struct cube_filter_data *filter = data;
 	if (!filter || !settings)return;
 
@@ -2885,6 +2924,7 @@ static void filter_update(void *data, obs_data_t *settings)
 
 static void filter_tick(void *data, float seconds)
 {
+	/* Advances per-frame state, timers, and sync data. */
 	struct cube_filter_data *filter = data;
 	struct obs_video_info video_info;
 
@@ -3068,6 +3108,7 @@ static void filter_tick(void *data, float seconds)
 
 static void filter_save(void *data, obs_data_t *settings)
 {
+	/* Persists the current filter configuration into OBS settings. */
 	struct cube_filter_data *filter = data;
 	blog(LOG_INFO, "[CUBE] guardando valores");
 	obs_data_set_double(settings, "pos_x", filter->pos_x);
@@ -3143,6 +3184,7 @@ static void filter_save(void *data, obs_data_t *settings)
 
 static void filter_load(void *data, obs_data_t *settings)
 {
+	/* Restores the filter configuration from OBS settings. */
 	struct cube_filter_data *filter = data;
 	blog(LOG_INFO, "[CUBE] cargando valores");
 	filter->pos_x = (float)obs_data_get_double(settings, "pos_x");
@@ -3217,6 +3259,7 @@ static void filter_load(void *data, obs_data_t *settings)
 }
 static void filter_defaults(obs_data_t *settings)
 {
+	/* Sets the default values for all filter settings. */
 	obs_data_set_default_double(settings, "pos_x", 0.0);
 	obs_data_set_default_double(settings, "pos_y", 0.0);
 	obs_data_set_default_double(settings, "pos_z", 0.0);
