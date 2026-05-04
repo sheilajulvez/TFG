@@ -4,19 +4,6 @@ Este documento resume qué hace cada archivo importante dentro de `src`.
 
 > Nota: en esta carpeta hay mezcla de **clases C++**, **estructuras C**, **módulos de OBS** y algunos **prototipos/comentarios**. Por eso, aquí se explica cada archivo por su función real dentro del proyecto.
 
-## ¿Por qué hay archivos `.c`, `.cpp`, `.h` y `.hpp`?
-
-En este proyecto se mezclan varios lenguajes y estilos de implementación porque cada parte encaja mejor con una tecnología distinta:
-
-- `*.c`: se usan para módulos escritos en C puro, que encajan bien con la API de OBS y con código más cercano al sistema.
-- `*.cpp`: se usan cuando hace falta C++, por ejemplo para aprovechar clases, `std::vector`, OpenCV, Qt u otras librerías orientadas a objetos.
-- `*.h`: suelen ser cabeceras compartidas entre C y C++, con declaraciones de funciones, `struct` y `typedef`.
-- `*.hpp`: normalmente indican cabeceras pensadas sobre todo para C++, especialmente cuando declaran clases.
-
-La mezcla no es un error: responde a la evolución del proyecto. Algunas partes empezaron en C por ser más directas para OBS, y otras pasaron a C++ cuando fue útil trabajar con OpenCV, Qt o una estructura más modular.
-
-FUTURO: deberríamos unificarlo??
-
 ## Núcleo del plugin
 
 
