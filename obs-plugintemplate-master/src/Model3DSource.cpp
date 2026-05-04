@@ -5,6 +5,15 @@
 #include <QTextStream>
 #include <QDebug>
 
+/**
+ * @brief Constructs a Model3DSource object.
+ *
+ * Initializes OpenGL functions, loads a 3D model from the specified path,
+ * and sets up the necessary OpenGL objects for rendering, including a Vertex
+ * Array Object (VAO), a Vertex Buffer Object (VBO), and the shader program.
+ *
+ * @param path The file path to the 3D model (e.g., an .obj file).
+ */
 Model3DSource::Model3DSource(const QString &path)
 	: vbo(QOpenGLBuffer::VertexBuffer)
 {
@@ -32,12 +41,27 @@ Model3DSource::Model3DSource(const QString &path)
 	program.release();
 }
 
+/**
+ * @brief Destroys the Model3DSource object.
+ *
+ * Cleans up and releases the OpenGL resources, specifically the VAO and VBO,
+ * to prevent memory leaks.
+ */
 Model3DSource::~Model3DSource()
 {
 	vao.destroy();
 	vbo.destroy();
 }
 
+/**
+ * @brief Loads a 3D model from a file.
+ *
+ * Reads vertex data from a file (presumably in .obj format). It parses lines
+ * starting with "v " to extract vertex coordinates and populates the `vertices`
+ * vector.
+ *
+ * @param path The file path to the 3D model.
+ */
 void Model3DSource::loadModel(const QString &path)
 {
 	QFile file(path);
@@ -60,6 +84,16 @@ void Model3DSource::loadModel(const QString &path)
 	}
 }
 
+/**
+ * @brief Renders the 3D model.
+ *
+ * Sets up the projection matrix based on the viewport dimensions, binds the
+ * shader program and VAO, sets the model-view-projection (MVP) uniform,
+ * and issues the draw call to render the model.
+ *
+ * @param width The width of the viewport.
+ * @param height The height of the viewport.
+ */
 void Model3DSource::render(int width, int height)
 {
 	projectionMatrix.setToIdentity();
