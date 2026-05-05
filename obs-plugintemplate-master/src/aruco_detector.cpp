@@ -27,6 +27,16 @@ struct ArucoDetector {
 	std::string calibration_path;
 };
 
+/**
+ * @brief Sets default camera intrinsic and distortion parameters.
+ *
+ * This function initializes the camera matrix with default focal lengths (fx, fy = 2000)
+ * and a default principal point (cx = 1233, cy = 718). The distortion coefficients
+ * are set to zero. These values are used as a fallback when a calibration file is
+ * not available or fails to load.
+ *
+ * @param det Pointer to the ArucoDetector structure to modify.
+ */
 // set_default_camera_params (sin cambios)
 void set_default_camera_params(ArucoDetector *det)
 {
@@ -40,6 +50,18 @@ void set_default_camera_params(ArucoDetector *det)
 	blog(LOG_WARNING, "[CUBE] Usando parametros de camara por defecto (fx=fy=2000, cx=1233, cy=718).");
 }
 
+/**
+ * @brief Converts an OBS video frame from various YUV/RGB formats to BGRA.
+ *
+ * This function handles the conversion of an `obs_source_frame` into a `cv::Mat`
+ * with a BGRA color format, which is required for processing with OpenCV. It supports
+ * multiple video formats, including I420, I422, NV12, YUY2, UYVY, YVYU, BGRA, RGBA,
+ * BGR3, BGRX, and Y800 (grayscale). If the format is unsupported, a warning is logged.
+ *
+ * @param frame Pointer to the input `obs_source_frame`.
+ * @return A `cv::Mat` containing the frame data in BGRA format. Returns an empty
+ *         matrix if the conversion fails or the format is unsupported.
+ */
 // obs_frame_to_bgra (sin cambios)
 cv::Mat obs_frame_to_bgra(struct obs_source_frame *frame)
 {
@@ -146,6 +168,19 @@ cv::Mat obs_frame_to_bgra(struct obs_source_frame *frame)
 }
 
 extern "C" {
+/**
+ * @brief Loads camera calibration parameters from a file.
+ *
+ * Reads a YAML or XML file containing the camera matrix and distortion coefficients,
+ * which are essential for accurate 3D pose estimation. The file is expected to
+ * have "camera_matrix" and "distortion_coefficients" fields.
+ *
+ * @param filename Path to the calibration file.
+ * @param camera_matrix Output `cv::Mat` to store the camera intrinsic matrix.
+ * @param dist_coeffs Output `cv::Mat` to store the distortion coefficients.
+ * @return `true` if the file is opened and parameters are loaded successfully,
+ *         `false` otherwise.
+ */
 // load_camera_calibration (sin cambios)
 bool load_camera_calibration(const std::string &filename,
 			     cv::Mat &camera_matrix, cv::Mat &dist_coeffs)
@@ -173,6 +208,18 @@ bool load_camera_calibration(const std::string &filename,
 	return true;
 }
 
+/**
+ * @brief Sets the camera calibration for the ArUco detector from a file.
+ *
+ * This function attempts to load calibration data from the specified file. If
+ * loading fails or the filename is invalid, it falls back to default camera
+ * parameters by calling `set_default_camera_params`.
+ *
+ * @param det Pointer to the ArucoDetector structure.
+ * @param filename Path to the camera calibration file.
+ * @return `true` if calibration is set (either from file or default), `false`
+ *         if the detector or filename is null.
+ */
 // set_camera_calibration (sin cambios)
 bool set_camera_calibration(ArucoDetector *det, const char *filename)
 {
@@ -194,6 +241,18 @@ bool set_camera_calibration(ArucoDetector *det, const char *filename)
 	return true;
 }
 
+/**
+ * @brief Initializes and configures a new ArucoDetector instance.
+ *
+ * This function allocates memory for an `ArucoDetector` structure and initializes it
+ * with the specified marker size, dictionary, and calibration file. If the
+ * calibration file cannot be loaded, it applies default camera parameters.
+ *
+ * @param marker_size_meters The physical size of the ArUco markers in meters.
+ * @param dict The identifier for the ArUco dictionary to be used (e.g., ARUCO_DICT_4X4_100).
+ * @param calibration_file Path to the camera calibration file.
+ * @return A pointer to the newly created `ArucoDetector` instance.
+ */
 // initialize_aruco_detector (sin cambios)
 ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,
 					 const char *calibration_file)
@@ -215,6 +274,15 @@ ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,
 	return det;
 }
 
+/**
+ * @brief Frees the resources associated with an ArucoDetector instance.
+ *
+ * Releases all OpenCV-related matrices and pointers (`dictionary`, `detector_params`,
+ * `camera_matrix`, `dist_coeffs`, `mat_bgra`) and deallocates the `ArucoDetector`
+ * structure itself.
+ *
+ * @param det Pointer to the ArucoDetector to be cleaned up.
+ */
 // cleanup_aruco_detector (sin cambios)
 void cleanup_aruco_detector(ArucoDetector *det)
 {
@@ -227,7 +295,18 @@ void cleanup_aruco_detector(ArucoDetector *det)
 	delete det;
 }
 
-
+/**
+ * @brief Converts a 3x3 rotation matrix to Euler angles (pitch, yaw, roll).
+ *
+ * This function calculates the Euler angles from a given rotation matrix, handling
+ * the gimbal lock singularity case. The resulting angles are converted from radians
+ * to degrees.
+ *
+ * @param R The input 3x3 rotation matrix (cv::Mat).
+ * @param pitch Output for the pitch angle in degrees (rotation around X-axis).
+ * @param yaw Output for the yaw angle in degrees (rotation around Y-axis).
+ * @param roll Output for the roll angle in degrees (rotation around Z-axis).
+ */
 static void rotation_to_euler(const cv::Mat &R, float &pitch, float &yaw,
 			      float &roll)
 {
@@ -251,6 +330,26 @@ static void rotation_to_euler(const cv::Mat &R, float &pitch, float &yaw,
 	roll = static_cast<float>(roll * 180.0 / M_PI);
 }
 
+/**
+ * @brief Computes the screen coordinates of a point projected along the marker's normal.
+ *
+ * This function projects a 3D point from the marker's local Z-axis into the 2D image
+ * plane to determine the "up" direction for text or overlays. The coordinates are
+ * scaled and clamped to fit within the final output dimensions.
+ *
+ * @param det Pointer to the ArucoDetector containing camera parameters.
+ * @param rvec The rotation vector of the marker.
+ * @param tvec The translation vector of the marker.
+ * @param frame_w Width of the original video frame.
+ * @param frame_h Height of the original video frame.
+ * @param base_w Width of the OBS base canvas.
+ * @param base_h Height of the OBS base canvas.
+ * @param out_w Width of the final OBS output.
+ * @param out_h Height of the final OBS output.
+ * @param out_tip_x Pointer to store the resulting X coordinate.
+ * @param out_tip_y Pointer to store the resulting Y coordinate.
+ * @param out_valid Pointer to a boolean that will be set to true if the computation is successful.
+ */
 static void compute_normal_tip_screen(const ArucoDetector *det,
 				      const cv::Vec3d &rvec,
 				      const cv::Vec3d &tvec,
@@ -296,7 +395,23 @@ static void compute_normal_tip_screen(const ArucoDetector *det,
 	*out_valid = true;
 }
 
-
+/**
+ * @brief Processes a video frame to detect a specific ArUco marker and estimate its pose.
+ *
+ * This function takes an OBS video frame, converts it to a processable format (BGRA),
+ * detects ArUco markers, and if the target marker (specified by `det->id`) is found,
+ * it computes its 3D pose (translation and rotation), screen position, and corner
+ * coordinates.
+ *
+ * @param det Pointer to the ArucoDetector instance.
+ * @param frame The input OBS video frame.
+ * @param base_w Width of the OBS base canvas.
+ * @param base_h Height of the OBS base canvas.
+ * @param fw Width of the final OBS output (used for scaling).
+ * @param fh Height of the final OBS output (used for scaling).
+ * @param res Pointer to an ArucoResult structure to store the detection results.
+ * @return `true` if the target marker was detected and processed successfully, `false` otherwise.
+ */
 bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 			int base_w, int base_h, int fw, int fh,
 			ArucoResult *res)
@@ -411,6 +526,17 @@ bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
 	return true;
 }
 
+/**
+ * @brief Checks if a given marker ID is present in a list of allowed IDs.
+ *
+ * A helper function to determine if a detected marker's ID is one of the IDs
+ * the system is configured to track.
+ *
+ * @param id The marker ID to check.
+ * @param allowed_ids An array of integers representing the allowed marker IDs.
+ * @param allowed_count The number of elements in the `allowed_ids` array.
+ * @return `true` if the ID is in the allowed list, `false` otherwise.
+ */
 static inline bool id_permitido(int id, const int *allowed_ids, size_t allowed_count)
 {
 	if (!allowed_ids || allowed_count == 0)
@@ -423,6 +549,17 @@ static inline bool id_permitido(int id, const int *allowed_ids, size_t allowed_c
 	return false;
 }
 
+/**
+ * @brief Calculates the area of a quadrilateral defined by four points.
+ *
+ * This function uses the Shoelace formula to compute the area of the quadrilateral
+ * formed by the corners of a detected marker. This is useful for determining which
+ * marker is largest on screen.
+ *
+ * @param c A vector of four `cv::Point2f` representing the corners of the quadrilateral.
+ * @return The area of the quadrilateral as a float. Returns 0.0f if the input
+ *         does not have four points.
+ */
 static inline float area_cuadrilatero(const std::vector<cv::Point2f> &c)
 {
 	/* Area por formula del "shoelace" (en coordenadas de imagen).
@@ -439,6 +576,25 @@ static inline float area_cuadrilatero(const std::vector<cv::Point2f> &c)
 	return std::fabs(a) * 0.5f;
 }
 
+/**
+ * @brief Processes a video frame to find the first available marker from a list of allowed IDs.
+ *
+ * This function is similar to `process_frame_rgba`, but instead of searching for a single
+ * specific marker, it searches for any marker whose ID is in the `allowed_ids` list.
+ * It selects the first one it finds in the detection results and computes its pose
+ * and position.
+ *
+ * @param det Pointer to the ArucoDetector instance.
+ * @param frame The input OBS video frame.
+ * @param base_w Width of the OBS base canvas.
+ * @param base_h Height of the OBS base canvas.
+ * @param fw Width of the final OBS output.
+ * @param fh Height of the final OBS output.
+ * @param allowed_ids An array of marker IDs to search for.
+ * @param allowed_count The number of IDs in the `allowed_ids` array.
+ * @param res Pointer to an ArucoResult structure to store the detection results.
+ * @return `true` if a permitted marker was detected and processed, `false` otherwise.
+ */
 bool process_frame_rgba_select_ids(ArucoDetector *det, struct obs_source_frame *frame,
 				  int base_w, int base_h, int fw, int fh,
 				  const int *allowed_ids, size_t allowed_count,
@@ -560,6 +716,16 @@ bool process_frame_rgba_select_ids(ArucoDetector *det, struct obs_source_frame *
 	return true;
 }
 
+/**
+ * @brief Sets the ArUco dictionary for the detector.
+ *
+ * Changes the active ArUco dictionary based on an integer ID. It maps this ID
+ * to the corresponding predefined dictionary in OpenCV. If the ID is unknown,
+ * it defaults to `DICT_4X4_100`.
+ *
+ * @param det Pointer to the ArucoDetector instance.
+ * @param dict_id The integer identifier for the desired dictionary (e.g., ARUCO_DICT_4X4_100).
+ */
 // set_marker_dictionary (sin cambios)
 void set_marker_dictionary(ArucoDetector *det, int dict_id)
 {
@@ -608,43 +774,81 @@ void set_marker_dictionary(ArucoDetector *det, int dict_id)
 	blog(LOG_INFO, "[Aruco] Diccionario de marcadores cambiado a: %d",  dict_id);
 }
 
-
+/**
+ * @brief Sets the physical size of the markers to be detected.
+ *
+ * @param det Pointer to the ArucoDetector instance.
+ * @param size The marker size in meters.
+ */
 void set_marker_size(ArucoDetector *const det, float size)
 {
 	det->marker_size = size;
 }
 
-
+/**
+ * @brief Sets the specific marker ID to be tracked.
+ *
+ * @param det Pointer to the ArucoDetector instance.
+ * @param id The integer ID of the marker to track.
+ */
 void set_marker_id(ArucoDetector *const det, int id)
 {
 	det->id = id;
 }
 
-
+/**
+ * @brief Gets the currently configured marker dictionary ID.
+ *
+ * @param det Pointer to the ArucoDetector instance.
+ * @return The integer ID of the current marker dictionary.
+ */
 const int get_marker_dictionary(const ArucoDetector *const det)
 {
 	return det->marker_dict;
 }
 
-
+/**
+ * @brief Gets the currently configured marker size.
+ *
+ * @param det Pointer to the ArucoDetector instance.
+ * @return The marker size in meters.
+ */
 const int get_marker_size(const ArucoDetector *const det)
 {
 	return det->marker_size;
 }
 
-
+/**
+ * @brief Gets the currently configured marker ID to be tracked.
+ *
+ * @param det Pointer to the ArucoDetector instance.
+ * @return The integer ID of the marker being tracked.
+ */
 const int get_marker_id(const ArucoDetector *const det)
 {
 	return det->id;
 }
 
-
+/**
+ * @brief Gets the path to the currently loaded camera calibration file.
+ *
+ * @param det Pointer to the ArucoDetector instance.
+ * @return A C-style string with the path to the calibration file, or NULL if not set.
+ */
 const char *get_calibration_path(const ArucoDetector *const det)
 {
 	return det ? det->calibration_path.c_str() : NULL;
 }
 
-
+/**
+ * @brief Sets the camera calibration by loading a new file.
+ *
+ * If the file is loaded successfully, the detector's calibration path is updated.
+ * If it fails, the detector's parameters are reset to default values.
+ *
+ * @param det Pointer to the ArucoDetector instance.
+ * @param path The path to the new camera calibration file.
+ */
 void set_calibration_path(ArucoDetector *det, const char *const path)
 {
 	if (det && path &&

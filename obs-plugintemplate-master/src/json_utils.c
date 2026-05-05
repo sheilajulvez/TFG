@@ -1,4 +1,3 @@
-
 #include "json_utils.h"
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +9,15 @@
 #include <windows.h>
 #endif
 
+/**
+ * @brief Trims leading and trailing whitespace from a string in-place.
+ *
+ * Modifies the input string by removing any space, tab, or newline characters
+ * from the beginning and end.
+ *
+ * @param str The null-terminated string to trim.
+ * @return A pointer to the beginning of the trimmed string.
+ */
 char *trim_whitespace(char *str)
 {
 	if (!str) return NULL;
@@ -22,8 +30,17 @@ char *trim_whitespace(char *str)
 	return str;
 }
 
-// https://medium.com/@priyanshugrv/building-a-simple-json-parser-in-c-9ecd1c6b1b9e parseador de json en C
-/** Parsea un entero no negativo después de "key": en el JSON. */
+/**
+ * @brief Parses a non-negative integer value for a given key from a JSON string.
+ *
+ * Searches for a key in the format "key": value and extracts the integer.
+ * This is a simple parser that does not handle nested structures or complex scenarios.
+ *
+ * @param json The JSON string to parse.
+ * @param key The key to search for.
+ * @param out_value Pointer to a uint32_t to store the parsed value.
+ * @return `true` if the key and a valid integer value were found, `false` otherwise.
+ */
 bool parse_json_int(const char *json, const char *key,
 		    uint32_t *out_value)
 {
@@ -58,10 +75,18 @@ bool parse_json_int(const char *json, const char *key,
 	return true;
 }
 
-//https://en.cppreference.com/w/c/string/byte/strstr 
-// /** Parsea un entero dentro de un objeto hijo en el JSON: "parent_key": { ... "child_key": value ... } */
-
-// 
+/**
+ * @brief Parses an integer from a nested JSON object.
+ *
+ * Finds a parent object and then searches for a child key within it to extract an integer value.
+ * For example, it can parse `value` from `"parent_key": { ... "child_key": value ... }`.
+ *
+ * @param json The JSON string to parse.
+ * @param parent_key The key of the parent object.
+ * @param child_key The key of the integer value within the parent object.
+ * @param out_value Pointer to a uint32_t to store the parsed value.
+ * @return `true` if the nested key and value were found, `false` otherwise.
+ */
 bool parse_json_int_nested(const char *json, const char *parent_key,
 			   const char *child_key, uint32_t *out_value)
 {
@@ -79,8 +104,16 @@ bool parse_json_int_nested(const char *json, const char *parent_key,
 }
 
 /**
- * Parsea un string JSON después de "key": "value" y lo copia a out_str.
- * Devuelve true si encontró la clave y extrajo el valor.
+ * @brief Parses a string value for a given key from a JSON string.
+ *
+ * Searches for a key in the format "key": "value" and copies the value into the
+ * output buffer. It handles escaped quotes within the string.
+ *
+ * @param json The JSON string to parse.
+ * @param key The key to search for.
+ * @param out_str Buffer to store the parsed string.
+ * @param out_size The size of the output buffer.
+ * @return `true` if the key was found and the string was extracted, `false` otherwise.
  */
 bool parse_json_string(const char *json, const char *key,
 		       char *out_str, size_t out_size)
@@ -123,10 +156,16 @@ bool parse_json_string(const char *json, const char *key,
 }
 
 /**
- * Parsea un time formato DOMjudg a time_t.
- *   "2025-03-06T10:00:00+01:00"
- *   "2025-03-06T10:00:00.000+01:00"
- *   "2025-03-06T10:00:00Z"
+ * @brief Parses an ISO 8601 formatted date-time string to a Unix epoch time.
+ *
+ * Supports formats like:
+ * - "2025-03-06T10:00:00+01:00"
+ * - "2025-03-06T10:00:00.000+01:00"
+ * - "2025-03-06T10:00:00Z"
+ *
+ * @param str The ISO 8601 string to parse.
+ * @param out_epoch Pointer to a double to store the resulting epoch time (UTC).
+ * @return `true` if parsing is successful, `false` otherwise.
  */
 bool parse_iso8601(const char *str, double *out_epoch)
 {
@@ -192,8 +231,13 @@ bool parse_iso8601(const char *str, double *out_epoch)
 }
 
 /**
- * Parsea la cabecera Date: HTTP  a  UTC.
- *  "Thu, 06 Mar 2025 16:30:00 GMT"
+ * @brief Parses an HTTP 'Date' header string to a Unix epoch time.
+ *
+ * Supports the standard GMT format, e.g., "Thu, 06 Mar 2025 16:30:00 GMT".
+ *
+ * @param date_str The HTTP date string.
+ * @param out_epoch Pointer to a double to store the resulting epoch time (UTC).
+ * @return `true` if parsing is successful, `false` otherwise.
  */
 bool parse_http_date(const char *date_str, double *out_epoch)
 {
@@ -243,8 +287,12 @@ bool parse_http_date(const char *date_str, double *out_epoch)
 }
 
 /**
- * Busca el siguiente objeto '{...}' en el array JSON de rows del scoreboard.
- * Devuelve puntero al '{' o NULL si no hay más.
+ * @brief Finds the beginning of the next JSON object '{...}' in a string.
+ *
+ * Useful for iterating through a JSON array of objects, such as scoreboard rows.
+ *
+ * @param p A pointer to the current position in the JSON string.
+ * @return A pointer to the opening brace '{' of the next object, or NULL if not found.
  */
 const char *find_next_json_object(const char *p)
 {
@@ -254,7 +302,12 @@ const char *find_next_json_object(const char *p)
 }
 
 /**
- * Busca el cierre '}' correspondiente contando niveles de anidación.
+ * @brief Finds the corresponding closing brace '}' for a JSON object.
+ *
+ * This function correctly handles nested objects by counting brace depth.
+ *
+ * @param p A pointer to the opening brace '{' of a JSON object.
+ * @return A pointer to the matching closing brace '}', or NULL if not found.
  */
 const char *find_closing_brace(const char *p)
 {
