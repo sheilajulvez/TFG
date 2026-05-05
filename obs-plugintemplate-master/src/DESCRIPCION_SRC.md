@@ -49,18 +49,18 @@ Este documento resume qué hace cada archivo importante dentro de `src`.
  `json_utils.c`  Implementa las funciones auxiliares de parseo de enteros, cadenas, fechas y búsqueda de objetos JSON. 
 
 ## Conversión de formatos de vídeo
-FUTURO
+FUTURO eliminar
  `yuv2bgra.h`  Declara funciones para convertir distintos formatos YUV a BGRA, junto con el tipo de función auxiliar `get_uv_func`. 
  `yuv2bgra.cpp`  Implementa las conversiones de `I420`, `NV12`, `I422`, `YUY2` y otros formatos hacia BGRA para poder procesarlos después con OBS/OpenCV. 
 
 ## Prototipos de interfaz Qt
-FUTURO
+FUTURO Eliminar
  `test.hpp`  Declara `TestWidget`, un `QDockWidget` de prueba con botón y lógica de interacción básica. 
  `test2.hpp`  Declara `WhiteSquareWidget`, un `QWidget` simple que pinta un cuadrado blanco en `paintEvent`. 
 
 ## Prototipos y archivos auxiliares
 
-FUTURO
+FUTURO ELiminar
  `extraer.py`  Script auxiliar en Python. Probablemente se usa para extraer, transformar o preparar datos del proyecto. 
 
 
