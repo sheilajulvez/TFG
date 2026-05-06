@@ -2,16 +2,14 @@
 
 \section*{\tituloPortadaVal}
 
-Hoy en día, muchos programas de televisión —sobre todo los informativos— utilizan elementos de realidad aumentada (RA) que se muestran en pantalla para complementar la información ofrecida por los locutores. Gracias a esta tecnología es posible integrar gráficos en tres dimensiones, datos interactivos o visualizaciones complejas directamente en el plató, de manera que parecen formar parte del espacio real. Con ello no solo se completa y facilita la comprensión de los contenidos, sino que también se aporta un aspecto más dinámico y atractivo a la emisión.
+Este Trabajo de Fin de Grado presenta el diseño e implementación de un plugin nativo para \textbf{OBS Studio} que incorpora un sistema completo de \textbf{realidad aumentada (RA)} orientada a datos en retransmisiones en directo, con aplicación específica a concursos de programación universitarios del estilo ICPC.
 
-En este Trabajo de Fin de Grado se estudia cómo aplicar la realidad aumentada a las retransmisiones en directo mediante plataformas como YouTube u otros servicios de streaming. Para llevarlo a cabo se emplea OBS Studio como herramienta principal de producción, analizando de qué forma puede adaptarse para generar efectos similares a los que se utilizan en televisión profesional.
+El plugin extiende OBS Studio con cuatro modos de operación diferenciados: superposición de un \textbf{modelo 3D} anclado a marcadores \textbf{ArUco} detectados en tiempo real mediante el algoritmo \textbf{PnP} de \textbf{OpenCV}, un \textbf{cronómetro analógico} sincronizado con el tiempo oficial del concurso, un \textbf{marcador} (\textit{scoreboard}) con la clasificación general actualizada en tiempo real, y un modo de \textbf{información de equipo} que identifica automáticamente qué equipo aparece en cámara y muestra sus datos. Los modelos tridimensionales se cargan a través de la biblioteca \textbf{ASSIMP}, que soporta más de cuarenta formatos de fichero.
 
-El trabajo se centra especialmente en el caso de concursos de programación en línea, donde la RA puede ser de gran ayuda para presentar la información de manera más clara, facilitar la interacción con el público y mejorar el valor visual del contenido. De esta forma se busca demostrar cómo esta tecnología puede enriquecer tanto la experiencia del espectador como la del propio presentador.
+El desarrollo abordó los principales retos técnicos del sistema: la integración de los sistemas de coordenadas de OpenCV y OBS, el suavizado de la superposición para eliminar el temblor visual, y una \textbf{arquitectura de dos hilos} que separa las peticiones periódicas a la API REST de \textbf{DOMjudge} del ciclo de renderizado, garantizando que la latencia de red nunca interrumpa la producción de fotogramas. El sistema se complementa con una herramienta independiente de calibración de cámara desarrollada en Python.
+
+El resultado demuestra la viabilidad de incorporar un pipeline completo de RA orientada a datos a OBS Studio como \textbf{filtro nativo}, sin latencia adicional por procesos externos y sin modificar el núcleo del software.
 
 \section*{Palabras clave}
-   
-\noindent Realidad Aumentada, Retransmisión en directo, OBS plugin, Modelos 3D, Marcadores
 
-   
-
-
+\noindent Realidad Aumentada, Retransmisión en directo, Plugin OBS, ArUco, OpenCV, DOMjudge, Modelos 3D, Estimación de pose

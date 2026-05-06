@@ -2,15 +2,19 @@
 
 \section*{\tituloPortadaEngVal}
 
-In recent years, it has become increasingly common for television programs to incorporate augmented reality (AR) effects during live presentations. This technology enables the integration of virtual elements—such as three-dimensional graphics, interactive visualizations, or real-time simulations—that appear to coexist physically within the studio environment and interact naturally with the presenters. By doing so, AR enhances the visual narrative, facilitates the understanding of complex information, and increases the overall aesthetic and communicative impact of the broadcast.
+In recent years, it has become increasingly common for television programs to incorporate augmented reality (AR) effects during live broadcasts. This technology enables the integration of virtual elements, such as three-dimensional graphics, interactive data visualizations, or real-time overlays, that appear to coexist within the real environment. By doing so, AR enhances the visual narrative, facilitates the understanding of complex information, and increases the communicative impact of the broadcast.
 
-This Final Degree Project aims to explore the potential of augmented reality technology in the context of live streaming, specifically through platforms such as YouTube, using OBS Studio as the main production tool. The study investigates how AR can be integrated into streaming workflows to replicate, in a more accessible and cost-effective way, the advanced visual effects typically found in professional television environments. Particular emphasis is placed on the application of these techniques to programming contest broadcasts, a format where visual clarity, contextual data representation, and audience engagement are essential. Implementing AR elements in this setting has the potential to significantly enhance the viewer’s experience, improve content comprehension, and add a layer of visual professionalism to the production.
+This Final Degree Project explores the potential of augmented reality in the context of live streaming using OBS Studio as the main production tool. The central contribution is a native OBS Studio plugin, implemented as a video filter, that detects ArUco visual markers in the camera feed, estimates their pose in real time using the PnP algorithm from OpenCV, and renders synthetic content anchored to those markers directly on the video frame without any external process.
 
+The plugin offers four distinct operating modes. In the 3D model mode, arbitrary geometry loaded via Assimp is overlaid on the marker with correct position and orientation. In the stopwatch mode, an analogue countdown clock is rendered whose hands are synchronized with the official contest time retrieved from a remote API. In the scoreboard mode, the full live ranking of a programming contest is projected onto the video in real time. In the team info mode, the system automatically identifies which team the camera is pointing at and displays that team’s data exclusively, combining marker detection with a JSON mapping file prepared before the broadcast.
 
+Several non-trivial technical problems are solved in this work: the coordinate system mismatch between OpenCV and OBS, resolved via a 180-degree rotation and component sign correction; an exponential moving average filter with circular interpolation to eliminate the visual jitter produced by camera noise; a two-thread architecture that keeps network requests in a secondary thread so they never block the render cycle; and a standalone Python camera calibration tool. The plugin also handles all seven pixel formats that OBS can deliver from a capture device.
+
+The specific domain of application is programming contest broadcasts, where structured real-time data from the DOMjudge automatic judge system is consumed via its REST API using libcurl, which is bundled with OBS. This application demonstrates that it is possible to add a complete AR pipeline to OBS Studio while maintaining the native filter architecture and without modifying the core of the software.
 
 \section*{Keywords}
 
-\noindent Aumented Reality, Live Streaming, OBS plugin, 3D Models, Markers
+\noindent Augmented Reality, Live Streaming, OBS plugin, 3D Models, ArUco Markers, OpenCV, DOMjudge
 
 
 

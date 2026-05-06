@@ -162,4 +162,32 @@
   2022.
 \newblock Accedido el 21 de julio de 2025.
 
+\bibitem[{{Apple Inc.}(2025)}]{ARKit}
+{\sc {Apple Inc.}}
+\newblock {ARKit} -- {Augmented Reality Development Platform}.
+\newblock \url{https://developer.apple.com/augmented-reality/arkit/}, 2025.
+\newblock Accedido el 1 de julio de 2025.
+
+\bibitem[{{Google LLC}(2025)}]{ARCore}
+{\sc {Google LLC}}.
+\newblock {ARCore} -- {Google's Platform for Building Augmented Reality
+  Experiences}.
+\newblock \url{https://developers.google.com/ar}, 2025.
+\newblock Accedido el 1 de julio de 2025.
+
+\bibitem[{{ICPC Foundation}(2025)}]{ICPC}
+{\sc {ICPC Foundation}}.
+\newblock {ICPC} -- {International Collegiate Programming Contest}.
+\newblock \url{https://icpc.global/}, 2025.
+\newblock Accedido el 1 de julio de 2025.
+
+\bibitem[{{Sports Video Group}(2025)}]{SportsVideo2025}
+{\sc {Sports Video Group}}
+\newblock Live from {Super Bowl LIX}: Augmented-reality graphics play starring
+  role in {Fox Sports} broadcast.
+\newblock
+  \url{https://www.sportsvideo.org/2025/02/09/live-from-super-bowl-lix-augmented-reality-graphics-play-starring-role-in-fox-sports-broadcast/},
+  2025.
+\newblock Accedido el 21 de julio de 2025.
+
 \end{thebibliography}
