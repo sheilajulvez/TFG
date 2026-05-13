@@ -564,6 +564,14 @@
 			return degrees * (float)M_PI / 180.0f;
 	}
 
+	/* Aplica rotacion manual en orden Z->Y->X para desacoplar mejor los ejes de la UI. */
+	static inline void apply_ui_rotation_zyx(float rot_x_deg, float rot_y_deg, float rot_z_deg)
+	{
+		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, degrees_to_radians(rot_z_deg));
+		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, degrees_to_radians(rot_y_deg));
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, degrees_to_radians(rot_x_deg));
+	}
+
 
 void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths, float *heights, float scale,
 	const float rvec[3], bool detected, float offset_rot_x_deg, float offset_rot_y_deg, float offset_rot_z_deg)
@@ -618,12 +626,8 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 			//  Corrección de coordenadas (Y-Abajo de OpenCV a Y-Arriba de OBS)
 			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
-			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,
-					  degrees_to_radians(offset_rot_x_deg));
-			gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,
-					  degrees_to_radians(offset_rot_y_deg));
-			gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,
-					  degrees_to_radians(offset_rot_z_deg));
+			apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg,
+					      offset_rot_z_deg);
 
 			//  Aplicar la rotación del tracker (rvec) SEGUNDO
 			if (detected) {
@@ -713,9 +717,8 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 		}
 
 		/* Aplicar después los offsets manuales (relativos al marcador) */
-		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, degrees_to_radians(offset_rot_x_deg));
-		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, degrees_to_radians(offset_rot_y_deg));
-		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, degrees_to_radians(offset_rot_z_deg));
+		apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg,
+				      offset_rot_z_deg);
 	
 
 		gs_effect_set_texture(image_param, m->texture);
@@ -829,9 +832,8 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		}
 
 		
-		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,degrees_to_radians(offset_rot_x_deg));
-		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, degrees_to_radians(offset_rot_y_deg));
-		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, degrees_to_radians(offset_rot_z_deg));
+		apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg,
+				      offset_rot_z_deg);
 
 		
 		
