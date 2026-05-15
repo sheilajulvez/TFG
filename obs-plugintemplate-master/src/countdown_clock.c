@@ -9,6 +9,7 @@
 #include "countdown_clock.h"
 #include <stdlib.h>
 #include <string.h>
+#include <obs-module.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -114,6 +115,18 @@ void countdown_clock_sync_full(countdown_clock_t *clock, double remaining,
 	clock->remaining_seconds = remaining;
 	if (total_duration > 0)
 		clock->duration_seconds = (uint32_t)(total_duration + 0.5);
+	/* Al sincronizar desde web, el reloj debe seguir avanzando entre consultas. */
+	if (clock->remaining_seconds > 0.0) {
+		clock->state = COUNTDOWN_STATE_RUNNING;
+	} else {
+		clock->remaining_seconds = 0.0;
+		clock->state = COUNTDOWN_STATE_FINISHED;
+	}
+
+	blog(LOG_INFO,
+	     "[COUNTDOWN] Sincronizado desde web. Restante=%.2fs Total=%.2fs Estado=%d",
+	     clock->remaining_seconds, (double)clock->duration_seconds,
+	     (int)clock->state);
 }
 
 countdown_state_t countdown_clock_get_state(const countdown_clock_t *clock)

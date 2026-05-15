@@ -102,6 +102,49 @@ static size_t header_callback(char *buffer, size_t size, size_t nitems,
 	return total;
 }
 
+/* Convierte duracion de DOMjudge a segundos.
+ * Formatos soportados: "HH:MM:SS", "MM:SS", "PT#H#M#S". */
+static bool parse_duration_to_seconds(const char *duration_str, double *out_seconds)
+{
+	if (!duration_str || !duration_str[0] || !out_seconds)
+		return false;
+
+	int h = 0, m = 0, s = 0;
+	if (duration_str[0] == 'P' && duration_str[1] == 'T') {
+		const char *p = duration_str + 2;
+		int value = 0;
+		while (*p) {
+			if (*p >= '0' && *p <= '9') {
+				value = value * 10 + (*p - '0');
+			} else if (*p == 'H') {
+				h = value;
+				value = 0;
+			} else if (*p == 'M') {
+				m = value;
+				value = 0;
+			} else if (*p == 'S') {
+				s = value;
+				value = 0;
+			} else {
+				return false;
+			}
+			p++;
+		}
+		*out_seconds = (double)(h * 3600 + m * 60 + s);
+		return true;
+	}
+
+	if (sscanf(duration_str, "%d:%d:%d", &h, &m, &s) == 3) {
+		*out_seconds = (double)(h * 3600 + m * 60 + s);
+		return true;
+	}
+	if (sscanf(duration_str, "%d:%d", &m, &s) == 2) {
+		*out_seconds = (double)(m * 60 + s);
+		return true;
+	}
+	return false;
+}
+
 static bool fetch_team_name_by_url(CURL *curl, memory_buffer_t *buf,
 				   const char *team_url, char *out_name,
 				   size_t out_name_size)
@@ -298,6 +341,7 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	double server_time, start_epoch, end_epoch, elapsed, remaining, total_dur;
 	char start_time_str[128];
 	char end_time_str[128];
+	char duration_str[64];
 	bool got_start, got_end;
 	
 	scoreboard_team_t teams[MAX_SCOREBOARD_TEAMS];
@@ -405,6 +449,8 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 
 				got_start = parse_json_string(buf.data, "start_time", start_time_str, sizeof(start_time_str));
 				got_end = parse_json_string(buf.data, "end_time", end_time_str, sizeof(end_time_str));
+				duration_str[0] = '\0';
+				parse_json_string(buf.data, "duration", duration_str, sizeof(duration_str));
 
 				if (got_start && start_time_str[0]) {
 					if (parse_iso8601(start_time_str, &start_epoch)) {
@@ -417,6 +463,14 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 							remaining = end_epoch - server_time;
 							if (remaining < 0) remaining = 0;
 							total_dur = end_epoch - start_epoch;
+						} else {
+							double duration_seconds = 0.0;
+							if (parse_duration_to_seconds(duration_str, &duration_seconds)) {
+								end_epoch = start_epoch + duration_seconds;
+								remaining = end_epoch - server_time;
+								if (remaining < 0) remaining = 0;
+								total_dur = duration_seconds;
+							}
 						}
 
 						EnterCriticalSection(&sync->mutex);
@@ -427,8 +481,22 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 						sync->result_total_duration = total_dur;
 						sync->result_server_time = server_time;
 						LeaveCriticalSection(&sync->mutex);
+
+						blog(LOG_INFO,
+						     "[WEB_SYNC] Contest OK. elapsed=%.2fs remaining=%.2fs total=%.2fs",
+						     elapsed, remaining, total_dur);
+					} else {
+						blog(LOG_WARNING,
+						     "[WEB_SYNC] No se pudo parsear start_time del contest.");
 					}
+				} else {
+					blog(LOG_WARNING,
+					     "[WEB_SYNC] Contest sin start_time util para countdown.");
 				}
+			} else {
+				blog(LOG_WARNING,
+				     "[WEB_SYNC] Error consultando contest. CURL=%d HTTP=%ld URL=%s",
+				     (int)res, http_code, contest_url);
 			}
 		}
 
