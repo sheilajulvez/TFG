@@ -6,55 +6,84 @@ A level-1 auxiliary file: Cascaras/autorizacion.aux
 A level-1 auxiliary file: Cascaras/dedicatoria.aux
 A level-1 auxiliary file: Cascaras/agradecimientos.aux
 A level-1 auxiliary file: Cascaras/resumen.aux
-A level-1 auxiliary file: Cascaras/abstract.aux
 A level-1 auxiliary file: TeXiS/TeXiS_toc.aux
 A level-1 auxiliary file: Capitulos/Introduccion.aux
 A level-1 auxiliary file: Capitulos/EstadoDeLaCuestion.aux
+White space in argument---line 94 of file Capitulos/EstadoDeLaCuestion.aux
+ : \citation{cite:
+ :                 84,151}
+I'm skipping whatever remains of this command
+White space in argument---line 95 of file Capitulos/EstadoDeLaCuestion.aux
+ : \citation{cite:
+ :                 152,154}
+I'm skipping whatever remains of this command
+White space in argument---line 96 of file Capitulos/EstadoDeLaCuestion.aux
+ : \citation{cite:
+ :                 153}
+I'm skipping whatever remains of this command
+White space in argument---line 97 of file Capitulos/EstadoDeLaCuestion.aux
+ : \citation{cite:
+ :                 159,160}
+I'm skipping whatever remains of this command
+White space in argument---line 98 of file Capitulos/EstadoDeLaCuestion.aux
+ : \citation{cite:
+ :                 188}
+I'm skipping whatever remains of this command
+White space in argument---line 99 of file Capitulos/EstadoDeLaCuestion.aux
+ : \citation{cite:
+ :                 343,347}
+I'm skipping whatever remains of this command
+A level-1 auxiliary file: Capitulos/ConcursosProgramacion.aux
 A level-1 auxiliary file: Capitulos/DescripcionTrabajo.aux
+A level-1 auxiliary file: Capitulos/DescripcionTrabajoConcursosProgramación.aux
 A level-1 auxiliary file: Capitulos/ConclusionesTrabajoFuturo.aux
+A level-1 auxiliary file: Capitulos/Introduction.aux
+A level-1 auxiliary file: Capitulos/ConclusionsFutureWork.aux
 A level-1 auxiliary file: Capitulos/ContribucionesPersonales.aux
 A level-1 auxiliary file: Cascaras/bibliografia.aux
 The style file: TeXiS/TeXiS.bst
-A level-1 auxiliary file: Cascaras/fin.aux
+A level-1 auxiliary file: Apendices/appendixA.aux
+A level-1 auxiliary file: Apendices/appendixB.aux
 Database file #1: biblio.bib
-You've used 22 entries,
+You've used 23 entries,
             2962 wiz_defined-function locations,
-            1229 strings with 16842 characters,
-and the built_in function-call counts, 10880 in all, are:
-= -- 963
-> -- 303
-< -- 29
-+ -- 125
-- -- 97
-* -- 624
-:= -- 1690
-add.period$ -- 84
-call.type$ -- 22
-change.case$ -- 162
-chr.to.int$ -- 22
-cite$ -- 22
-duplicate$ -- 890
-empty$ -- 803
-format.name$ -- 133
-if$ -- 2180
+            1238 strings with 17164 characters,
+and the built_in function-call counts, 11270 in all, are:
+= -- 999
+> -- 313
+< -- 30
++ -- 129
+- -- 100
+* -- 642
+:= -- 1757
+add.period$ -- 88
+call.type$ -- 23
+change.case$ -- 169
+chr.to.int$ -- 23
+cite$ -- 23
+duplicate$ -- 922
+empty$ -- 831
+format.name$ -- 137
+if$ -- 2256
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 164
-newline$ -- 130
-num.names$ -- 89
-pop$ -- 317
+missing$ -- 170
+newline$ -- 136
+num.names$ -- 93
+pop$ -- 328
 preamble$ -- 1
-purify$ -- 120
+purify$ -- 125
 quote$ -- 0
-skip$ -- 383
+skip$ -- 396
 stack$ -- 0
-substring$ -- 473
-swap$ -- 432
+substring$ -- 486
+swap$ -- 444
 text.length$ -- 10
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 220
+type$ -- 230
 warning$ -- 0
-while$ -- 84
+while$ -- 87
 width$ -- 0
-write$ -- 306
+write$ -- 320
+(There were 6 error messages)

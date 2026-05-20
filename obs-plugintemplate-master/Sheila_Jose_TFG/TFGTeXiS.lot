@@ -4,13 +4,18 @@
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {1.1}{\ignorespaces Planificación del proyecto por fases.}}{4}{table.caption.12}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {2.1}{\ignorespaces Comparativa de tipos de Realidad Aumentada}}{7}{table.caption.15}%
-\contentsline {table}{\numberline {2.2}{\ignorespaces Comparativa de SDKs y bibliotecas de RA}}{14}{table.caption.28}%
-\contentsline {table}{\numberline {2.3}{\ignorespaces Principales endpoints de la API REST de DOMjudge para la integración con el plugin de RA.}}{28}{table.caption.47}%
+\contentsline {table}{\numberline {2.1}{\ignorespaces Comparativa multidimensional de los tipos y tecnologías de Realidad Aumentada.}}{8}{table.caption.18}%
+\contentsline {table}{\numberline {2.2}{\ignorespaces Comparativa de SDKs y bibliotecas de RA.}}{17}{table.caption.35}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {3.1}{\ignorespaces Formatos de vídeo soportados por el módulo de detección y su conversión a BGR para OpenCV.}}{46}{table.caption.108}%
+\contentsline {table}{\numberline {3.1}{\ignorespaces Principales endpoints de la API REST de DOMjudge relevantes para la integración con el plugin de RA.}}{35}{table.caption.64}%
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {4.1}{\ignorespaces Formatos de vídeo soportados por el módulo de detección y su conversión a BGR para OpenCV.}}{43}{table.caption.78}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {7.1}{\ignorespaces Project plan by phase.}}{67}{table.caption.130}%
 \babel@toc {english}{}\relax 
+\addvspace {10\p@ }
 \babel@toc {spanish}{}\relax 
 \addvspace {10\p@ }
 \addvspace {10\p@ }

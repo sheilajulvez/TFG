@@ -1,6 +1,6 @@
-\chapter{Concursos de Programación y DOMjudge}
+\chapter{Estado de la Cuestión Concursos de Programación}
 
-\label{cap:concursos}
+\label{cap:concursos_programacion}
 
 \chapterquote{La competición es para los perdedores}{Peter Thiel}
 
@@ -133,3 +133,40 @@ DOMjudge proporciona una \textbf{documentación interactiva de la API} basada en
 Para el desarrollo y las pruebas del plugin de este TFG, DOMjudge ofrece una \textbf{instancia pública de demostración} permanentemente disponible en \url{https://www.domjudge.org/demoweb/}. Esta instancia contiene datos de un concurso ficticio con equipos, envíos y veredictos de ejemplo, y expone exactamente la misma API que un servidor real. El acceso es libre con las credenciales de ejemplo proporcionadas en la propia página. La documentación interactiva de esta instancia se encuentra en \url{https://www.domjudge.org/demoweb/api/doc}.
 
 La integración con esta API es la que permite al plugin de OBS Studio consultar el marcador y los eventos del concurso en tiempo real, posibilitando superponer sobre la retransmisión información actualizada al instante: el equipo que acaba de resolver un problema, su posición en la clasificación o el tiempo transcurrido. Esta capacidad es la que conecta directamente el trabajo de este TFG con el dominio de los concursos de programación, trasladando al ámbito académico la misma experiencia de retransmisión enriquecida con RA que se aplica en eventos deportivos de gran escala como los descritos en el capítulo anterior.
+\section{Conclusiones del Estado de la Cuestión en Concursos de
+Programación}
+\label{sec:conclusiones_concursos}
+Una vez analizada la estructura operativa de los concursos de programación ylas herramientas que los sustentan, se han identificado los  pilares necesarios para dotar de inteligencia de datos al sistema de Realidad Aumentada propuesto en este TFG.
+
+El estudio del formato ICPC ha revelado que la información crítica no reside
+únicamente en el marcador final, sino en el flujo constante de eventos
+(\textit{submissions}) y veredictos del juez automático. Para que la
+Realidad Aumentada sea efectiva en una retransmisión, debe ser capaz de
+reaccionar a estos eventos de forma síncrona. La investigación ha permitido
+concluir que:
+\begin{itemize}
+\item \textbf{Relevancia del tiempo real}: El sistema debe priorizar la
+visualización de los \textit{first solves} y los cambios de posición en el
+\textit{rank}, ya que son los momentos de mayor impacto narrativo.
+\item \textbf{Estandarización}: La dependencia de un sistema de gestión
+de concursos (CMS) robusto es indispensable. La arquitectura de DOMjudge se
+presenta como la solución ideal por su amplia adopción y su cumplimiento de
+los estándares internacionales de la comunidad competitiva.
+\end{itemize}
+
+La revisión de la API REST de DOMjudge ha sido determinante para definir la
+arquitectura del plugin de OBS. Se utilizarán los endpoints
+\texttt{/contests}, \texttt{/teams} y \texttt{/scoreboard} como fuentes
+primarias. La capacidad de obtener respuestas en formato JSON facilita el
+parseo directo dentro del entorno C++ del plugin, permitiendo una
+actualización de los activos 3D sin interrumpir el flujo de vídeo.
+
+Con el cierre de este capítulo, se completa la fase de investigación del
+"Estado de la Cuestión". Se dispone ahora de un marco teórico doble: por un
+lado, el conocimiento técnico sobre RA, visión por computador y renderizado 3D
+en OBS~\ref{cap:estadoDeLaCuestion}, y por otro, la comprensión de la lógica y la extracción
+de datos de los concursos de programación~\ref{cap:concursos_programacion}.
+Esta base permite abordar con garantías el siguiente bloque del trabajo: la
+\textbf{Descripción del Trabajo de Realidad Aumentada}~\ref{cap:descripcionTrabajo}. En dicho capítulo se
+detallará el proyerto detallado de la integración de RA en elmundo de OBS. Yposteriormente cómo se fusionan finalmente los datos del marcador de DOMjudge con la estimación de pose de OpenCV para generar la experiencia de visualización
+enriquecida que motiva este proyecto \ref{cap:descripcionTrabajoConcursosProgramacion}.

@@ -30,18 +30,20 @@ Esta memoria corresponde al estudio, diseño e implementación de una solución 
 
 El punto de partida de este trabajo está en cómo la RA ha pasado de ser una curiosidad experimental a convertirse en una herramienta habitual dentro de la producción audiovisual. Hoy en día ya no sorprende ver cómo informativos, retransmisiones deportivas o programas de entretenimiento incluyen gráficos en 3D, animaciones y elementos interactivos que se superponen en el escenario real, creando una experiencia mucho más visual y atractiva para el espectador.
 
-Con este proyecto se quiere probar hasta qué punto es posible llevar estas ideas a un entorno concreto: la \textbf{retransmisión de concursos de programación en streaming}. Aunque todavía no es muy común aplicar la RA en este tipo de contenidos, esta tecnología tiene un gran potencial para hacer las emisiones más claras, dinámicas y entretenidas, además de contribuir a poner en valor este tipo de competiciones técnicas.
+Con este proyecto se quiere probar hasta qué punto es posible llevar estas ideas a un entorno concreto: la \textbf{retransmisión de concursos de programación en \textit{streaming}}. Aunque todavía no es muy común aplicar la RA en este tipo de contenidos, esta tecnología tiene un gran potencial para hacer las emisiones más claras, dinámicas y entretenidas, además de contribuir a poner en valor este tipo de competiciones técnicas.
 
 
 \section{Motivación}
 
 En la actualidad, las retransmisiones profesionales en televisión, especialmente en los informativos que se emiten en directo, utilizan \textbf{realidad aumentada (RA)} como recurso para reforzar y clarificar la información. Esta tendencia evidencia el potencial de la RA como herramienta de comunicación visual en tiempo real, al aportar claridad, dinamismo y un mayor atractivo a los contenidos.
 
-En el ámbito del \textbf{streaming}, una de las herramientas más extendidas es \textbf{OBS Studio}, debido a su carácter de software libre y a la amplia comunidad que lo respalda. Sin embargo, la plataforma no ofrece soporte nativo para integrar efectos avanzados de RA, lo que limita su uso en entornos donde sería deseable disponer de este tipo de recursos.
+En el ámbito del \textit{streaming}, una de las herramientas más extendidas es \textbf{OBS Studio}, debido a su carácter de software libre y a la amplia comunidad que lo respalda. Sin embargo, la plataforma no ofrece soporte nativo para integrar efectos avanzados de RA, lo que limita su uso en entornos donde sería deseable disponer de este tipo de recursos.
 
 Un dominio especialmente representativo para explorar esta posibilidad son los \textbf{concursos de programación universitarios}. Estos eventos generan en tiempo real información muy rica: clasificaciones actualizadas instante a instante, veredictos de los envíos de código, tiempos de penalización y, en los momentos finales, la resolución dramática de un marcador congelado. Sin embargo, las retransmisiones de estos concursos son habitualmente sencillas, con una cámara fija sobre las mesas de los participantes y escasa información visual para el espectador. La RA ofrece aquí una oportunidad concreta: superponer esa información estructurada directamente sobre la imagen en directo, acercando la experiencia de estas competiciones universitarias a los estándares visuales de las retransmisiones deportivas profesionales.
 
-La motivación de este proyecto surge de la combinación de estas dos observaciones: explorar la posibilidad de dotar a OBS Studio de capacidades de RA y aplicarlas de forma práctica a la retransmisión de concursos de programación. Con ello se busca sentar una base tecnológica que pueda abrir nuevas oportunidades de innovación en la creación de contenidos digitales interactivos y en tiempo real, demostrable en un caso de uso técnico real.
+La Facultad de Informática de la Universidad Complutense de Madrid (FDI-UCM) organiza anualmente concursos de programación en el estilo ICPC que reúnen a equipos de estudiantes del grado. La retransmisión en directo de estas competiciones, habitualmente a través de plataformas de \textit{streaming}, representa un escenario ideal para explorar el uso de la RA: existe información estructurada en tiempo real, un público técnico que aprecia representaciones visuales precisas, y una producción audiovisual sencilla que podría beneficiarse de una capa de contenido aumentado. Este contexto concreto actúa como caso de uso principal y guía buena parte de las decisiones de diseño del sistema.
+
+La motivación de este proyecto surge de la combinación de estas observaciones: explorar la posibilidad de dotar a OBS Studio de capacidades de RA y aplicarlas de forma práctica a la retransmisión de concursos de programación. Con ello se busca sentar una base tecnológica que pueda abrir nuevas oportunidades de innovación en la creación de contenidos digitales interactivos y en tiempo real, demostrable en un caso de uso técnico real.
 
 \section{Objetivos}
 
@@ -51,7 +53,7 @@ Este planteamiento implica resolver un conjunto de retos técnicos que se aborda
 
 \begin{itemize}
   \item Detectar \textbf{marcadores ArUco} en cada frame de la cámara y estimar la pose del marcador en tiempo real mediante el algoritmo PnP de OpenCV, para determinar la posición y orientación del contenido virtual que debe superponerse.
-  \item Implementar la \textbf{cadena de transformación de coordenadas} entre el espacio de OpenCV y el de OBS, resolviendo el cambio de convenio de ejes que introduce una rotación de $180°$ sobre el eje horizontal.
+  \item Implementar la \textbf{cadena de transformación de coordenadas} entre el espacio de OpenCV y el de OBS, resolviendo el cambio de convenio de ejes que introduce una rotación de $180^\circ$ sobre el eje horizontal.
   \item Desarrollar los cuatro \textbf{modos de operación} del plugin: superposición de un modelo 3D arbitrario anclado al marcador, cronómetro analógico sincronizado con el tiempo del concurso, marcador (\textit{scoreboard}) del concurso en tiempo real e información individual del equipo detectado en cámara.
   \item Integrar conectividad con la plataforma de juez automático \textbf{DOMjudge} a través de su API REST, utilizando \textbf{libcurl} como biblioteca HTTP, para obtener clasificaciones, veredictos y tiempos del concurso de forma periódica desde el plugin.
   \item Diseñar una \textbf{arquitectura de dos hilos} que separe las peticiones de red del ciclo de renderizado, de modo que la latencia de red nunca bloquee la producción de frames.
@@ -60,38 +62,38 @@ Este planteamiento implica resolver un conjunto de retos técnicos que se aborda
   \item Ofrecer una \textbf{interfaz de usuario} integrada en OBS que permita al operador configurar y cambiar los parámetros del plugin en directo, sin reiniciar la escena.
 \end{itemize}
 
-Como resultado, el sistema demuestra la viabilidad de añadir un pipeline completo de RA orientada a datos a OBS Studio manteniendo la arquitectura de filtro nativo, y abre la puerta a su adaptación a otros tipos de retransmisión en directo más allá de los concursos de programación.
+Como resultado, el sistema demuestra la viabilidad de añadir un \textit{pipeline} completo de RA orientada a datos a OBS Studio manteniendo la arquitectura de filtro nativo, y abre la puerta a su adaptación a otros tipos de retransmisión en directo más allá de los concursos de programación.
 
 \section{Plan de trabajo}
 
-El proyecto se organizó en cuatro fases consecutivas siguiendo una metodología de investigación aplicada iterativa. Cada fase tenía un objetivo concreto y producía un entregable que servía de punto de partida para la siguiente. La tabla~\ref{tab:planificacion} resume la planificación general.
+El proyecto se organizará en cuatro fases consecutivas siguiendo una metodología de investigación aplicada iterativa. Cada fase tiene un objetivo concreto y produce un entregable que sirve de punto de partida para la siguiente. La tabla~\ref{tab:planificacion} resume la planificación general.
 
 \begin{table}[H]
 \centering
 \small
-\begin{tabularx}{\textwidth}{c l X c}
+\begin{tabularx}{\textwidth}{c p{3cm} X p{3.2cm}}
 \toprule
-\textbf{Fase} & \textbf{Nombre} & \textbf{Objetivo principal} & \textbf{Duración} \\
+\textbf{Fase} & \textbf{Nombre} & \textbf{Objetivo principal} & \textbf{Duración y periodo} \\
 \midrule
-1 & Estado del arte & Revisar tecnologías de RA, evaluar SDKs disponibles y estudiar la API de plugins de OBS Studio & 4 semanas \\[4pt]
-2 & Diseño y prototipo & Definir la arquitectura del sistema y construir un primer prototipo funcional & 4 semanas \\[4pt]
-3 & Implementación & Desarrollar el sistema completo: cuatro modos de operación, integración con DOMjudge, calibración de cámara e interfaz de usuario & 8 semanas \\[4pt]
-4 & Documentación y validación & Validar el sistema mediante pruebas, redactar la memoria y preparar la defensa & 3 semanas \\
+1 & Estado del arte & Revisar tecnologías de RA, evaluar SDKs disponibles y estudiar la API de plugins de OBS Studio & 4 semanas\newline Oct.–nov. 2025 \\[4pt]
+2 & Diseño y prototipo & Definir la arquitectura del sistema y construir un primer prototipo funcional & 4 semanas\newline Nov.–dic. 2025 \\[4pt]
+3 & Implementación & Desarrollar el sistema completo con los modos de operación necesarios, la integración con fuentes de datos externas, la calibración de cámara y la interfaz de usuario & 8 semanas\newline Ene.–mar. 2026 \\[4pt]
+4 & Documentación y validación & Validar el sistema mediante pruebas, redactar la memoria y preparar la defensa & 3 semanas\newline Abr.–jun. 2026 \\
 \bottomrule
 \end{tabularx}
 \caption{Planificación del proyecto por fases.}
 \label{tab:planificacion}
 \end{table}
 
-La primera fase se dedicó al estudio del estado de la cuestión: revisión de sistemas de RA en retransmisiones en vivo, evaluación comparativa de SDKs disponibles y análisis de la arquitectura de plugins de OBS Studio. Los resultados de esta investigación y las decisiones tecnológicas adoptadas se recogen en el capítulo~\ref{cap:estadoDeLaCuestion}.
+La primera fase se dedicará al estudio del estado de la cuestión: revisión de sistemas de RA en retransmisiones en vivo, evaluación comparativa de SDKs disponibles y análisis de la arquitectura de plugins de OBS Studio. Los resultados de esta investigación y las decisiones tecnológicas adoptadas se recogerán en el capítulo~\ref{cap:estadoDeLaCuestion}.
 
-La segunda fase tuvo como objetivo establecer la arquitectura del sistema y comprobar que el enfoque elegido era técnicamente viable. Se diseñó la estructura del plugin y se construyó un prototipo inicial que validó la superposición básica de contenido 3D sobre la señal de cámara.
+La segunda fase tendrá como objetivo establecer la arquitectura del sistema y comprobar que el enfoque elegido es técnicamente viable. Se diseñará la estructura del plugin y se construirá un prototipo inicial que valide la superposición básica de contenido 3D sobre la señal de cámara.
 
-La tercera fase fue la más extensa e incluyó el desarrollo completo del plugin. El capítulo~\ref{cap:descripcionTrabajo} documenta en detalle todo el trabajo realizado en esta etapa.
+La tercera fase será la más extensa e incluirá el desarrollo completo del plugin. El capítulo~\ref{cap:descripcionTrabajo} documentará en detalle todo el trabajo realizado en esta etapa.
 
-La cuarta fase estuvo dedicada a las pruebas de estabilidad del sistema, la revisión del código y la redacción de esta memoria.
+La cuarta fase estará dedicada a las pruebas de estabilidad del sistema, la revisión del código y la redacción de esta memoria.
 
-El resto de la memoria se organiza de la siguiente forma. El capítulo~\ref{cap:estadoDeLaCuestion} analiza el estado de la cuestión: tipos y aplicaciones de la RA, los SDKs disponibles y la justificación de la elección tecnológica, la arquitectura de OBS Studio y su sistema de plugins, y el dominio de los concursos de programación junto con la plataforma DOMjudge. El capítulo~\ref{cap:descripcionTrabajo} describe el diseño e implementación completos del plugin: detección de marcadores, estimación de pose, renderizado 3D, conectividad con DOMjudge y los cuatro modos de operación. El capítulo~\ref{cap:conclusiones} presenta las conclusiones del trabajo y las líneas de trabajo futuro.
+El resto de la memoria se organiza de la siguiente forma. El capítulo~\ref{cap:estadoDeLaCuestion} analiza el estado de la cuestión en realidad aumentada: sus tipos, aplicaciones principales, SDKs disponibles, la justificación de la elección tecnológica, la arquitectura de OBS Studio y su sistema de plugins. El capítulo~\ref{cap:concursos_programacion} introduce el dominio de los concursos de programación y la plataforma DOMjudge, que actúa como fuente de datos para la parte dinámica del sistema. El capítulo~\ref{cap:descripcionTrabajo} describe el diseño e implementación del filtro de realidad aumentada en OBS: detección de marcadores, estimación de pose, renderizado 3D y configuración del modo AR. El capítulo~\ref{cap:descripcionTrabajoConcursosProgramacion} explica la ampliación del filtro para concursos de programación, incluyendo elementos dinámicos, conectividad con DOMjudge y modos de visualización. Finalmente, el capítulo~\ref{cap:conclusiones} presenta las conclusiones del trabajo y las líneas de trabajo futuro.
 
 
 % \section{Explicaciones adicionales sobre el uso de esta plantilla}
@@ -103,7 +105,4 @@ El resto de la memoria se organiza de la siguiente forma. El capítulo~\ref{cap:
 
 % El siguiente texto se genera con el comando \verb|\lipsum[2-20]| que viene a continuación en el fichero .tex. El único propósito es mostrar el aspecto de las páginas usando esta plantilla. Quita este comando y, si quieres, comenta o elimina el paquete \textit{lipsum} al final de \verb|TeXiS\TeXiS_pream.tex|
 
-% \subsection{Texto de prueba}
-
-
-% \lipsum[2-20]
+% \subsection{Texto de p

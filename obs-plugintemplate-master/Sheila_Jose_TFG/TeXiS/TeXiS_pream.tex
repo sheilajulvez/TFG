@@ -41,7 +41,7 @@
 % otros y se desea no tener que incluirlo, se puede cambiar TeXiS.sty,
 % y eliminar el comando example.
 \usepackage{verbatim}
-
+\raggedbottom
 % El  paquete  "layout" es  de  "depuración".  Sirve  para definir  el
 % comando \layout que puedes meter  en cualquier sitio del documento y
 % te genera  un par de páginas  con un gráfico sobre  la estructura de
@@ -641,8 +641,6 @@
 % poco de independencia  del tamaño de la página.  Consulta el fichero
 % portada.tex para más información.
 \usepackage{calc}
-\usepackage{tikz}
-\usetikzlibrary{positioning}
 
 % Define el entorno  longtable que sirve para crear  tablas que ocupan
 % más de una página.

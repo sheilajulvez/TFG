@@ -2,14 +2,20 @@
 
 \section*{\tituloPortadaVal}
 
-Este Trabajo de Fin de Grado presenta el diseño e implementación de un plugin nativo para \textbf{OBS Studio} que incorpora un sistema completo de \textbf{realidad aumentada (RA)} orientada a datos en retransmisiones en directo, con aplicación específica a concursos de programación universitarios del estilo ICPC.
+En los últimos años, es cada vez más frecuente que los programas de televisión incorporen efectos de realidad aumentada (RA) en sus retransmisiones en directo. Esta tecnología permite integrar elementos virtuales, como gráficos tridimensionales, visualizaciones de datos interactivas o superposiciones en tiempo real, que parecen coexistir con el entorno real. De este modo, la RA enriquece la narrativa visual, facilita la comprensión de información compleja y aumenta el impacto comunicativo de la emisión.
 
-El plugin extiende OBS Studio con cuatro modos de operación diferenciados: superposición de un \textbf{modelo 3D} anclado a marcadores \textbf{ArUco} detectados en tiempo real mediante el algoritmo \textbf{PnP} de \textbf{OpenCV}, un \textbf{cronómetro analógico} sincronizado con el tiempo oficial del concurso, un \textbf{marcador} (\textit{scoreboard}) con la clasificación general actualizada en tiempo real, y un modo de \textbf{información de equipo} que identifica automáticamente qué equipo aparece en cámara y muestra sus datos. Los modelos tridimensionales se cargan a través de la biblioteca \textbf{ASSIMP}, que soporta más de cuarenta formatos de fichero.
+Este Trabajo de Fin de Grado explora el potencial de la realidad aumentada en el contexto de las retransmisiones en directo mediante \textit{streaming}, utilizando OBS Studio como herramienta principal de producción. La contribución central es un \textit{plugin} nativo de OBS Studio, implementado como filtro de vídeo, que detecta marcadores visuales ArUco en la señal de la cámara, estima su pose en tiempo real mediante el algoritmo PnP de OpenCV, y renderiza contenido sintético anclado a dichos marcadores directamente sobre el fotograma de vídeo, sin ningún proceso externo.
 
-El desarrollo abordó los principales retos técnicos del sistema: la integración de los sistemas de coordenadas de OpenCV y OBS, el suavizado de la superposición para eliminar el temblor visual, y una \textbf{arquitectura de dos hilos} que separa las peticiones periódicas a la API REST de \textbf{DOMjudge} del ciclo de renderizado, garantizando que la latencia de red nunca interrumpa la producción de fotogramas. El sistema se complementa con una herramienta independiente de calibración de cámara desarrollada en Python.
+El \textit{plugin} ofrece cuatro modos de operación diferenciados. En el modo de modelo 3D, se superpone geometría arbitraria cargada mediante Assimp sobre el marcador con posición y orientación correctas. En el modo cronómetro, se renderiza un reloj analógico de cuenta atrás cuyas manecillas se sincronizan con el tiempo oficial del concurso obtenido desde una API remota. En el modo \textit{scoreboard}, la clasificación completa de un concurso de programación se proyecta sobre el vídeo en tiempo real. En el modo de información de equipo, el sistema identifica automáticamente a qué equipo apunta la cámara y muestra exclusivamente sus datos, combinando la detección de marcadores con un fichero JSON de mapeo preparado antes de la retransmisión.
 
-El resultado demuestra la viabilidad de incorporar un pipeline completo de RA orientada a datos a OBS Studio como \textbf{filtro nativo}, sin latencia adicional por procesos externos y sin modificar el núcleo del software.
+En el trabajo se resuelven varios problemas técnicos de envergadura: la discrepancia entre los sistemas de coordenadas de OpenCV y OBS, resuelta mediante una rotación de $180^\circ$ y la corrección del signo de las componentes correspondientes; un filtro de media móvil exponencial con interpolación circular para eliminar el temblor visual producido por el ruido de cámara; una arquitectura de dos hilos que mantiene las peticiones de red en un hilo secundario para que nunca bloqueen el ciclo de renderizado; y una herramienta independiente de calibración de cámara en Python. El \textit{plugin} gestiona además los siete formatos de píxel que OBS puede entregar desde un dispositivo de captura.
+
+El dominio de aplicación específico son las retransmisiones de concursos de programación, donde los datos estructurados en tiempo real del sistema de juez automático DOMjudge se consumen a través de su API REST mediante libcurl, incluida en OBS Studio. Esta aplicación demuestra que es posible añadir un \textit{pipeline} completo de RA a OBS Studio manteniendo la arquitectura de filtro nativo y sin modificar el núcleo del software.
 
 \section*{Palabras clave}
 
-\noindent Realidad Aumentada, Retransmisión en directo, Plugin OBS, ArUco, OpenCV, DOMjudge, Modelos 3D, Estimación de pose
+\noindent Realidad Aumentada, Retransmisión en directo, \textit{plugin} OBS, Modelos 3D, Marcadores ArUco, OpenCV, DOMjudge
+
+   
+
+

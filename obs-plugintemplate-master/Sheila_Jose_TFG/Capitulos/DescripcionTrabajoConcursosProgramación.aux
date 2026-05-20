@@ -1,0 +1,82 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\citation{DOMjudge}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Descripción del Trabajo Concursos de Programación}{51}{chapter.100}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{cap:descripcionTrabajoConcursosProgramacion}{{5}{51}{Descripción del Trabajo Concursos de Programación}{chapter.100}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Renderizado de texto dinámico}{52}{section.101}\protected@file@percent }
+\newlabel{sec:texto_dinamico}{{5.1}{52}{Renderizado de texto dinámico}{section.101}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.1}Pipeline de renderizado}{52}{subsection.102}\protected@file@percent }
+\newlabel{subsec:pipeline_overlay}{{5.1.1}{52}{Pipeline de renderizado}{subsection.102}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.1}{\ignorespaces Convenios de coordenadas 2D. OBS se configura para usar el convenio de OpenCV, de forma que las coordenadas del detector se pueden usar sin transformación adicional.}}{53}{figure.caption.103}\protected@file@percent }
+\newlabel{fig:coordsystems}{{5.1}{53}{Convenios de coordenadas 2D. OBS se configura para usar el convenio de OpenCV, de forma que las coordenadas del detector se pueden usar sin transformación adicional}{figure.caption.103}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.2}{\ignorespaces \textit  {Pipeline} de conversión de la representación de Rodrigues a la orientación del \textit  {overlay}.}}{53}{figure.caption.104}\protected@file@percent }
+\newlabel{fig:rodrigues_pipeline}{{5.2}{53}{\textit {Pipeline} de conversión de la representación de Rodrigues a la orientación del \textit {overlay}}{figure.caption.104}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.2}Suavizado del \textit  {overlay}}{53}{subsection.105}\protected@file@percent }
+\newlabel{subsec:suavizado}{{5.1.2}{53}{Suavizado del \textit {overlay}}{subsection.105}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}El reloj analógico 3D}{54}{section.106}\protected@file@percent }
+\newlabel{sec:reloj3d}{{5.2}{54}{El reloj analógico 3D}{section.106}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}Conectividad con DOMjudge}{55}{section.107}\protected@file@percent }
+\newlabel{sec:domjudge_integracion}{{5.3}{55}{Conectividad con DOMjudge}{section.107}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.1}Arquitectura de hilos}{55}{subsection.108}\protected@file@percent }
+\newlabel{subsec:hilos}{{5.3.1}{55}{Arquitectura de hilos}{subsection.108}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.3}{\ignorespaces Arquitectura de dos hilos del plugin. El hilo secundario realiza peticiones HTTP asíncronas y escribe los datos en la caché protegida por \texttt  {CRITICAL\_SECTION}; el hilo principal de OBS lee de la caché en cada fotograma sin bloquearse.}}{55}{figure.caption.109}\protected@file@percent }
+\newlabel{fig:hilos}{{5.3}{55}{Arquitectura de dos hilos del plugin. El hilo secundario realiza peticiones HTTP asíncronas y escribe los datos en la caché protegida por \texttt {CRITICAL\_SECTION}; el hilo principal de OBS lee de la caché en cada fotograma sin bloquearse}{figure.caption.109}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.2}Red asíncrona con libcurl}{56}{subsection.110}\protected@file@percent }
+\newlabel{subsec:libcurl}{{5.3.2}{56}{Red asíncrona con libcurl}{subsection.110}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.3}Máquina de estados de conexión}{56}{subsection.111}\protected@file@percent }
+\newlabel{subsec:estados_conexion}{{5.3.3}{56}{Máquina de estados de conexión}{subsection.111}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.4}Endpoints y flujo de datos}{56}{subsection.112}\protected@file@percent }
+\newlabel{subsec:endpoints}{{5.3.4}{56}{Endpoints y flujo de datos}{subsection.112}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.4}{\ignorespaces Flujo de datos desde DOMjudge hasta los componentes de renderizado. El hilo secundario escribe en la caché; el hilo principal la lee sin bloqueos para alimentar el reloj y el motor de texto.}}{57}{figure.caption.116}\protected@file@percent }
+\newlabel{fig:flujo_datos}{{5.4}{57}{Flujo de datos desde DOMjudge hasta los componentes de renderizado. El hilo secundario escribe en la caché; el hilo principal la lee sin bloqueos para alimentar el reloj y el motor de texto}{figure.caption.116}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.5}Modos de visualización}{57}{subsection.117}\protected@file@percent }
+\newlabel{subsec:modos}{{5.3.5}{57}{Modos de visualización}{subsection.117}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.4}Configuración ampliada}{57}{section.118}\protected@file@percent }
+\newlabel{sec:configuracion_ampliada}{{5.4}{57}{Configuración ampliada}{section.118}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.1}Configuración del servidor}{58}{subsection.119}\protected@file@percent }
+\newlabel{subsec:config_servidor}{{5.4.1}{58}{Configuración del servidor}{subsection.119}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.2}Mapeo de marcadores a equipos}{58}{subsection.120}\protected@file@percent }
+\newlabel{subsec:mapeo}{{5.4.2}{58}{Mapeo de marcadores a equipos}{subsection.120}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.5}Conclusiones y decisiones de diseño}{58}{section.121}\protected@file@percent }
+\newlabel{sec:conclusiones_diseno_concursos}{{5.5}{58}{Conclusiones y decisiones de diseño}{section.121}{}}
+\@setckpt{Capitulos/DescripcionTrabajoConcursosProgramación}{
+\setcounter{page}{60}
+\setcounter{equation}{0}
+\setcounter{enumi}{3}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{5}
+\setcounter{section}{5}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{4}
+\setcounter{table}{0}
+\setcounter{parentequation}{0}
+\setcounter{NAT@ctr}{0}
+\setcounter{float@type}{8}
+\setcounter{section@level}{0}
+\setcounter{Item}{16}
+\setcounter{Hfootnote}{0}
+\setcounter{bookmark@seq@number}{79}
+\setcounter{caption@flags}{2}
+\setcounter{continuedfloat}{0}
+\setcounter{KVtest}{0}
+\setcounter{subfigure}{0}
+\setcounter{subfigure@save}{0}
+\setcounter{lofdepth}{1}
+\setcounter{subtable}{0}
+\setcounter{subtable@save}{0}
+\setcounter{lotdepth}{1}
+\setcounter{lstnumber}{1}
+\setcounter{AM@survey}{0}
+\setcounter{lstlisting}{0}
+\setcounter{lastyear}{2025}
+}

@@ -1,51 +1,78 @@
 \chapter{Introduction}
 \label{cap:introduction}
-\addcontentsline{toc}{chapter}{Introduction}
-\ref{cap:introduccion}.
 
-\chapterquote{Cuanto peor, mejor para todos. Y cuanto peor para todos, mejor. Mejor para mí, el suyo. Beneficio político.}{-Rajoy}
+\chapterquote{Document the code.}{Pedro Pablo}
 
-\section{Introducción}
-This report corresponds to the Bachelor’s Thesis in Video Games by Sheila Julvez and José Moreno. In this project, we focused on studying, designing, and implementing a technological solution that allows the use of \textbf{augmented reality (AR)} and spatial detection techniques in live broadcasts, using the open-source platform \textbf{OBS Studio} as the base. The idea arises in a context where the audiovisual world is changing rapidly, combining real-time content creation with immersive technologies that are transforming the way digital content is communicated and consumed.
+This report describes the study, design, and implementation of a technological solution that enables the use of \textbf{augmented reality (AR)} through visual marker detection in live broadcasts, based on the open-source platform \textbf{OBS Studio}. The project is situated in a context where the audiovisual world is evolving rapidly, combining real-time content creation with immersive technologies that are transforming the way digital content is communicated and consumed.
 
-The starting point of this work lies in how AR has gone from being an experimental curiosity to becoming a common tool in audiovisual production. A clear example is the data from \textbf{\textbackslash{}cite\{GrandViewAR\}}, which estimated the global AR market at around \textbf{\$70.2 billion} in 2023. Nowadays, it is common to see news programs, sports broadcasts, or entertainment shows including 3D graphics, animations, and interactive elements overlaid on real environments, creating a much more visual and engaging experience for viewers.
+The starting point of this work lies in how AR has gone from being an experimental curiosity to becoming a standard tool in audiovisual production. Today, it is no longer surprising to see how news programmes, sports broadcasts, or entertainment shows include 3D graphics, animations, and interactive elements overlaid on real environments, creating a much more visual and engaging experience for viewers.
 
-With this project, we want to test how feasible it is to bring these ideas into a specific context: \textbf{live streaming programming contests}. Although AR is still not widely used in this type of content, we believe it has great potential to make broadcasts clearer, more dynamic, and entertaining, while also highlighting the value of these technical competitions.
+With this project, we aim to explore to what extent it is possible to bring these ideas into a specific domain: the \textbf{live \textit{streaming} of programming contests}. Although AR is still not widely used in this type of content, this technology has great potential to make broadcasts clearer, more dynamic, and more engaging, while also contributing to raising the profile of these technical competitions.
+
 
 \section{Motivation}
+\label{sec:motivacion_en}
 
- The choice of this topic for our Bachelor’s Thesis comes from two main reasons: on one hand, our academic and professional interest in immersive technologies applied to the audiovisual field; and on the other hand, the growing need to innovate in how technical content is presented and consumed in digital environments, such as live programming contests.
+In today's professional television broadcasts, particularly live news programmes, \textbf{augmented reality (AR)} is used as a resource to reinforce and clarify information. This trend demonstrates the potential of AR as a visual communication tool in real time, providing clarity, dynamism, and greater appeal to content.
 
-As Video Game Development students, we have worked extensively with graphics systems, interactive environments, and real-time rendering. All of this has sparked our interest in the intersection between advanced graphics technologies and modern media. Augmented reality, in particular, seems very interesting to us because it has applications beyond interactive entertainment, in contexts where clarity, visual appeal, and technical efficiency are also important.
+In the domain of live \textit{streaming}, one of the most widely used tools is \textbf{OBS Studio}, owing to its free and open-source nature and the large community that supports it. However, the platform does not offer native support for integrating advanced AR effects, which limits its use in contexts where such capabilities would be desirable.
 
-On a more personal level, this project also gives us the opportunity to put into practice what we have learned during the degree in developing interactive graphical solutions, tackling real technical challenges such as integrating AR libraries, detecting physical space, or inserting real-time graphics into a live streaming workflow with OBS Studio. Being able to apply all this knowledge in a functional scenario, with both technical and creative components, is an exciting challenge and we believe it can make an original contribution to a field that is rapidly growing.
+A particularly representative domain in which to explore this possibility is that of \textbf{university programming contests}. These events generate very rich real-time information: rankings updated instant by instant, submission verdicts, penalty times, and, in the final moments, the dramatic resolution of a frozen scoreboard. Yet the broadcasts of these contests are typically simple, with a fixed camera over the participants' desks and little visual information for the viewer. AR offers a concrete opportunity here: overlaying that structured information directly onto the live image, bringing the experience of these university competitions closer to the visual standards of professional sports broadcasts.
+
+The Faculty of Computer Science of the Complutense University of Madrid (FDI-UCM) organises programming contests in the ICPC style every year, bringing together teams of undergraduate students. The live broadcast of these competitions, typically through \textit{streaming} platforms, represents an ideal scenario in which to explore the use of AR: there is real-time structured information, a technical audience that appreciates precise visual representations, and a simple audiovisual production that could benefit greatly from a layer of augmented content. This specific context serves as the main use case and guides many of the design decisions of the system.
+
+The motivation for this project stems from the combination of these observations: to explore the possibility of equipping OBS Studio with AR capabilities and applying them practically to the broadcasting of programming contests. The aim is to lay a technological foundation that can open new opportunities for innovation in the creation of interactive, real-time digital content, demonstrable in a concrete technical use case.
+
 
 \section{Objectives}
+\label{sec:objetivos_en}
 
- The main goal of this project is to create a theoretical and practical foundation that allows us to understand and apply \textbf{augmented reality (AR)} in live broadcasts using \textbf{OBS Studio}. We focused mainly on how this technology can be used for streaming programming contests.
+The main objective of this project is to incorporate \textbf{augmented reality (AR)} functionalities in real time into \textbf{OBS Studio}. To this end, a native OBS Studio filter is developed that can integrate synthetic content directly into the video stream of a broadcast, without additional latency from external processes and without modifying the software core.
 
-Beyond exploring what AR can bring visually or communicatively, we also wanted to analyze the technical challenges that arise when integrating it into a real-time broadcast system. These include, for example, detecting and modeling physical space, tracking cameras and moving objects, and rendering 3D elements live without compromising the quality or fluidity of the stream.
+This approach entails resolving a set of technical challenges that are addressed as concrete objectives of the project:
 
-Through this thesis, we aim to establish a starting point that can support future projects in this area. Our intention is to contribute to the field of immersive digital communication and provide a reference for students, professionals, or creators who want to experiment with new ways to enhance the viewer experience in live broadcasts, especially in such a technically specific area as programming contests.
+\begin{itemize}
+  \item Detect \textbf{ArUco markers} in each camera frame and estimate the marker pose in real time using OpenCV's PnP algorithm, in order to determine the position and orientation of the virtual content to be overlaid.
+  \item Implement the \textbf{coordinate transformation chain} between the OpenCV and OBS coordinate spaces, resolving the axis convention change that introduces a $180^\circ$ rotation about the horizontal axis.
+  \item Develop the four \textbf{operating modes} of the plugin: superimposition of an arbitrary 3D model anchored to the marker, an analogue countdown clock synchronised with the contest time, a real-time contest \textit{scoreboard}, and individual team information for the team detected on camera.
+  \item Integrate connectivity with the automatic judging platform \textbf{DOMjudge} through its REST API, using \textbf{libcurl} as the HTTP library, to periodically retrieve rankings, verdicts, and contest times from within the plugin.
+  \item Design a \textbf{two-thread architecture} that separates network requests from the rendering cycle, so that network latency never blocks \textit{frame} production.
+  \item Develop an independent \textbf{camera calibration tool} that generates the intrinsic parameters file and distortion coefficients loaded by the plugin at startup.
+  \item Apply a \textbf{smoothing filter} over the pose estimate to eliminate the visual jitter caused by camera noise and video compression.
+  \item Provide a \textbf{user interface} integrated into OBS that allows the operator to configure and change plugin parameters live, without restarting the scene.
+\end{itemize}
+
+As a result, the system demonstrates the feasibility of adding a complete data-driven AR \textit{pipeline} to OBS Studio while maintaining the native filter architecture, and opens the door to its adaptation to other types of live broadcast beyond programming contests.
+
 
 \section{Working Plan}
+\label{sec:plan_trabajo_en}
 
- The development of this Bachelor’s Thesis will follow a sequential structure divided into four main phases, each addressing a specific set of technical and analytical activities. This methodological organization is intended to ensure a logical and coherent progression toward achieving the objectives, allowing effective management of time and resources throughout the research and development process.
+The project will be organised in four consecutive phases following an iterative applied research methodology. Each phase has a specific objective and produces a deliverable that serves as the starting point for the next. Table~\ref{tab:planificacion_en} summarises the overall plan.
 
-The first phase focuses on a thorough literature review. In this initial stage, academic sources, relevant case studies, and applied examples of augmented reality systems used in live broadcasting will be collected and analyzed. Additionally, a comparative evaluation of available technologies and tools will be carried out to select the most suitable ones for the subsequent prototype implementation.
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{c p{3cm} X p{3.2cm}}
+\toprule
+\textbf{Phase} & \textbf{Name} & \textbf{Main objective} & \textbf{Duration and period} \\
+\midrule
+1 & State of the art & Review AR technologies, evaluate available SDKs, and study the OBS Studio plugin API & 4 weeks\newline Oct.–Nov. 2025 \\[4pt]
+2 & Design and prototype & Define the system architecture and build a first functional prototype & 4 weeks\newline Nov.–Dec. 2025 \\[4pt]
+3 & Implementation & Develop the complete system with the required operating modes, integration with external data sources, camera calibration, and user interface & 8 weeks\newline Jan.–Mar. 2026 \\[4pt]
+4 & Documentation and validation & Validate the system through testing, write the report, and prepare the defence & 3 weeks\newline Apr.–Jun. 2026 \\
+\bottomrule
+\end{tabularx}
+\caption{Project plan by phase.}
+\label{tab:planificacion_en}
+\end{table}
 
-The second phase deals with the conceptual and technical design of the system, along with the progressive development of a functional prototype. This stage includes defining technical and operational requirements, selecting development environments and integration platforms, and programming the first versions of the AR system adapted to streaming environments. It is considered a testing phase to help familiarize ourselves with the various tools studied previously.
+The first phase will be devoted to the state-of-the-art study: a review of AR systems in live broadcasts, a comparative evaluation of available SDKs, and an analysis of the OBS Studio plugin architecture. The results of this research and the technological decisions taken will be presented in the chapter on the state of the art.
 
-The third phase focuses on the implementation and experimental validation of the prototype under controlled conditions. Performance, stability, and visual quality tests will be carried out, along with user experience evaluations and trials in live programming contests.
+The second phase will aim to establish the system architecture and verify that the chosen approach is technically feasible. The plugin structure will be designed and an initial prototype will be built to validate the basic superimposition of 3D content over the camera signal.
 
-Finally, the fourth phase is dedicated to the preparation and formalization of the final thesis document. This includes writing the technical report, organizing the results, reviewing and correcting the content, and preparing materials for the public presentation and academic defense of the project before the evaluation committee.
+The third phase will be the most extensive and will include the complete development of the plugin. The technical description chapters document in detail all the work carried out during this stage.
 
- 
+The fourth phase will be devoted to system stability testing, code review, and the writing of this report.
 
-
-
-
-
-
-
-
+The rest of the report is organised as follows. The state-of-the-art chapter analyses AR technology: its types, main applications, available SDKs, the justification of the technological choice, the OBS Studio architecture, and its plugin system. The programming contests chapter introduces the domain of programming contests and the DOMjudge platform, which acts as the data source for the dynamic part of the system. The AR description chapter describes the design and implementation of the augmented reality filter in OBS: marker detection, pose estimation, 3D rendering, and AR mode configuration. The programming contests description chapter explains the extension of the filter for programming contests, including dynamic elements, DOMjudge connectivity, and visualisation modes. Finally, the conclusions chapter presents the conclusions of the work and

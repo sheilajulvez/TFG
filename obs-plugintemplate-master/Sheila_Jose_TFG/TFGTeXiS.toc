@@ -5,86 +5,92 @@
 \contentsline {section}{\numberline {1.1}Motivación}{1}{section.9}%
 \contentsline {section}{\numberline {1.2}Objetivos}{2}{section.10}%
 \contentsline {section}{\numberline {1.3}Plan de trabajo}{3}{section.11}%
-\contentsline {chapter}{\numberline {2}Estado de la cuestión}{5}{chapter.13}%
+\contentsline {chapter}{\numberline {2}Estado de la cuestión Realidad Aumentada}{5}{chapter.13}%
 \contentsline {section}{\numberline {2.1}Tipos de realidad aumentada}{6}{section.14}%
-\contentsline {section}{\numberline {2.2}Aplicaciones de la Realidad Aumentada}{7}{section.16}%
-\contentsline {section}{\numberline {2.3}APIs y SDKs de Realidad Aumentada}{10}{section.21}%
-\contentsline {subsection}{\numberline {2.3.1}Vuforia}{10}{subsection.22}%
-\contentsline {subsection}{\numberline {2.3.2}ARToolKit}{11}{subsection.23}%
-\contentsline {subsection}{\numberline {2.3.3}OpenCV}{12}{subsection.24}%
-\contentsline {subsection}{\numberline {2.3.4}SDKs de NVIDIA}{12}{subsection.25}%
-\contentsline {subsection}{\numberline {2.3.5}DeepAR}{13}{subsection.26}%
-\contentsline {subsection}{\numberline {2.3.6}Comparativa de todas las herramientas}{14}{subsection.27}%
-\contentsline {subsection}{\numberline {2.3.7}Decisión tecnológica: OpenCV y el módulo ArUco}{14}{subsection.29}%
-\contentsline {section}{\numberline {2.4}OBS Studio}{15}{section.30}%
-\contentsline {subsection}{\numberline {2.4.1}OBS Studio como usuario}{15}{subsection.31}%
-\contentsline {subsection}{\numberline {2.4.2}Desarrollo de plugins}{18}{subsection.35}%
-\contentsline {subsection}{\numberline {2.4.3}Renderizado de contenido 3D en OBS}{20}{subsection.36}%
-\contentsline {section}{\numberline {2.5}Realidad Aumentada en OBS Studio}{22}{section.37}%
-\contentsline {subsection}{\numberline {2.5.1}Aplicación externa}{23}{subsection.38}%
-\contentsline {subsection}{\numberline {2.5.2}Integración nativa mediante plugin}{24}{subsection.39}%
-\contentsline {subsection}{\numberline {2.5.3}Flujo conceptual de la Realidad Aumentada}{24}{subsection.40}%
-\contentsline {section}{\numberline {2.6}Concursos de Programación y DOMjudge}{25}{section.42}%
-\contentsline {subsection}{\numberline {2.6.1}Qué son los concursos de programación y cómo funcionan}{26}{subsection.43}%
-\contentsline {subsection}{\numberline {2.6.2}DOMjudge}{27}{subsection.44}%
-\contentsline {subsection}{\numberline {2.6.3}API REST de DOMjudge}{27}{subsection.46}%
-\contentsline {chapter}{\numberline {3}Descripción del Trabajo}{29}{chapter.48}%
-\contentsline {section}{\numberline {3.1}Construcción y ciclo de vida}{30}{section.49}%
-\contentsline {subsection}{\numberline {3.1.1}Dependencias y compilación}{30}{subsection.50}%
-\contentsline {subsection}{\numberline {3.1.2}Ciclo de vida del plugin}{30}{subsection.51}%
-\contentsline {subsubsection}{\numberline {3.1.2.1}Inicialización}{30}{subsubsection.52}%
-\contentsline {subsubsection}{\numberline {3.1.2.2}Actualización de lógica}{31}{subsubsection.57}%
-\contentsline {subsubsection}{\numberline {3.1.2.3}Renderizado gráfico}{31}{subsubsection.58}%
-\contentsline {subsection}{\numberline {3.1.3}Configuración dinámica}{32}{subsection.63}%
-\contentsline {subsection}{\numberline {3.1.4}Arquitectura de hilos}{32}{subsection.64}%
-\contentsline {section}{\numberline {3.2}Modelos 3D y overlays}{33}{section.66}%
-\contentsline {subsection}{\numberline {3.2.1}Gestión de geometría poligonal}{33}{subsection.67}%
-\contentsline {subsubsection}{\numberline {3.2.1.1}Estructura de malla}{33}{subsubsection.68}%
-\contentsline {subsection}{\numberline {3.2.2}Transformaciones y control de usuario}{34}{subsection.69}%
-\contentsline {subsection}{\numberline {3.2.3}Texto 3D y overlays}{34}{subsection.70}%
-\contentsline {subsubsection}{\numberline {3.2.3.1}Texto proyectado en 3D}{34}{subsubsection.71}%
-\contentsline {subsection}{\numberline {3.2.4}El modo cronómetro 3D}{34}{subsection.72}%
-\contentsline {section}{\numberline {3.3}Detección ArUco y calibración de cámara}{35}{section.73}%
-\contentsline {subsection}{\numberline {3.3.1}Integración con OpenCV}{35}{subsection.74}%
-\contentsline {subsection}{\numberline {3.3.2}Calibración de la cámara}{36}{subsection.75}%
-\contentsline {subsubsection}{\numberline {3.3.2.1}Proceso de calibración}{36}{subsubsection.77}%
-\contentsline {subsection}{\numberline {3.3.3}Estimación de pose}{37}{subsection.81}%
-\contentsline {subsection}{\numberline {3.3.4}Robustez y seguimiento temporal}{37}{subsection.82}%
-\contentsline {section}{\numberline {3.4}Configuración del modo AR}{38}{section.85}%
-\contentsline {subsection}{\numberline {3.4.1}Diccionario e identificador del detector}{38}{subsection.86}%
-\contentsline {subsection}{\numberline {3.4.2}Offsets de posición y rotación}{39}{subsection.88}%
-\contentsline {subsection}{\numberline {3.4.3}Modos de visualización}{39}{subsection.89}%
-\contentsline {section}{\numberline {3.5}Conectividad y sincronización con DOMjudge}{40}{section.90}%
-\contentsline {subsection}{\numberline {3.5.1}Red asíncrona con libcurl}{40}{subsection.92}%
-\contentsline {subsection}{\numberline {3.5.2}Máquina de estados de conexión}{41}{subsection.93}%
-\contentsline {subsection}{\numberline {3.5.3}Configuración y seguridad}{41}{subsection.94}%
-\contentsline {subsection}{\numberline {3.5.4}Endpoints y procesado JSON}{42}{subsection.95}%
-\contentsline {subsection}{\numberline {3.5.5}Optimización de tráfico y latencia}{42}{subsection.99}%
-\contentsline {subsection}{\numberline {3.5.6}Mapeo de marcadores a equipos}{42}{subsection.100}%
-\contentsline {subsection}{\numberline {3.5.7}El \textit {scoreboard} visual}{43}{subsection.101}%
-\contentsline {section}{\numberline {3.6}Overlays 2D anclados al marcador}{43}{section.102}%
-\contentsline {subsection}{\numberline {3.6.1}El sistema de coordenadas}{43}{subsection.103}%
-\contentsline {subsection}{\numberline {3.6.2}El efecto visual buscado}{44}{subsection.105}%
-\contentsline {subsection}{\numberline {3.6.3}Detección en los modos de texto}{45}{subsection.106}%
-\contentsline {subsubsection}{\numberline {3.6.3.1}Conversión de formatos de vídeo de entrada}{45}{subsubsection.107}%
-\contentsline {subsubsection}{\numberline {3.6.3.2}De la rotación detectada a la orientación del overlay}{46}{subsubsection.109}%
-\contentsline {subsection}{\numberline {3.6.4}Selección y mapeo de marcadores en Team Info}{47}{subsection.111}%
-\contentsline {subsection}{\numberline {3.6.5}Composición del scoreboard}{48}{subsection.112}%
-\contentsline {subsection}{\numberline {3.6.6}Cadena de transformaciones}{48}{subsection.113}%
-\contentsline {subsection}{\numberline {3.6.7}Suavizado del overlay}{49}{subsection.114}%
-\contentsline {subsection}{\numberline {3.6.8}Fondo del overlay}{50}{subsection.115}%
-\contentsline {section}{\numberline {3.7}Liberación de recursos}{50}{section.116}%
-\contentsline {subsection}{\numberline {3.7.1}Persistencia de estado}{50}{subsection.117}%
-\contentsline {subsection}{\numberline {3.7.2}Memoria GPU}{51}{subsection.120}%
-\contentsline {subsection}{\numberline {3.7.3}Limpieza del detector}{51}{subsection.121}%
-\contentsline {subsection}{\numberline {3.7.4}Cierre de conexiones}{51}{subsection.122}%
-\contentsline {chapter}{\numberline {4}Conclusiones y Trabajo Futuro}{53}{chapter.123}%
-\contentsline {section}{\numberline {4.1}Conclusiones}{53}{section.124}%
-\contentsline {section}{\numberline {4.2}Limitaciones}{54}{section.125}%
-\contentsline {section}{\numberline {4.3}Trabajo Futuro}{54}{section.126}%
-\contentsline {chapter}{Contribuciones Personales}{57}{chapter*.127}%
+\contentsline {subsection}{\numberline {2.1.1}Flujo conceptual de la Realidad Aumentada}{8}{subsection.19}%
+\contentsline {section}{\numberline {2.2}Aplicaciones de la Realidad Aumentada}{9}{section.21}%
+\contentsline {section}{\numberline {2.3}APIs y SDKs de Realidad Aumentada}{12}{section.26}%
+\contentsline {subsection}{\numberline {2.3.1}Vuforia}{12}{subsection.27}%
+\contentsline {subsection}{\numberline {2.3.2}ARToolKit}{13}{subsection.28}%
+\contentsline {subsection}{\numberline {2.3.3}SDKs de NVIDIA}{14}{subsection.29}%
+\contentsline {subsection}{\numberline {2.3.4}DeepAR}{14}{subsection.30}%
+\contentsline {subsection}{\numberline {2.3.5}OpenCV}{15}{subsection.31}%
+\contentsline {subsubsection}{\numberline {2.3.5.1}Calibración de la cámara}{16}{subsubsection.32}%
+\contentsline {subsection}{\numberline {2.3.6}Comparativa de todas las herramientas}{17}{subsection.34}%
+\contentsline {subsection}{\numberline {2.3.7}Decisión tecnológica: OpenCV y el módulo ArUco}{17}{subsection.36}%
+\contentsline {section}{\numberline {2.4}OBS Studio}{17}{section.37}%
+\contentsline {subsection}{\numberline {2.4.1}OBS Studio como usuario}{18}{subsection.38}%
+\contentsline {subsection}{\numberline {2.4.2}Desarrollo de plugins}{21}{subsection.42}%
+\contentsline {subsection}{\numberline {2.4.3}Renderizado de contenido 3D en OBS}{23}{subsection.43}%
+\contentsline {section}{\numberline {2.5}Realidad Aumentada en OBS Studio}{26}{section.44}%
+\contentsline {subsection}{\numberline {2.5.1}Aplicación externa}{26}{subsection.47}%
+\contentsline {subsection}{\numberline {2.5.2}Integración nativa mediante plugin}{28}{subsection.52}%
+\contentsline {chapter}{\numberline {3}Estado de la Cuestión Concursos de Programación}{29}{chapter.53}%
+\contentsline {section}{\numberline {3.1}Concursos de Programación}{29}{section.54}%
+\contentsline {subsection}{\numberline {3.1.1}Objetivos de los concursos de programación}{30}{subsection.56}%
+\contentsline {subsection}{\numberline {3.1.2}Formato ICPC y dinámica del concurso}{31}{subsection.57}%
+\contentsline {subsection}{\numberline {3.1.3}Veredictos del juez automático}{32}{subsection.58}%
+\contentsline {subsection}{\numberline {3.1.4}Infraestructura tecnológica: el CMS}{32}{subsection.59}%
+\contentsline {section}{\numberline {3.2}DOMjudge}{32}{section.60}%
+\contentsline {subsection}{\numberline {3.2.1}Arquitectura}{33}{subsection.61}%
+\contentsline {subsection}{\numberline {3.2.2}API REST de DOMjudge}{34}{subsection.63}%
+\contentsline {section}{\numberline {3.3}Conclusiones del Estado de la Cuestión en Concursos de Programación}{36}{section.65}%
+\contentsline {chapter}{\numberline {4}Descripción del Trabajo Realidad Aumentada}{39}{chapter.66}%
+\contentsline {section}{\numberline {4.1}Decisión arquitectónica: fuente o filtro}{40}{section.67}%
+\contentsline {subsection}{\numberline {4.1.1}Las dos alternativas }{40}{subsection.68}%
+\contentsline {subsection}{\numberline {4.1.2}Análisis del API: qué puede hacer cada tipo}{40}{subsection.69}%
+\contentsline {subsection}{\numberline {4.1.3}Decisión y consecuencias para la implementación}{41}{subsection.70}%
+\contentsline {section}{\numberline {4.2}Construcción y ciclo de vida}{41}{section.71}%
+\contentsline {section}{\numberline {4.3}Ciclo de vida del plugin}{42}{section.72}%
+\contentsline {subsection}{\numberline {4.3.1}Inicialización}{42}{subsection.73}%
+\contentsline {subsection}{\numberline {4.3.2}Actualización de lógica}{42}{subsection.74}%
+\contentsline {subsection}{\numberline {4.3.3}Renderizado gráfico}{42}{subsection.75}%
+\contentsline {subsection}{\numberline {4.3.4}Actualización de configuración}{42}{subsection.76}%
+\contentsline {subsection}{\numberline {4.3.5}Conversión de formatos de vídeo de entrada}{42}{subsection.77}%
+\contentsline {section}{\numberline {4.4}Detección ArUco y calibración de cámara}{43}{section.79}%
+\contentsline {subsection}{\numberline {4.4.1}Integración con OpenCV}{44}{subsection.80}%
+\contentsline {subsection}{\numberline {4.4.2}Proceso de calibración de cámara}{44}{subsection.81}%
+\contentsline {subsection}{\numberline {4.4.3}Estimación de pose}{45}{subsection.85}%
+\contentsline {section}{\numberline {4.5}Renderizado de Objetos 3D y Coherencia Espacial}{45}{section.86}%
+\contentsline {section}{\numberline {4.6}Configuración del modo AR}{46}{section.87}%
+\contentsline {subsection}{\numberline {4.6.1}Diccionario, identificador y tamaño del marcador}{46}{subsection.88}%
+\contentsline {subsection}{\numberline {4.6.2}Archivo de calibración}{47}{subsection.90}%
+\contentsline {subsection}{\numberline {4.6.3}Modelo 3D y textura}{47}{subsection.91}%
+\contentsline {subsection}{\numberline {4.6.4}Offsets de posición y rotación}{48}{subsection.93}%
+\contentsline {section}{\numberline {4.7}Liberación de recursos}{49}{section.95}%
+\contentsline {subsection}{\numberline {4.7.1}Persistencia de estado}{49}{subsection.96}%
+\contentsline {subsection}{\numberline {4.7.2}Memoria GPU}{50}{subsection.98}%
+\contentsline {subsection}{\numberline {4.7.3}Limpieza del detector}{50}{subsection.99}%
+\contentsline {chapter}{\numberline {5}Descripción del Trabajo Concursos de Programación}{51}{chapter.100}%
+\contentsline {section}{\numberline {5.1}Renderizado de texto dinámico}{52}{section.101}%
+\contentsline {subsection}{\numberline {5.1.1}Pipeline de renderizado}{52}{subsection.102}%
+\contentsline {subsection}{\numberline {5.1.2}Suavizado del \textit {overlay}}{53}{subsection.105}%
+\contentsline {section}{\numberline {5.2}El reloj analógico 3D}{54}{section.106}%
+\contentsline {section}{\numberline {5.3}Conectividad con DOMjudge}{55}{section.107}%
+\contentsline {subsection}{\numberline {5.3.1}Arquitectura de hilos}{55}{subsection.108}%
+\contentsline {subsection}{\numberline {5.3.2}Red asíncrona con libcurl}{56}{subsection.110}%
+\contentsline {subsection}{\numberline {5.3.3}Máquina de estados de conexión}{56}{subsection.111}%
+\contentsline {subsection}{\numberline {5.3.4}Endpoints y flujo de datos}{56}{subsection.112}%
+\contentsline {subsection}{\numberline {5.3.5}Modos de visualización}{57}{subsection.117}%
+\contentsline {section}{\numberline {5.4}Configuración ampliada}{57}{section.118}%
+\contentsline {subsection}{\numberline {5.4.1}Configuración del servidor}{58}{subsection.119}%
+\contentsline {subsection}{\numberline {5.4.2}Mapeo de marcadores a equipos}{58}{subsection.120}%
+\contentsline {section}{\numberline {5.5}Conclusiones y decisiones de diseño}{58}{section.121}%
+\contentsline {chapter}{\numberline {6}Conclusiones y Trabajo Futuro}{61}{chapter.122}%
+\contentsline {section}{\numberline {6.1}Conclusiones}{61}{section.123}%
+\contentsline {section}{\numberline {6.2}Limitaciones}{62}{section.124}%
+\contentsline {section}{\numberline {6.3}Trabajo Futuro}{62}{section.125}%
+\contentsline {chapter}{\numberline {7}Introduction}{65}{chapter.126}%
+\contentsline {section}{\numberline {7.1}Motivation}{65}{section.127}%
+\contentsline {section}{\numberline {7.2}Objectives}{66}{section.128}%
+\contentsline {section}{\numberline {7.3}Working Plan}{67}{section.129}%
 \babel@toc {english}{}\relax 
+\contentsline {chapter}{\numberline {8}Conclusions and Future Work}{69}{chapter.131}%
+\contentsline {section}{\numberline {8.1}Conclusions}{69}{section.132}%
+\contentsline {section}{\numberline {8.2}Limitations}{70}{section.133}%
+\contentsline {section}{\numberline {8.3}Future Work}{70}{section.134}%
+\contentsline {chapter}{Contribuciones Personales}{73}{chapter*.135}%
 \babel@toc {spanish}{}\relax 
-\contentsline {chapter}{Bibliograf\'{\i }a}{59}{chapter*.128}%
-\contentsline {chapter}{\numberline {A}Manual de Instalación del Plugin}{63}{appendix.129}%
-\contentsline {chapter}{\numberline {B}Manual de Configuración del Plugin}{67}{appendix.130}%
+\contentsline {chapter}{Bibliograf\'{\i }a}{77}{chapter*.136}%
+\contentsline {chapter}{\numberline {A}Manual de Instalación del Plugin}{81}{appendix.137}%
+\contentsline {chapter}{\numberline {B}Manual de Configuración del Plugin}{85}{appendix.138}%
