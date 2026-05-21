@@ -1,15 +1,3 @@
-/**
- * @file countdown_clock.h
- * @brief Módulo de reloj de cuenta atrás (countdown timer).
- *
- * Gestiona el estado interno del temporizador: duración, tiempo restante
- * y ángulos de las manecillas para un reloj analógico que muestra
- * el tiempo restante. Diseñado para ser modular y expandible.
- *
- * Las manecillas indican tiempo restante: por ejemplo, si quedan 6 horas,
- * la manecilla de horas apunta a las 6 (en un dial de 12h).
- */
-
 #ifndef COUNTDOWN_CLOCK_H
 #define COUNTDOWN_CLOCK_H
 
@@ -20,7 +8,6 @@
 extern "C" {
 #endif
 
-/** Estado del countdown */
 typedef enum countdown_state {
 	COUNTDOWN_STATE_STOPPED = 0,
 	COUNTDOWN_STATE_RUNNING,
@@ -28,118 +15,91 @@ typedef enum countdown_state {
 	COUNTDOWN_STATE_FINISHED
 } countdown_state_t;
 
-/** Estructura opaca del reloj (implementación en .c) */
 typedef struct countdown_clock countdown_clock_t;
 
-/**
- * Crea un reloj de cuenta atrás.
- * @return Instancia nueva o NULL si falla.
- */
-countdown_clock_t *countdown_clock_create();
+// Creates a new countdown clock.
+// Crea un nuevo reloj de cuenta atras.
+countdown_clock_t *countdown_clock_create(void);
 
-/**
- * Destruye el reloj y libera recursos.
- */
+// Releases the countdown clock resources.
+// Libera los recursos del reloj de cuenta atras.
 void countdown_clock_destroy(countdown_clock_t *clock);
 
-/**
- * Establece la duración total del countdown (en segundos).
- * No reinicia el reloj; usar countdown_clock_start() después.
- */
-void countdown_clock_set_duration(countdown_clock_t *clock, uint32_t total_seconds);
+// Sets the total countdown duration in seconds.
+// Establece la duracion total de la cuenta atras en segundos.
+void countdown_clock_set_duration(countdown_clock_t *clock,
+				  uint32_t total_seconds);
 
-/**
- * Establece la duración en horas, minutos y segundos.
- */
+// Sets the countdown duration in hours, minutes, and seconds.
+// Establece la duracion de la cuenta atras en horas, minutos y segundos.
 void countdown_clock_set_duration_hms(countdown_clock_t *clock,
-                                      uint32_t hours, uint32_t minutes, uint32_t seconds);
+				      uint32_t hours, uint32_t minutes,
+				      uint32_t seconds);
 
-/**
- * Inicia la cuenta atrás desde la duración configurada.
- */
+// Starts the countdown from the configured duration.
+// Inicia la cuenta atras desde la duracion configurada.
 void countdown_clock_start(countdown_clock_t *clock);
 
-/**
- * Pausa el countdown (el tiempo restante se mantiene).
- */
+// Pauses the countdown.
+// Pausa la cuenta atras.
 void countdown_clock_pause(countdown_clock_t *clock);
 
-/**
- * Reanuda si estaba pausado.
- */
+// Resumes the countdown if it is paused.
+// Reanuda la cuenta atras si esta pausada.
 void countdown_clock_resume(countdown_clock_t *clock);
 
-/**
- * Reinicia al estado inicial (duración actual) sin iniciar.
- */
+// Resets the countdown without starting it.
+// Reinicia la cuenta atras sin iniciarla.
 void countdown_clock_reset(countdown_clock_t *clock);
 
-/**
- * Actualiza el estado del reloj (llamar desde video_tick con delta en segundos).
- * No debe bloquear; solo actualiza tiempo restante y ángulos.
- */
+// Advances the countdown by the given delta time.
+// Avanza la cuenta atras con el delta de tiempo indicado.
 void countdown_clock_tick(countdown_clock_t *clock, float delta_seconds);
 
-/**
- * Sincroniza el tiempo restante desde una fuente externa (p. ej. API web).
- * Ajusta el countdown para que muestre exactamente h, m, s restantes.
- */
+// Synchronizes the remaining countdown time.
+// Sincroniza el tiempo restante de la cuenta atras.
 void countdown_clock_sync_remaining(countdown_clock_t *clock,
-				     uint32_t hours, uint32_t minutes,
-				     uint32_t seconds);
+				    uint32_t hours, uint32_t minutes,
+				    uint32_t seconds);
 
-/** 
- * Sincroniza el reloj con tiempo restante y duración total. 
- * Útil para mantener el porcentaje de la manecilla única tras una reconexión.
- */
+// Synchronizes the remaining and total countdown time.
+// Sincroniza el tiempo restante y total de la cuenta atras.
 void countdown_clock_sync_full(countdown_clock_t *clock, double remaining,
 			       double total_duration);
 
-/**
- * Obtiene el estado actual.
- */
+// Returns the current countdown state.
+// Devuelve el estado actual de la cuenta atras.
 countdown_state_t countdown_clock_get_state(const countdown_clock_t *clock);
 
-/**
- * Obtiene el tiempo restante (horas, minutos, segundos enteros).
- */
+// Returns the remaining time as hours, minutes, and seconds.
+// Devuelve el tiempo restante en horas, minutos y segundos.
 void countdown_clock_get_remaining(const countdown_clock_t *clock,
-                                  uint32_t *out_hours, uint32_t *out_minutes, uint32_t *out_seconds);
+				   uint32_t *out_hours,
+				   uint32_t *out_minutes,
+				   uint32_t *out_seconds);
 
-/**
- * Obtiene el tiempo restante total en segundos (puede incluir fracción si se desea en el futuro).
- */
+// Returns the remaining time in seconds.
+// Devuelve el tiempo restante en segundos.
 double countdown_clock_get_remaining_seconds(const countdown_clock_t *clock);
 
-/**
- * Ángulos en grados (0–360) para las manecillas del reloj analógico.
- * Convención: 0° = "12 en punto", sentido horario positivo (o antihorario según modelo 3D).
- * - hour_deg: manecilla de horas (suele usar dial de 12h).
- * - minute_deg: manecilla de minutos (60 divisiones).
- * - second_deg: manecilla de segundos (60 divisiones).
- */
+// Returns the analog clock hand angles.
+// Devuelve los angulos de las manecillas del reloj analogico.
 void countdown_clock_get_hand_angles(const countdown_clock_t *clock,
-                                    float *hour_deg, float *minute_deg, float *second_deg);
+				     float *hour_deg, float *minute_deg,
+				     float *second_deg);
 
-/**
- * Establece el número máximo de horas en el dial (12 o 24) para el cálculo de la manecilla de horas.
- * Por defecto 12.
- */
-void countdown_clock_set_dial_hours(countdown_clock_t *clock, uint32_t max_hours);
+// Sets the maximum number of hours in the dial.
+// Establece el numero maximo de horas del dial.
+void countdown_clock_set_dial_hours(countdown_clock_t *clock,
+				    uint32_t max_hours);
 
-/**
- * Obtiene el ángulo para una manecilla única que representa el tiempo restante total.
- * El ángulo se calcula como: (tiempo_restante / duración_total) * 360 grados.
- * Si la duración es 0, devuelve 0 grados.
- * @param clock Instancia del reloj
- * @param single_hand_deg Puntero donde se almacenará el ángulo en grados (0-360)
- */
+// Returns the angle for the single countdown hand.
+// Devuelve el angulo de la manecilla unica de la cuenta atras.
 void countdown_clock_get_single_hand_angle(const countdown_clock_t *clock,
-                                           float *single_hand_deg);
-
+					   float *single_hand_deg);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* COUNTDOWN_CLOCK_H */
+#endif
