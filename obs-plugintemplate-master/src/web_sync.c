@@ -18,7 +18,6 @@
 #define WEB_SYNC_BUFFER_SIZE 16384
 #define WEB_SYNC_MIN_INTERVAL 1.0f
 
-//EJEMPLO CURL https://curl.se/libcurl/c/getinmemory.html PARA LA MEMORIA
 struct web_sync {
 	char *base_url;
 	char *contest_id;
@@ -53,14 +52,14 @@ typedef struct {
 	char *data;
 	size_t size;
 } memory_buffer_t;
-
-/* Buffer para almacenar la cabecera Date: del servidor */
 typedef struct {
 	char date_str[128];
 	bool found;
 } header_date_t;
 
-static size_t write_callback(char *ptr, size_t size, size_t nmemb,void *userdata)
+// Stores the HTTP response body into the memory buffer.
+// Guarda el cuerpo de la respuesta HTTP en el buffer de memoria.
+static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
 	memory_buffer_t *buf = (memory_buffer_t *)userdata;
 	size_t total = size * nmemb;
@@ -74,10 +73,8 @@ static size_t write_callback(char *ptr, size_t size, size_t nmemb,void *userdata
 	return size * nmemb;
 }
 
-/**
- * Callback para interceptar la cabecera HTTP Date: de la respuesta.
- *  "Date: Thu, 06 Mar 2025 16:30:00 GMT\r\n"
- */
+// Captures the HTTP Date header from the response.
+// Captura la cabecera HTTP Date de la respuesta.
 static size_t header_callback(char *buffer, size_t size, size_t nitems,
 			      void *userdata)
 {
@@ -102,8 +99,8 @@ static size_t header_callback(char *buffer, size_t size, size_t nitems,
 	return total;
 }
 
-/* Convierte duracion de DOMjudge a segundos.
- * Formatos soportados: "HH:MM:SS", "MM:SS", "PT#H#M#S". */
+// Converts a DOMjudge duration string to seconds.
+// Convierte una duracion de DOMjudge a segundos.
 static bool parse_duration_to_seconds(const char *duration_str, double *out_seconds)
 {
 	if (!duration_str || !duration_str[0] || !out_seconds)
@@ -145,6 +142,8 @@ static bool parse_duration_to_seconds(const char *duration_str, double *out_seco
 	return false;
 }
 
+// Fetches a team name from a DOMjudge team URL.
+// Obtiene el nombre de un equipo desde una URL de DOMjudge.
 static bool fetch_team_name_by_url(CURL *curl, memory_buffer_t *buf,
 				   const char *team_url, char *out_name,
 				   size_t out_name_size)
@@ -183,12 +182,8 @@ static bool fetch_team_name_by_url(CURL *curl, memory_buffer_t *buf,
 	return false;
 }
 
-/**
- * Parsea el JSON del scoreboard de DOMjudge.
- * Según la API: GET /api/v4/contests/{cid}/scoreboard
- * Devuelve objeto Scoreboard con:
- *   "rows": [ { "rank": 1, "team_id": "1", "score": { "num_solved": 3, "total_time": 120 }, ... } ]
- */
+// Parses the DOMjudge scoreboard JSON response.
+// Parsea la respuesta JSON del scoreboard de DOMjudge.
 static int parse_scoreboard_json(const char *json,
 				 scoreboard_team_t *teams, int max_teams)
 {
@@ -235,7 +230,6 @@ static int parse_scoreboard_json(const char *json,
 			}
 		}
 
-		/* score es un objeto anidado: "score": { "num_solved": X, "total_time": Y } */
 		parse_json_int_nested(temp, "score", "num_solved",
 				      &num_solved);
 		parse_json_int_nested(temp, "score", "total_time",
@@ -245,8 +239,6 @@ static int parse_scoreboard_json(const char *json,
 			sizeof(teams[count].team_id) - 1);
 		teams[count].team_id[sizeof(teams[count].team_id) - 1] = '\0';
 
-		/* El nombre se pone como "Team {id}" por defecto;
-		   se puede enriquecer con /teams/{id} si es necesario */
 		snprintf(teams[count].team_name,
 			 sizeof(teams[count].team_name), "Team %s",
 			 team_id_str);
@@ -268,9 +260,8 @@ static int parse_scoreboard_json(const char *json,
 	return count;
 }
 
-/**
- * Parsea el JSON de equipos de DOMjudge.
- */
+// Parses the DOMjudge teams JSON response.
+// Parsea la respuesta JSON de equipos de DOMjudge.
 static int parse_teams_json(const char *json, scoreboard_team_t *teams, int max_teams)
 {
 	const char *arr_start = strchr(json, '[');
@@ -315,18 +306,16 @@ static int parse_teams_json(const char *json, scoreboard_team_t *teams, int max_
 	return count;
 }
 
-/**
- * Hilo principal de sincronización web.
- */
+// Runs the main synchronization loop in the worker thread.
+// Ejecuta el bucle principal de sincronizacion en el hilo de trabajo.
 static DWORD WINAPI sync_thread_func(LPVOID arg)
 {
 	web_sync_t *sync = (web_sync_t *)arg;
 	memory_buffer_t buf;
 	CURL *curl = NULL;
 	struct curl_version_info_data *vinfo = NULL;
-	bool https_supported = false;
 	const char *const *proto = NULL;
-	
+
 	float interval;
 	char contest_url[2048];
 	char scoreboard_url[2048];
@@ -337,19 +326,17 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	CURLcode res;
 	long http_code;
 	header_date_t hdr;
-	
 	double server_time, start_epoch, end_epoch, elapsed, remaining, total_dur;
 	char start_time_str[128];
 	char end_time_str[128];
 	char duration_str[64];
 	bool got_start, got_end;
-	
 	scoreboard_team_t teams[MAX_SCOREBOARD_TEAMS];
 	int team_count;
 	int tc;
 	scoreboard_team_t t_cache[100];
-	 int teams_ = 0;
-	 int teams_cycle_ = 0;
+	int teams_ = 0;
+	int teams_cycle_ = 0;
 
 	buf.data = (char *)malloc(WEB_SYNC_BUFFER_SIZE);
 	if (!buf.data) {
@@ -369,14 +356,10 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	vinfo = curl_version_info(CURLVERSION_NOW);
 	blog(LOG_INFO, "[WEB_SYNC] Thread iniciado. libcurl version: %s", vinfo->version);
 
-	
 	for (proto = vinfo->protocols; *proto; proto++) {
-		if (_stricmp(*proto, "https") == 0) {
-			https_supported = true;
+		if (_stricmp(*proto, "https") == 0)
 			break;
-		}
 	}
-
 
 	while (!sync->thread_stop) {
 		interval = sync->interval_seconds;
@@ -397,7 +380,6 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 		if (sync->base_url && sync->contest_id) {
 			snprintf(contest_url, sizeof(contest_url), "%s/contests/%s", sync->base_url, sync->contest_id);
 			snprintf(scoreboard_url, sizeof(scoreboard_url), "%s/contests/%s/scoreboard", sync->base_url, sync->contest_id);
-			
 			if (sync->cached_team_count == 0 || teams_++ % 10 == 0) {
 				snprintf(t_url, sizeof(t_url), "%s/contests/%s/teams", sync->base_url, sync->contest_id);
 			} else {
@@ -422,7 +404,6 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 		if (contest_url[0]) {
 			memset(&hdr, 0, sizeof(hdr));
 			buf.size = 0; buf.data[0] = '\0';
-			
 			curl_easy_setopt(curl, CURLOPT_URL, contest_url);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
@@ -456,7 +437,6 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 					if (parse_iso8601(start_time_str, &start_epoch)) {
 						elapsed = server_time - start_epoch;
 						if (elapsed < 0) elapsed = 0;
-						
 						remaining = 0;
 						total_dur = 0;
 						if (got_end && end_time_str[0] && parse_iso8601(end_time_str, &end_epoch)) {
@@ -579,7 +559,6 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 				snprintf(teams_url, sizeof(teams_url), "%s/contests/%s/teams", sync->base_url, sync->contest_id);
 			}
 			LeaveCriticalSection(&sync->mutex);
-			
 			if (teams_url[0]) {
 				buf.size = 0; buf.data[0] = '\0';
 				curl_easy_setopt(curl, CURLOPT_URL, teams_url);
@@ -594,7 +573,6 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 				}
 			}
 		}
-		
 		if (auth_user) bfree(auth_user);
 		if (auth_pass) bfree(auth_pass);
 	}
@@ -604,6 +582,8 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	return 0;
 }
 
+// Destroys the synchronizer and stops the worker thread.
+// Destruye el sincronizador y detiene el hilo de trabajo.
 void web_sync_destroy(web_sync_t *sync)
 {
 	if (!sync) return;
@@ -620,6 +600,8 @@ void web_sync_destroy(web_sync_t *sync)
 	free(sync);
 }
 
+// Creates the DOMjudge synchronization worker.
+// Crea el sincronizador para DOMjudge.
 web_sync_t *web_sync_create_domjudge(const char *base_url,
 				     const char *contest_id,
 				     float interval_seconds)
@@ -659,6 +641,8 @@ web_sync_t *web_sync_create_domjudge(const char *base_url,
 	return sync;
 }
 
+// Updates the contest endpoint configuration.
+// Actualiza la configuracion del concurso.
 void web_sync_set_contest(web_sync_t *sync, const char *base_url,
 			  const char *contest_id)
 {
@@ -673,6 +657,8 @@ void web_sync_set_contest(web_sync_t *sync, const char *base_url,
 	LeaveCriticalSection(&sync->mutex);
 }
 
+// Updates the polling interval in seconds.
+// Actualiza el intervalo de consulta en segundos.
 void web_sync_set_interval(web_sync_t *sync, float interval_seconds)
 {
 	if (!sync)
@@ -682,12 +668,16 @@ void web_sync_set_interval(web_sync_t *sync, float interval_seconds)
 	sync->interval_seconds = interval_seconds;
 }
 
+// Enables or disables periodic requests.
+// Activa o desactiva las peticiones periodicas.
 void web_sync_set_enabled(web_sync_t *sync, bool enabled)
 {
 	if (sync)
 		sync->enabled = enabled;
 }
 
+// Polls the latest synchronization result without blocking.
+// Consulta el ultimo resultado de sincronizacion sin bloquear.
 bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result)
 {
 	if (!sync || !result)
@@ -725,6 +715,8 @@ bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result)
 	return has_new;
 }
 
+// Sets the basic authentication credentials.
+// Configura las credenciales de autenticacion basica.
 void web_sync_set_auth(web_sync_t *sync, const char *username, const char *password)
 {
 	if (!sync) return;
@@ -736,6 +728,8 @@ void web_sync_set_auth(web_sync_t *sync, const char *username, const char *passw
 	LeaveCriticalSection(&sync->mutex);
 }
 
+// Performs a synchronous connection test.
+// Realiza una prueba sincrona de conexion.
 bool web_sync_test_connection(const char *base_url, const char *contest_id,
 			      const char *username, const char *password)
 {
@@ -810,6 +804,8 @@ bool web_sync_test_connection(const char *base_url, const char *contest_id,
 	return ok;
 }
 
+// Copies the cached teams into the provided array.
+// Copia los equipos en cache al array proporcionado.
 int web_sync_get_teams(web_sync_t *sync, scoreboard_team_t *out_teams, int max_teams)
 {
 	if (!sync || !out_teams || max_teams <= 0)
@@ -825,4 +821,3 @@ int web_sync_get_teams(web_sync_t *sync, scoreboard_team_t *out_teams, int max_t
 	LeaveCriticalSection(&sync->mutex);
 	return count;
 }
-
