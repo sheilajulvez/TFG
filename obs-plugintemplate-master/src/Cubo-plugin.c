@@ -2394,7 +2394,7 @@ static obs_properties_t *filter_properties(void *data)
 	obs_property_list_add_int(dict, "5x5 (100)", ARUCO_DICT_5X5_100);
 	obs_property_list_add_int(dict, "6x6 (100)", ARUCO_DICT_6X6_100);
 	obs_property_list_add_int(dict, "7x7 (100)", ARUCO_DICT_7X7_100);
-obs_properties_add_path(props, "calibration_file", "Archivo de Calibracion", 
+obs_properties_add_path(props, "calibration_path", "Archivo de Calibracion", 
                         OBS_PATH_FILE, "YAML (*.yml *.yaml);;Todos (*.*)", NULL);
 
 	obs_properties_add_float_slider(props, "ar_offset_pos_x","AR Offset Posicion X", -1000,1000.0f, 10.0f);
@@ -3296,7 +3296,7 @@ static void filter_load(void *data, obs_data_t *settings)
 	const char *tp = obs_data_get_string(settings, "texture_path");
 	if (filter->texture_path_str) bfree(filter->texture_path_str);
 	filter->texture_path_str = (tp && *tp) ? bstrdup(tp) : NULL;
-	const char *cp = obs_data_get_string(settings, "calibration_file");
+	const char *cp = obs_data_get_string(settings, "calibration_path");
 	if (cp && *cp) set_calibration_path(filter->detector, cp);
 
 	filter->countdown_duration_h = (uint32_t)obs_data_get_int(settings, "countdown_duration_h");
