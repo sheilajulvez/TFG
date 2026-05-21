@@ -250,12 +250,12 @@ bool set_camera_calibration(ArucoDetector *det, const char *filename)
  *
  * @param marker_size_meters The physical size of the ArUco markers in meters.
  * @param dict The identifier for the ArUco dictionary to be used (e.g., ARUCO_DICT_4X4_100).
- * @param calibration_file Path to the camera calibration file.
+ * @param calibration_path Path to the camera calibration file.
  * @return A pointer to the newly created `ArucoDetector` instance.
  */
 // initialize_aruco_detector (sin cambios)
 ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,
-					 const char *calibration_file)
+					 const char *calibration_path)
 {
 	auto *det = new ArucoDetector;
 	set_marker_dictionary(det, dict);
@@ -263,7 +263,7 @@ ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,
 	set_marker_size(det, marker_size_meters);
 	det->id = 0;
 	blog(LOG_WARNING, "[CUBE] catgar cpsitas");
-	if (!set_camera_calibration(det, calibration_file)) {
+	if (!set_camera_calibration(det, calibration_path)) {
 		blog(LOG_WARNING,
 		     "[CUBE] Usando parametros de camara por defecto.");
 		det->camera_matrix = (cv::Mat_<double>(3, 3) << 2000.0, 0.0,

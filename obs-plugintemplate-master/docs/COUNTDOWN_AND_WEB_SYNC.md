@@ -36,7 +36,7 @@ Se ha integrado en el plugin SJ_3D un **modo Countdown** que muestra un reloj an
   - **Convención:** mesh 0 = esfera/dial (sin rotación extra), mesh 1 = manecilla de horas, mesh 2 = minutos, mesh 3 = segundos.
   - Cada manecilla recibe una rotación adicional alrededor del eje Z (grados) según el tiempo restante.
 
-### 4. Integración en el filtro (Cubo-plugin.c)
+### 4. Integración en el filtro (main_filter.c)
 
 - **Modo de renderizado:** Se añade la opción **"Countdown (reloj)"** (valor 2) junto a "3D" y "AR".
 - **Propiedades de Countdown:**

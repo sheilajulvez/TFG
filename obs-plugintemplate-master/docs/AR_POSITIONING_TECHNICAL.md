@@ -31,13 +31,13 @@ Es la puerta de entrada para la detección. Su función es:
    $$scale\_x = \frac{W_{source}}{W_{frame}}$$
 3. Almacenar los 4 "corners" escalados en la estructura `ArucoResult` para su uso en el hilo de renderizado.
 
-### `aruco_marker_metrics_2d` (Cubo-plugin.c)
+### `aruco_marker_metrics_2d` (main_filter.c)
 Analiza la geometría de los corners para derivar métricas útiles para el renderizado:
 - **Centro Geométrico ($C_x, C_y$):** Se calcula como el promedio simple para máxima estabilidad horizontal.
   $$C_x = \frac{\sum x_i}{4}, \quad C_y = \frac{\sum y_i}{4}$$
 - **Dimensiones Proyectadas:** Calcula el ancho y alto visual (`marker_w`, `marker_h`) basándose en la distancia euclidiana entre esquinas adyacentes.
 
-### `filter_render` (Cubo-plugin.c)
+### `filter_render` (main_filter.c)
 El núcleo del renderizado visual. Utiliza el **Stack de Matrices** de OpenGL para posicionar el texto con precisión clínica:
 1. `gs_matrix_push()`: Aísla las transformaciones del overlay del resto de la escena.
 2. `gs_matrix_translate3f(C_x, C_y, 0)`: Posiciona el "pincel" exactamente en el centro del marcador ArUco.

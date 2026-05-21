@@ -54,7 +54,7 @@ Pipeline interno:
 
 ---
 
-## 3) Archivo: `src/Cubo-plugin.c`
+## 3) Archivo: `src/main_filter.c`
 
 ### 3.1 Estructuras y memoria (datos persistentes del filtro)
 
@@ -201,4 +201,3 @@ Formato recomendado (array de objetos):
 - **Rounded geometry**: se regenera cuando cambia el tamano del texto. Si el texto cambia cada frame, puede regenerar a menudo.
   - Mitigacion: cache por tamaños discretos o regenerar con hysteresis mayor.
 - **Suavizado**: EMA funciona bien para jitter. Para tracking mas “fisico”, se puede usar filtro de Kalman 2D.
-

@@ -64,7 +64,7 @@ graph TB
     end
     
     subgraph "Plugin SJ_3D"
-        B --> D[Cubo-plugin.c<br/>Controlador Principal]
+        B --> D[main_filter.c<br/>Controlador Principal]
         D --> E[SJ_3DModel<br/>Renderizado 3D]
         D --> F[ArUco Detector<br/>Detección AR]
         D --> G[Countdown Clock<br/>Lógica de Reloj]
@@ -117,9 +117,9 @@ sequenceDiagram
 
 ## Módulos del Proyecto
 
-### 1. Cubo-plugin.c - Controlador Principal
+### 1. main_filter.c - Controlador Principal
 
-**Ubicación**: [`src/Cubo-plugin.c`](file:///c:/Users/josem/Desktop/jose/tfg/TFG/obs-plugintemplate-master/src/Cubo-plugin.c)
+**Ubicación**: `src/main_filter.c`
 
 **Responsabilidad**: Punto de entrada del plugin, gestión del ciclo de vida y coordinación de módulos.
 
@@ -344,7 +344,7 @@ typedef struct ArucoResult {
 ```c
 ArucoDetector* initialize_aruco_detector(float marker_size,
                                          int dictionary_id,
-                                         const char *calibration_file);
+                                         const char *calibration_path);
 ```
 
 **Detección**
@@ -762,7 +762,7 @@ Las propiedades se definen en `filter_properties()` y incluyen:
 | `marker_id` | Int | 0-100 | ID del marcador ArUco |
 | `marker_size` | Float | 0.1-10 | Tamaño del marcador (m) |
 | `marker_dict` | List | - | Diccionario ArUco |
-| `calibration_file` | Path | - | Archivo de calibración |
+| `calibration_path` | Path | - | Archivo de calibración |
 | `ar_offset_pos_x/y/z` | Float | -1000 a 1000 | Offset de posición AR |
 | `ar_offset_rot_x/y/z` | Float | -360 a 360 | Offset de rotación AR |
 | `countdown_duration_h` | Int | 0-99 | Horas del countdown |
@@ -1076,7 +1076,7 @@ Ver [`docs/DEPENDENCIAS_COUNTDOWN.md`](file:///c:/Users/josem/Desktop/jose/tfg/T
 ```
 obs-plugintemplate-master/
 ├── src/                          # Código fuente
-│   ├── Cubo-plugin.c            # Controlador principal del plugin
+│   ├── main_filter.c            # Controlador principal del plugin
 │   ├── SJ_3DModel.c/h           # Renderizado de modelos 3D
 │   ├── aruco_detector.cpp/h     # Detección ArUco
 │   ├── countdown_clock.c/h      # Lógica de countdown
@@ -1113,7 +1113,7 @@ obs-plugintemplate-master/
 |---------|-------------|
 | `CMakeLists.txt` | Configuración principal de CMake |
 | `buildspec.json` | Metadatos del plugin (nombre, versión, autor) |
-| `src/Cubo-plugin.c` | Punto de entrada, lógica principal |
+| `src/main_filter.c` | Punto de entrada, lógica principal |
 | `src/SJ_3DModel.c` | Motor de renderizado 3D |
 | `src/aruco_detector.cpp` | Detección de marcadores |
 | `src/countdown_clock.c` | Sistema de countdown |

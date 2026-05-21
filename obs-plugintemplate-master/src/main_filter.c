@@ -2205,7 +2205,7 @@ static bool render_mode_changed(obs_properties_t *props,
 	obs_property_set_visible(obs_properties_get(props, "marker_id"), show_ar_controls);
 	obs_property_set_visible(obs_properties_get(props, "marker_size"), show_ar_controls);
 	obs_property_set_visible(obs_properties_get(props, "marker_dict"), show_ar_controls || show_team_info);
-	obs_property_set_visible(obs_properties_get(props, "calibration_file"), show_ar_controls);
+	obs_property_set_visible(obs_properties_get(props, "calibration_path"), show_ar_controls);
 	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_x"), show_ar_controls);
 	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_y"), show_ar_controls);
 	obs_property_set_visible(obs_properties_get(props, "ar_offset_pos_z"), show_ar_controls);

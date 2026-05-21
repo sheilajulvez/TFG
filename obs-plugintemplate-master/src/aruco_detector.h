@@ -40,7 +40,7 @@ typedef struct {
  * @param marker_size_meters  Tamao (m) de tu marcador.
  * @return Puntero opaque (liberar con cleanup).
  */
-ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict, const char *calibration_file);
+ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict, const char *calibration_path);
 
 /** @brief Libera el detector */
 void cleanup_aruco_detector(ArucoDetector *det);

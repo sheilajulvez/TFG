@@ -122,7 +122,7 @@ target_include_directories(${_name} PRIVATE
 )
 
 target_sources(${_name} PRIVATE
-    src/Cubo-plugin.c
+    src/main_filter.c
     src/SJ_3DModel.c
     src/aruco_detector.cpp
     src/yuv2bgra.cpp

@@ -1,7 +1,7 @@
 # Fix del renderizado del texto AR en modos 3 (Scoreboard) y 4 (Team Info)
 
 > **Estado:** Aplicado y verificado en runtime para el clipping. Pendiente de prueba final del swap Y↔Z.
-> **Archivo modificado:** `src/Cubo-plugin.c` (un solo archivo, dos bloques quirúrgicos).
+> **Archivo modificado:** `src/main_filter.c` (un solo archivo, dos bloques quirúrgicos).
 > **Sin tocar:** `aruco_marker_metrics_2d`, `process_frame_rgba*`, suavizado AR, escalado y posicionamiento del marcador.
 
 ---
@@ -33,7 +33,7 @@ void gs_set_3d_mode(double fovy, double znear, double zvar)
 Los tres parámetros se descartan inmediatamente. Por tanto, las llamadas
 
 ```c
-// Cubo-plugin.c (estado anterior)
+// main_filter.c (estado anterior)
 gs_set_3d_mode(60.0f, 0.000001f, 5000.0f);   // modos 3/4
 gs_set_3d_mode(60.0f, 0.1f,      5000.0f);   // modo 0/1/2 (3D)
 ```
@@ -109,7 +109,7 @@ X y Y coinciden entre OpenCV y OBS (Y-Down en ambos). Z difiere en sentido. Por 
 
 ### 3.1 Cambio 1 — Sustituir `gs_set_3d_mode` por `gs_ortho` con rango Z amplio
 
-**Ubicación:** `src/Cubo-plugin.c`, dentro de `filter_render`, en el bloque del overlay (≈ línea 1686-1704).
+**Ubicación:** `src/main_filter.c`, dentro de `filter_render`, en el bloque del overlay (≈ línea 1686-1704).
 
 **Antes:**
 
@@ -143,11 +143,11 @@ if (overlay_use_3d_pose) {
 
 **Por qué funciona.** `gs_ortho` sí está implementada. El mapeo X/Y en píxeles se conserva (no rompe `gs_matrix_translate3f(final_x, final_y, …)` ni la métrica del marcador), y se amplía la profundidad visible a ±10 000 unidades, suficiente para textos arbitrariamente grandes y rotaciones extremas. **No** introduce perspectiva (foreshortening); para eso harían falta `gs_frustum` o cargar manualmente una matriz de perspectiva con `gs_matrix_set`.
 
-**Estado del modo 0/1/2 (modelos 3D).** La llamada equivalente en `Cubo-plugin.c` línea 1484 sigue siendo `gs_set_3d_mode(60.0f, 0.1f, 5000.0f)`, también no-op. No se ha tocado porque actualmente no presenta el síntoma. Si en el futuro un modelo grande aparece recortado, aplicar el mismo patrón.
+**Estado del modo 0/1/2 (modelos 3D).** La llamada equivalente en `main_filter.c` línea 1484 sigue siendo `gs_set_3d_mode(60.0f, 0.1f, 5000.0f)`, también no-op. No se ha tocado porque actualmente no presenta el síntoma. Si en el futuro un modelo grande aparece recortado, aplicar el mismo patrón.
 
 ### 3.2 Cambio 2 — Reordenar los offsets al frame de pantalla
 
-**Ubicación:** `src/Cubo-plugin.c`, dentro del bloque `if (overlay_use_3d_pose)` (≈ línea 1786-1832).
+**Ubicación:** `src/main_filter.c`, dentro del bloque `if (overlay_use_3d_pose)` (≈ línea 1786-1832).
 
 **Antes:** los offsets manuales estaban al final del bloque, después de `R_x(180)`, `R_aruco` y `R_x(90)`. Al post-multiplicar, esto los situaba sobre el vértice **antes** que esas correcciones, en el frame del panel sin levantar.
 
@@ -172,7 +172,7 @@ gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, ar_offset_rot_z * deg2rad);  // eje Z mundia
 
 Como el panel está centrado en el origen en el momento del giro, las rotaciones siguen siendo respecto al centro del overlay, no respecto al origen de la pantalla.
 
-**Limitación conocida — Y/Z percibidos como cruzados.** OBS proyecta con Y-Down y el usuario percibe el panel ya levantado por `R_x(90)`. En ese mapa mental, lo que el usuario llama "Y" coincide visualmente con el eje Z del mundo y viceversa, así que mover el slider Y produce un efecto que el usuario etiqueta como Z, y el slider Z produce un efecto que etiqueta como Y. **No se ha aplicado un swap en código** porque cualquier swap rompe la composición con la rotación del marcador para orientaciones no triviales. Solución limpia pendiente: renombrar las etiquetas de los sliders en `obs_properties_add_float_slider` (líneas ≈ 2308-2310 de `Cubo-plugin.c`) para que reflejen el comportamiento percibido.
+**Limitación conocida — Y/Z percibidos como cruzados.** OBS proyecta con Y-Down y el usuario percibe el panel ya levantado por `R_x(90)`. En ese mapa mental, lo que el usuario llama "Y" coincide visualmente con el eje Z del mundo y viceversa, así que mover el slider Y produce un efecto que el usuario etiqueta como Z, y el slider Z produce un efecto que etiqueta como Y. **No se ha aplicado un swap en código** porque cualquier swap rompe la composición con la rotación del marcador para orientaciones no triviales. Solución limpia pendiente: renombrar las etiquetas de los sliders en `obs_properties_add_float_slider` (líneas ≈ 2308-2310 de `main_filter.c`) para que reflejen el comportamiento percibido.
 
 Mapeo actual:
 
@@ -227,5 +227,5 @@ Y reiniciar OBS para recargar el plugin tras cada compilación.
 ---
 
 **Autor del fix:** sesión de análisis y aplicación 2026-04-25.
-**Archivos modificados:** `src/Cubo-plugin.c`.
+**Archivos modificados:** `src/main_filter.c`.
 **Archivos consultados para diagnóstico:** `.deps/obs-studio-31.0.0/libobs/graphics/graphics.c` (confirmación del stub), `src/aruco_detector.cpp`, `src/aruco_detector.h`, `src/SJ_3DModel.c` (referencia del pipeline 3D que sí funciona), todos los `.md` de `docs/`.
