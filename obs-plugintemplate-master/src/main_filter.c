@@ -2404,25 +2404,17 @@ obs_properties_add_path(props, "calibration_path", "Archivo de Calibracion",
 	obs_properties_add_float_slider(props, "ar_offset_rot_y","AR Offset Rotacion Y", -360.0f, 360.0f,1.0f);
 	obs_properties_add_float_slider(props, "ar_offset_rot_z","AR Offset Rotacion Z", -360.0f, 360.0f,1.0f);
 
-	/* Countdown: duracion y sincronizacion web */
+	/* Countdown */
 	obs_properties_add_int(props, "countdown_duration_h", "Horas", 0, 99, 1);
 	obs_properties_add_int(props, "countdown_duration_m", "Minutos", 0, 59, 1);
 	obs_properties_add_int(props, "countdown_duration_s", "Segundos", 0, 59, 1);
 	obs_properties_add_bool(props, "countdown_running", "Cuenta Atras a Mover");
 	obs_properties_add_bool(props, "countdown_reset", "Reiniciar Reloj");
-	obs_properties_add_bool(props, "sync_enabled", "Sincronizacion Web");
-	obs_properties_add_float(props, "sync_interval_sec", "Intervalo API (seg)", 1.0f, 300.0f, 1.0f);
 
 	/* --- CONFIGURACION RELOJ --- */
 	obs_property_t *clk_mode = obs_properties_add_list(props, "clock_mode", "Manecillas Reloj", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(clk_mode, "H/M/S (3)", 0);
 	obs_property_list_add_int(clk_mode, "Total (1)", 1);
-	
-	obs_properties_add_int(props, "countdown_duration_h", "CD Horas", 0, 99, 1);
-	obs_properties_add_int(props, "countdown_duration_m", "CD Minutos", 0, 59, 1);
-	obs_properties_add_int(props, "countdown_duration_s", "CD Segundos", 0, 59, 1);
-	obs_properties_add_bool(props, "countdown_running", "Iniciar Cuenta Atras");
-	obs_properties_add_bool(props, "countdown_reset", "Reiniciar Reloj");
 	obs_properties_add_bool(props, "countdown_use_ar", "Reloj en Marker AR");
 
 	/* --- DOMJUDGE & SYNC --- */
