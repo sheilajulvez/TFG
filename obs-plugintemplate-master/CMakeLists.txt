@@ -132,8 +132,6 @@ target_sources(${_name} PRIVATE
 )
 
 
-set_source_files_properties(data/models/reloj.obj PROPERTIES HEADER_FILE_ONLY TRUE)
-
 set_target_properties_plugin(${_name} PROPERTIES OUTPUT_NAME ${_name})
 
 
