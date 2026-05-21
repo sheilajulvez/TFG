@@ -1,13 +1,13 @@
 #pragma once
-#include <stdint.h>
+
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// Valores puros C para elegir el diccionario
 #define ARUCO_DICT_ORIGINAL 0
 #define ARUCO_DICT_4X4_100 1
 #define ARUCO_DICT_5X5_100 2
@@ -15,10 +15,8 @@ extern "C" {
 #define ARUCO_DICT_7X7_100 4
 #define ARUCO_DICT_MIP_ORIGINAL 5
 
-/** Parametros y estado interno, opaque en C */
 typedef struct ArucoDetector ArucoDetector;
 
-/** Resultado de la deteccion */
 typedef struct {
 	bool detected;
 	int id;
@@ -35,46 +33,64 @@ typedef struct {
 	float euler_z;
 } ArucoResult;
 
-/**
- * @brief Crea e inicializa un detector ArUco.
- * @param marker_size_meters  Tamao (m) de tu marcador.
- * @return Puntero opaque (liberar con cleanup).
- */
-ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict, const char *calibration_path);
+// Initializes a new ArUco detector.
+// Inicializa un nuevo detector ArUco.
+ArucoDetector *initialize_aruco_detector(float marker_size_meters, int dict,
+					 const char *calibration_path);
 
-/** @brief Libera el detector */
+// Releases the ArUco detector resources.
+// Libera los recursos del detector ArUco.
 void cleanup_aruco_detector(ArucoDetector *det);
 
-/**
- * @brief Procesa un frame BGRA y rellena ArucoResult.
- * @return true si detect al menos un marcador.
- */
-bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame, int base_w, int base_h, int fw, int fh, ArucoResult *res);
+// Processes a frame for single-marker detection.
+// Procesa un fotograma para deteccion de un solo marcador.
+bool process_frame_rgba(ArucoDetector *det, struct obs_source_frame *frame,
+			int base_w, int base_h, int fw, int fh,
+			ArucoResult *res);
 
-/**
- * @brief Procesa un frame y selecciona un marcador entre una lista permitida.
- *
- * Se usa para el modo Team Info, donde el JSON define qué IDs de marcador son válidos.
- * No bloquea el hilo de render: esta función debe llamarse desde el camino de vídeo (filter_video).
- *
- * @param allowed_ids     Lista de IDs de marcador a buscar (por ejemplo, los del JSON).
- * @param allowed_count   Número de IDs en la lista.
- * @return true si se detecta al menos un marcador permitido.
- */
-bool process_frame_rgba_select_ids(ArucoDetector *det, struct obs_source_frame *frame,
-				  int base_w, int base_h, int fw, int fh,
-				  const int *allowed_ids, size_t allowed_count,
-				  ArucoResult *res);
+// Processes a frame for filtered multi-marker detection.
+// Procesa un fotograma para deteccion filtrada de varios marcadores.
+bool process_frame_rgba_select_ids(ArucoDetector *det,
+				   struct obs_source_frame *frame, int base_w,
+				   int base_h, int fw, int fh,
+				   const int *allowed_ids,
+				   size_t allowed_count, ArucoResult *res);
 
-void set_marker_dictionary(ArucoDetector *const det, int dict_id);
-void set_marker_size(ArucoDetector *const det, float size);
-void set_marker_id(ArucoDetector *const det, int id);
+// Sets the active ArUco dictionary.
+// Establece el diccionario ArUco activo.
+void set_marker_dictionary(ArucoDetector *det, int dict_id);
+
+// Sets the configured marker size.
+// Establece el tamano configurado del marcador.
+void set_marker_size(ArucoDetector *det, float size);
+
+// Sets the configured marker ID.
+// Establece el ID configurado del marcador.
+void set_marker_id(ArucoDetector *det, int id);
+
+// Loads camera calibration parameters from a file.
+// Carga los parametros de calibracion de camara desde un archivo.
 bool set_camera_calibration(ArucoDetector *det, const char *filename);
-const int get_marker_dictionary(const ArucoDetector *const det);
-const int get_marker_size(const ArucoDetector *const det);
-const int get_marker_id(const ArucoDetector *const det);
-void set_calibration_path(ArucoDetector *det, const char *const path);
-const char *get_calibration_path(const ArucoDetector *const det);
+
+// Returns the active dictionary identifier.
+// Devuelve el identificador del diccionario activo.
+int get_marker_dictionary(const ArucoDetector *det);
+
+// Returns the configured marker size.
+// Devuelve el tamano configurado del marcador.
+float get_marker_size(const ArucoDetector *det);
+
+// Returns the configured marker ID.
+// Devuelve el ID configurado del marcador.
+int get_marker_id(const ArucoDetector *det);
+
+// Sets the calibration file path.
+// Establece la ruta del archivo de calibracion.
+void set_calibration_path(ArucoDetector *det, const char *path);
+
+// Returns the current calibration file path.
+// Devuelve la ruta actual del archivo de calibracion.
+const char *get_calibration_path(const ArucoDetector *det);
 
 #ifdef __cplusplus
 }
