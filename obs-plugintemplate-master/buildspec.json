@@ -36,8 +36,8 @@
             "bundleId": "com.example.obs-plugintemplate"
         }
     },
-    "name": "ob",
-    "displayName": "OBS Plugin Template",
+    "name": "obs-domjudge-ar-overlay",
+    "displayName": "OBS DOMjudge AR Overlay",
     "version": "1.0.0",
     "author": "Sheila Julvez Jose Moreno",
     "website": "",
