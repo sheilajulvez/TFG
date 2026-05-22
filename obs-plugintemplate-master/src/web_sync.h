@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 /** Máximo de equipos que almacenamos del scoreboard */
-#define MAX_SCOREBOARD_TEAMS 16 //valor arbitrario, se puede ajustar según necesidades
+#define MAX_SCOREBOARD_TEAMS 100 /* suficiente para concursos típicos */
 
 typedef struct scoreboard_team {
 	char team_id[64];       /*ID del equipo (string en DOMjudge API) */
@@ -103,6 +103,16 @@ bool web_sync_test_connection(const char *base_url, const char *contest_id,
  * @return Número de equipos copiados
  */
 int web_sync_get_teams(web_sync_t *sync, scoreboard_team_t *out_teams, int max_teams);
+
+/**
+ * Copia el último resultado del scoreboard (con rank y num_solved) al array proporcionado.
+ * A diferencia de web_sync_get_teams, incluye los datos de puntuación.
+ * @param sync Instancia del sincronizador
+ * @param out_teams Array donde copiar los datos
+ * @param max_teams Tamaño máximo del array
+ * @return Número de equipos copiados
+ */
+int web_sync_get_scoreboard(web_sync_t *sync, scoreboard_team_t *out_teams, int max_teams);
 
 #ifdef __cplusplus
 }

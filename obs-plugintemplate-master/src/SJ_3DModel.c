@@ -564,12 +564,17 @@
 			return degrees * (float)M_PI / 180.0f;
 	}
 
-	/* Aplica rotacion manual en orden Z->Y->X para desacoplar mejor los ejes de la UI. */
+	/* Aplica offsets manuales de la UI en el mismo orden que el overlay de texto 3D:
+	 * función X → -Y → -Z (mismo orden que en overlay_use_3d_pose en Cubo-plugin.c).
+	 * Y y Z se niegan para compensar la inversión que produce Scale(-s,s,-s)·R180x. */
 	static inline void apply_ui_rotation_zyx(float rot_x_deg, float rot_y_deg, float rot_z_deg)
 	{
-		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, degrees_to_radians(rot_z_deg));
-		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, degrees_to_radians(rot_y_deg));
-		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, degrees_to_radians(rot_x_deg));
+		/* UI viene DESPUÉS de R180x en orden de vértice → solo Scale(-s,s,-s) queda detrás.
+		 * Scale no invierte Y  → +rot_y (sin negar)
+		 * Scale sí invierte Z  → -rot_z (negar para compensar) */
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,  degrees_to_radians( rot_x_deg));
+		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,  degrees_to_radians( rot_y_deg));
+		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,  degrees_to_radians(-rot_z_deg));
 	}
 
 
@@ -592,10 +597,10 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 		if (detected) {
 			angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] +
 					 rvec[2] * rvec[2]);
-			if (angle_rad > 1e-5f) { // Evitar división por cero
+			if (angle_rad > 1e-5f) {
 				ax =  rvec[0] / angle_rad;
-				ay = -rvec[1] / angle_rad; /* negar Y: OpenCV→OBS */
-				az = -rvec[2] / angle_rad; /* negar Z: OpenCV→OBS */
+				ay =  rvec[1] / angle_rad; /* +Y: con R90x en la cadena, el eje Y no necesita negación */
+				az =  rvec[2] / angle_rad; /* +Z: M=Scale(-s,-s,+s) no invierte Z → sin negar */
 			} else {
 				angle_rad = 0.0f;
 			}
@@ -619,21 +624,30 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 
 			gs_matrix_push();
 
-			//  Mover pivote al origen
-			gs_matrix_translate3f(-cx, -cy, -cz);
-			//  Escala
+			/* Cadena idéntica al overlay de texto 3D (overlay_use_3d_pose):
+			 * Vértice recibe (orden real de aplicación, de derecha a izquierda):
+			 *   T(-cx,-cy,-cz) → R90x → R_rvec → R180x → offsets → Scale */
+
+			/* 1. Escala */
 			gs_matrix_scale3f(-scale, scale, -scale);
-			//  Corrección de coordenadas (Y-Abajo de OpenCV a Y-Arriba de OBS)
+
+			/* 2. Offsets manuales UI (mismo orden que texto: X → -Y → -Z) */
+			apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg, offset_rot_z_deg);
+
+			/* 3. Corrección de ejes OpenCV → OBS */
 			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
-			apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg,
-					      offset_rot_z_deg);
-
-			//  Aplicar la rotación del tracker (rvec) SEGUNDO
+			/* 4. Rotación del tracker (rvec ArUco) */
 			if (detected) {
 				gs_matrix_rotaa4f(ax, ay, az, angle_rad);
 			}
-			
+
+			/* 5. Levantar el modelo perpendicular al marcador (igual que texto 3D) */
+			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI / 2.0f);
+
+			/* 6. Centrar el modelo en el origen (primera op. sobre el vértice) */
+			gs_matrix_translate3f(-cx, -cy, -cz);
+
 			//  Dibujar
 			gs_load_vertexbuffer(m->vb);
 			gs_load_indexbuffer(m->ib);
@@ -668,8 +682,8 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 		angle_rad = sqrt(rvec[0] * rvec[0] + rvec[1] * rvec[1] + rvec[2] * rvec[2]);
 		if (angle_rad > 1e-5f) {
 			ax =  rvec[0] / angle_rad;
-			ay = -rvec[1] / angle_rad; /* negar Y: OpenCV→OBS */
-			az = -rvec[2] / angle_rad; /* negar Z: OpenCV→OBS */
+			ay =  rvec[1] / angle_rad; /* +Y: con R90x en la cadena, el eje Y no necesita negación */
+			az =  rvec[2] / angle_rad; /* +Z: M=Scale(-s,-s,+s) no invierte Z → sin negar */
 		} else {
 			angle_rad = 0.0f;
 		}
@@ -687,7 +701,7 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 		if (!m->texture) {
 			gs_technique_end_pass(tech);
 			gs_technique_end(tech);
-			
+
 			// Llamada a la versión SIN textura (pasando todos los parámetros)
 			render_model_c_NoTexture(g_meshes, g_mesh_count,
 						 widths, heights, scale,
@@ -703,22 +717,28 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 
 		gs_matrix_push();
 
-		//  mover pivote al origen 3D
-		gs_matrix_translate3f(cx, cy, cz);
-		//  escala
+		/* Cadena idéntica al overlay de texto 3D (overlay_use_3d_pose):
+		 * Vértice recibe: T(-cx,-cy,-cz) → R90x → R_rvec → R180x → offsets → Scale */
+
+		/* 1. Escala */
 		gs_matrix_scale3f(-scale, scale, -scale);
-		//  Corrección de coordenadas (Y-Abajo a Y-Arriba)
+
+		/* 2. Offsets manuales UI (mismo orden que texto: X → -Y → -Z) */
+		apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg, offset_rot_z_deg);
+
+		/* 3. Corrección de ejes OpenCV → OBS */
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
-	
+		/* 4. Rotación del tracker (rvec ArUco) */
 		if (detected) {
-			/* Aplicar primero la rotación del marcador (ArUco) */
-			gs_matrix_rotaa4f(ax, ay, az, angle_rad); 
+			gs_matrix_rotaa4f(ax, ay, az, angle_rad);
 		}
 
-		/* Aplicar después los offsets manuales (relativos al marcador) */
-		apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg,
-				      offset_rot_z_deg);
+		/* 5. Levantar el modelo perpendicular al marcador (igual que texto 3D) */
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI / 2.0f);
+
+		/* 6. Centrar el modelo en el origen (primera op. sobre el vértice) */
+		gs_matrix_translate3f(-cx, -cy, -cz);
 	
 
 		gs_effect_set_texture(image_param, m->texture);
@@ -763,8 +783,8 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 				 rvec[2] * rvec[2]);
 		if (angle_rad > 1e-5f) {
 			ax =  rvec[0] / angle_rad;
-			ay = -rvec[1] / angle_rad; /* negar Y: OpenCV→OBS */
-			az = -rvec[2] / angle_rad; /* negar Z: OpenCV→OBS */
+			ay =  rvec[1] / angle_rad; /* +Y: con R90x en la cadena, el eje Y no necesita negación */
+			az =  rvec[2] / angle_rad; /* +Z: M=Scale(-s,-s,+s) no invierte Z → sin negar */
 		} else {
 			angle_rad = 0.0f;
 		}
@@ -824,19 +844,18 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 
 	
 		gs_matrix_scale3f(-scale, scale, -scale);
+
+		apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg,
+				      offset_rot_z_deg);
+
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
-		// Rotación del Tracker (ArUco)
 		if (detected) {
 			gs_matrix_rotaa4f(ax, ay, az, angle_rad);
 		}
 
-		
-		apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg,
-				      offset_rot_z_deg);
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI / 2.0f);
 
-		
-		
 		gs_matrix_translate3f(cx, pivot_y, cz);
 
 		
@@ -848,12 +867,12 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 			if ((int)i == mesh_id_hour && clock_hour_deg) {
 				gs_matrix_rotaa4f(
 					0.0f, 1.0f, 0.0f,
-					degrees_to_radians(extra_rotation));
+					degrees_to_radians(-extra_rotation));
 			} else if ((int)i == mesh_id_minute &&
 				   clock_minute_deg) {
 				gs_matrix_rotaa4f(
 					0.0f, 1.0f, 0.0f,
-					degrees_to_radians(extra_rotation));
+					degrees_to_radians(-extra_rotation));
 			} else if ((int)i == mesh_id_second &&
 				   clock_second_deg) {
 				gs_matrix_rotaa4f(
