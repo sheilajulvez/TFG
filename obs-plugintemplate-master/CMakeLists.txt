@@ -21,6 +21,8 @@ include(helpers)
 
 # libobs compilado localmente desde las dependencias de OBS.
 set(libobs_DIR           "${CMAKE_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/libobs")
+# libobsConfig.cmake resuelve w32-pthreads como dependencia transitiva en Windows.
+set(w32-pthreads_DIR     "${CMAKE_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/deps/w32-pthreads")
 
 find_package(libobs REQUIRED)
 
