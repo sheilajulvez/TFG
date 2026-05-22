@@ -1,4 +1,4 @@
-\begin{thebibliography}{24}
+\begin{thebibliography}{28}
 \expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
 
 \bibitem[{{Apple Inc.}(2025)}]{ARKit}
@@ -12,6 +12,14 @@
 \newblock {ARToolKitX} -- open source augmented reality sdk.
 \newblock \url{https://www.artoolkitx.org/}, 2025.
 \newblock Accedido el 24 de junio de 2025.
+
+\bibitem[{{Assimp Development Team}(2025)}]{assimp_import_file}
+{\sc {Assimp Development Team}}.
+\newblock {Assimp -- Importing a Scene}.
+\newblock
+  \url{https://assimp-docs.readthedocs.io/en/latest/usage/use_the_lib.html#importing-a-scene},
+  2025.
+\newblock Accedido el 1 de julio de 2025.
 
 \bibitem[{{Assimp GitHub Repository}(2025)}]{assimp_github}
 {\sc {Assimp GitHub Repository}}.
@@ -123,17 +131,23 @@
   2025.
 \newblock Accedido el 24 de junio de 2025.
 
+\bibitem[{{OBS Studio - Rendering Graphics}(2025)}]{obs_graphics_api}
+{\sc {OBS Studio - Rendering Graphics}}.
+\newblock {Rendering Graphics}.
+\newblock \url{https://docs.obsproject.com/graphics}, 2025.
+\newblock Accedido el 1 de julio de 2025.
+
 \bibitem[{Olsson y Smedberg(2012)}]{Olsson2012}
 {\sc Olsson, T.} y {\sc Smedberg, O.}
 \newblock Augmented reality and head-up displays in aviation.
 \newblock En {\em Handbook of Augmented Reality\/} (editado por B.~Furht),
   p\'aginas 491--520. Springer, 2012.
 
-\bibitem[{{Open Broadcaster Software}(s.f.)}]{OBS}
+\bibitem[{{Open Broadcaster Software}(2025)}]{OBS}
 {\sc {Open Broadcaster Software}}.
-\newblock {OBS Studio – Free and open source software for video recording and
+\newblock {OBS Studio -- Free and open source software for video recording and
   live streaming}.
-\newblock \url{https://obsproject.com}, s.f.
+\newblock \url{https://obsproject.com}, 2025.
 \newblock Accedido el 25 de junio de 2025.
 
 \bibitem[{{OpenCV Team}(2025)}]{OpenCV}
@@ -141,6 +155,21 @@
 \newblock Opencv -- open source computer vision library.
 \newblock \url{https://opencv.org/}, 2025.
 \newblock Accedido el 24 de junio de 2025.
+
+\bibitem[{Julvez~L{\'o}pez y Moreno~Barbero(2025)}]{PluginRepo}
+{\sc Julvez~L{\'o}pez, S.} y {\sc Moreno~Barbero, J.}
+\newblock Repositorio del plugin de realidad aumentada para {OBS Studio}.
+\newblock \url{https://github.com/sheilajulvezcognifit/TFG}, 2025.
+\newblock Accedido el 20 de mayo de 2026.
+
+\bibitem[{Julvez~L{\'o}pez y Moreno~Barbero(2026)}]{VideoValidacion}
+{\sc Julvez~L{\'o}pez, S.} y {\sc Moreno~Barbero, J.}
+\newblock V\'ideo de validaci\'on del plugin de realidad aumentada para {OBS
+  Studio}.
+\newblock
+  \url{https://drive.google.com/file/d/15hFG_nY4zixjdG2RuxKq84qQ5AKFcBp_/view},
+  2026.
+\newblock Accedido el 21 de mayo de 2026.
 
 \bibitem[{{PTC Inc.}(2025)}]{Vuforia}
 {\sc {PTC Inc.}}

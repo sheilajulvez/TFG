@@ -2,19 +2,14 @@
 
 \section*{\tituloPortadaEngVal}
 
-In recent years, it has become increasingly common for television programs to incorporate augmented reality (AR) effects during live broadcasts. This technology enables the integration of virtual elements, such as three-dimensional graphics, interactive data visualizations, or real-time overlays, that appear to coexist within the real environment. By doing so, AR enhances the visual narrative, facilitates the understanding of complex information, and increases the communicative impact of the broadcast.
+Nowadays, many television programs, especially news broadcasts, make use of augmented reality (AR) elements displayed on screen to complement the information delivered by presenters. Thanks to this technology it is possible to integrate three-dimensional graphics, interactive data, or complex visualizations directly into the studio, making them appear as part of the real space. This not only completes and facilitates the understanding of the content, but also gives the broadcast a more dynamic and visually appealing look.
 
-This Final Degree Project explores the potential of augmented reality in the context of live streaming using OBS Studio as the main production tool. The central contribution is a native OBS Studio plugin, implemented as a video filter, that detects ArUco visual markers in the camera feed, estimates their pose in real time using the PnP algorithm from OpenCV, and renders synthetic content anchored to those markers directly on the video frame without any external process.
+This Final Degree Project studies how to apply augmented reality to live broadcasts on platforms such as YouTube or other streaming services. To this end, OBS Studio is used as the main production tool, analysing how it can be adapted to generate effects similar to those used in professional television.
 
-The plugin offers four distinct operating modes. In the 3D model mode, arbitrary geometry loaded via Assimp is overlaid on the marker with correct position and orientation. In the stopwatch mode, an analogue countdown clock is rendered whose hands are synchronized with the official contest time retrieved from a remote API. In the scoreboard mode, the full live ranking of a programming contest is projected onto the video in real time. In the team info mode, the system automatically identifies which team the camera is pointing at and displays that team’s data exclusively, combining marker detection with a JSON mapping file prepared before the broadcast.
-
-Several non-trivial technical problems are solved in this work: the coordinate system mismatch between OpenCV and OBS, resolved via a 180-degree rotation and component sign correction; an exponential moving average filter with circular interpolation to eliminate the visual jitter produced by camera noise; a two-thread architecture that keeps network requests in a secondary thread so they never block the render cycle; and a standalone Python camera calibration tool. The plugin also handles all seven pixel formats that OBS can deliver from a capture device.
-
-The specific domain of application is programming contest broadcasts, where structured real-time data from the DOMjudge automatic judge system is consumed via its REST API using libcurl, which is bundled with OBS. This application demonstrates that it is possible to add a complete AR pipeline to OBS Studio while maintaining the native filter architecture and without modifying the core of the software.
+The work focuses especially on the case of online programming contests, where AR can be very helpful for presenting information more clearly, facilitating interaction with the audience, and improving the visual quality of the content. In this way, the goal is to demonstrate how this technology can enrich both the viewer's experience and that of the presenter themselves.
 
 \section*{Keywords}
 
 \noindent Augmented Reality, Live Streaming, OBS plugin, 3D Models, ArUco Markers, OpenCV, DOMjudge
-
 
 

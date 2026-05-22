@@ -8,37 +8,51 @@ A lo largo de este Trabajo de Fin de Grado hemos trabajado de forma coordinada, 
 
 \subsection*{Investigación del estado de la cuestión y selección tecnológica}
 
-La investigación del estado del arte fue liderada principalmente por Sheila. Esta fase, que se corresponde con el capítulo~\ref{cap:estadoDeLaCuestion} de la memoria, implicó revisar en profundidad la literatura académica y la documentación técnica sobre realidad aumentada: sus orígenes militares en los HUDs, su evolución hasta los dispositivos de consumo actuales, la taxonomía de tipos de RA (basada en marcadores, sin marcadores, óptica, proyectiva), y las aplicaciones en entornos de retransmisión audiovisual y \textit{broadcasting} profesional.
+La investigación del estado del arte fue liderada principalmente por Sheila. Esta fase, que se corresponde con el capítulo~\ref{cap:estadoDeLaCuestion} de la memoria, implicó revisar en profundidad la literatura académica y la documentación técnica sobre realidad aumentada: sus orígenes, su evolución hasta los dispositivos actuales, la taxonomía de tipos de RA (basada en marcadores, sin marcadores, óptica, proyectiva), y las aplicaciones en entornos de retransmisión audiovisual y \textit{broadcasting} profesional.
 
-Sheila analizó y comparó los principales SDKs de realidad aumentada disponibles en el mercado: Vuforia, ARToolKit, los SDK de NVIDIA, DeepAR, ARKit y ARCore. Para cada uno evaluó la compatibilidad con modelos 3D, la facilidad de integración como plugin nativo, el rendimiento en tiempo real y la política de licencias. Esta revisión comparativa fue determinante para justificar la elección de OpenCV y la biblioteca Assimp como base tecnológica del proyecto, descartando soluciones que habrían requerido procesos externos o modificaciones del núcleo de OBS Studio.
+Sheila analizó y comparó los principales SDKs de realidad aumentada disponibles en el mercado: Vuforia, ARToolKit, los SDK de NVIDIA, DeepAR, entre otros. Para cada uno evaluó la compatibilidad con modelos 3D, la facilidad de integración como plugin nativo en OBS, el rendimiento en tiempo real y la política de licencias. Junto con Jose asumieron que esta revisión comparativa fue determinante para justificar la elección de OpenCV y la biblioteca Assimp como base tecnológica del proyecto, descartando soluciones que habrían requerido procesos externos o modificaciones del núcleo de OBS Studio.
 
-Además, investigó a fondo la arquitectura interna de OBS Studio: su sistema de escenas y fuentes, el modelo de filtros de vídeo y el ciclo de vida de un \textit{plugin} nativo. Estudió la API pública de OBS y los \textit{templates} de desarrollo disponibles en el repositorio oficial, sentando las bases para que la integración del \textit{plugin} pudiera hacerse respetando la arquitectura nativa del software.
-
-\subsection*{Desarrollo de la herramienta de calibración de cámara}
-
-Una de las contribuciones técnicas individuales más relevantes de Sheila fue el diseño e implementación de la herramienta de calibración de cámara, desarrollada como utilidad independiente en Python. Esta herramienta automatiza el proceso de adquisición de imágenes de un tablero de ajedrez desde la cámara conectada, extrae las esquinas de los cuadros con subpíxel de precisión, y resuelve el modelo de cámara pinhole para obtener los parámetros intrínsecos (distancia focal en píxeles, punto principal) y los coeficientes de distorsión radial y tangencial.
-
-El fichero de calibración resultante en formato XML es cargado por el \textit{plugin} al arrancar y aplicado a cada fotograma antes de la estimación de pose, corrigiendo las deformaciones ópticas propias de cada objetivo. Sheila realizó varias sesiones de calibración con distintas cámaras para validar la estabilidad y repetibilidad de los parámetros obtenidos, y documentó el procedimiento de uso de la herramienta tanto en el código fuente como en el apéndice correspondiente de esta memoria.
+Además, colaboró en la investigacion de la arquitectura interna de OBS Studio: su sistema de escenas y fuentes, el modelo de filtros de fuentes y el ciclo de vida de un \textit{plugin} nativo. Estudió la API pública de OBS y los \textit{templates} de desarrollo disponibles en el repositorio oficial, sentando las bases para que la integración del \textit{plugin} pudiera hacerse respetando la arquitectura nativa del software.
 
 \subsection*{Diseño de la interfaz de usuario en OBS}
 
-Sheila fue la principal responsable del diseño y la implementación de la interfaz de usuario del \textit{plugin} dentro de OBS Studio. Definió los controles de propiedad que el operador puede ajustar en directo desde el panel de filtros: rutas a los ficheros de calibración y de modelo 3D, la URL de la API de DOMjudge, el modo de operación activo y los parámetros de escala y posición del contenido superpuesto.
+Sheila fue la principal responsable del diseño y la implementación de la interfaz del \textit{plugin} dentro de OBS Studio. Definió los controles de propiedad que el usuario puede ajustar desde el panel de filtros proporcionado por OBS: rutas a los ficheros de calibración y rutas a los modelos 3D, la URL de la API de DOMjudge, el modo de operación activo, los parámetros de escala y posición del contenido superpuesto, colores y sombras de elemnetos mostrados, direccion al archivo que une id de usuarios del concurso con marcador aruco, seleccion de biblioteca, id y tamaño de los marcadores, entre otros.
 
-El diseño de la interfaz buscó que cualquier operador pudiera configurar y cambiar los parámetros del \textit{plugin} sin necesidad de reiniciar la escena ni conocer los detalles internos del sistema. Sheila realizó varias pruebas de usabilidad con usuarios con distinto nivel técnico, incorporando mejoras iterativas para que los controles resultaran intuitivos incluso en condiciones de producción con poco tiempo disponible.
+El diseño de la interfaz buscó que cualquier usuario pudiera configurar y cambiar los parámetros del \textit{plugin} sin necesidad de reiniciar la escena ni conocer los detalles internos del sistema. Sheila realizó varias pruebas de usabilidad con usuarios con distinto nivel técnico, incorporando mejoras iterativas para que los controles resultaran intuitivos.
 
-\subsection*{Pruebas, validación y documentación}
+\subsection*{Desarrollo de la herramienta de calibración de cámara}
 
-Sheila coordinó la fase de pruebas y validación del sistema. Diseñó una batería de pruebas funcionales que cubría los cuatro modos de operación del \textit{plugin} bajo distintas condiciones: iluminación variable, distintas distancias al marcador, diferentes resoluciones de cámara y distintas tasas de fotogramas configuradas en OBS. Registró sistemáticamente los resultados y colaboró con Jose en la corrección de los problemas detectados.
+Una de las contribuciones técnicas individuales más relevantes de Sheila fue el diseño e implementación de la herramienta de calibración de cámara, desarrollada como utilidad independiente en Python. Esta herramienta automatiza el proceso de adquisición de imágenes de un tablero de ajedrez desde la cámara conectada, extrae las esquinas de los cuadros con subpíxel de precisión, y resuelve el modelo de cámara \textit{pinhole} para obtener los parámetros intrínsecos y los coeficientes de distorsión radial y tangencial.
 
-En cuanto a la documentación, Sheila redactó los capítulos introductorios y el capítulo del estado de la cuestión, así como las secciones de motivación, objetivos y conclusiones de la memoria. También se encargó de la revisión de estilo y coherencia del conjunto del documento, unificando la terminología y la estructura de las referencias bibliográficas.
+El fichero de calibración resultante en formato XML es cargado por el \textit{plugin} y aplicado a cada fotograma antes de la estimación de pose, corrigiendo las deformaciones ópticas propias de cada objetivo. Sheila realizó varias sesiones de calibración para validar la estabilidad y repetibilidad de los parámetros obtenidos, y documentó el procedimiento de uso de la herramienta tanto en el código fuente como en el apéndice correspondiente de esta memoria.
+
+\subsection*{Integración con DOMjudge y arquitectura de dos hilos}
+
+Sheila diseñó e implementó la capa de conectividad con la plataforma de juez automático DOMjudge. El cliente de red consume la API REST de DOMjudge usando libcurl, para obtener de forma periódica la clasificación general del concurso, los veredictos de los envíos y el tiempo oficial restante.
+
+Para que las peticiones HTTP no bloqueen en ningún caso el ciclo de renderizado, Sheila diseñó una arquitectura de dos hilos: el hilo principal ejecuta la detección de marcadores, la estimación de pose y el renderizado dentro de OBS, mientras que un hilo secundario realiza las peticiones de red de forma asíncrona. El acceso concurrente a los datos compartidos se protege mediante una sección crítica, garantizando que la actualización de datos nunca interrumpa la producción de fotogramas. Esta arquitectura fue diseñada explícitamente para entornos de producción en directo, donde cualquier parada del renderizado se traduce en algo perceptible por el espectador como una posible congelación de la imagen.
+
+\subsection*{Pruebas y validación}
+
+Sheila lideró y coordinó la fase de pruebas y validación del sistema. Con el apoyo de los tutores del proyecto, quienes facilitaron el material de test y los escenarios reales de la plataforma DOMjudge, diseñó una batería de pruebas funcionales exhaustiva. Este plan de pruebas se estructuró para evaluar el comportamiento del \textit{plugin} ante flujos variables de datos del concurso (como peticiones concurrentes, actualizaciones de problemas resueltos y cambios de estado en el marcador) en combinación con variaciones físicas de iluminación y distancia. Sheila se encargó de registrar sistemáticamente las métricas y resultados obtenidos, colaborando estrechamente con Jose para localizar el origen de los fallos de software y validar las correcciones implementadas.
+
+\subsection* {Documentación de la Memoria}
+
+En cuanto a la documentación, Sheila redactó los capítulos introductorios y el capítulo del estado de la cuestión de RA~\ref{cap:estadoDeLaCuestion}. También redactó el capítulo de descripción técnica del trabajo~\ref{cap:descripcionTrabajo}. Ambos capítulos incluyen diagramas de arquitectura, explicaciones de código y módulos implementados y análisis de las decisiones de diseño tomadas en cada etapa. También colaboró en el desarrollo de las secciones de objetivos y conclusiones de la memoria. Y se encargó de la revisión de estilo y coherencia del conjunto del documento, unificando la terminología y la estructura de las referencias bibliográficas junto con su compañero Jose.
 
 \section*{Contribuciones de Jose Moreno Barbero}
 
+\subsection*{Colaboración en la evaluación técnica del estado de la cuestión}
+
+Por su parte, Jose participó junto a Sheila activamente en la fase de selección tecnológica aportando la perspectiva de viabilidad técnica y compatibilidad arquitectónica.
+Apoyó el estudio de la arquitectura interna de OBS Studio analizando cómo la API de filtros nativos gestiona los formatos de vídeo y los contextos de renderizado. Esta labor conjunta de investigación y discusión técnica permitió validar que la combinación de OpenCV y Assimp no solo era la opción óptima a nivel teórico, sino también la más viable para garantizar la tasa de fotogramas por segundo requerida en una retransmisión en directo.
+
 \subsection*{Arquitectura del \textit{plugin} y ciclo de renderizado}
 
-Jose fue el principal responsable del diseño e implementación de la arquitectura central del \textit{plugin}. Esto implicó, en primer lugar, estudiar en detalle el modelo de extensión de OBS Studio y comprender el ciclo de vida de un filtro de vídeo nativo: los puntos de entrada \texttt{video\_render} y \texttt{video\_tick}, la gestión de la memoria de \textit{frame}, y las restricciones de tiempo que impone el ciclo de codificación de OBS para no introducir latencia adicional en la señal de salida.
+Jose fue el principal responsable del diseño e implementación de la arquitectura central del \textit{plugin}. Esto implicó, en primer lugar, estudiar en detalle el modelo de extensión de OBS Studio y comprender el ciclo de vida de un filtro de vídeo nativo: los puntos de entrada \texttt{video\_render} y \texttt{video\_tick}, la gestión de la memoria de fotograma, y las restricciones de tiempo que impone el ciclo de codificación de OBS para no introducir latencia adicional en la señal de salida.
 
 A partir de ese análisis, Jose diseñó la estructura modular del \textit{plugin}, separando claramente el módulo de visión artificial (detección de marcadores y estimación de pose), el módulo de renderizado 3D y el módulo de conectividad con la API externa. Esta separación de responsabilidades permite añadir nuevos modos de operación sin modificar el código de los módulos existentes y facilita el mantenimiento a largo plazo.
+
 
 \subsection*{Detección de marcadores ArUco y estimación de pose}
 
@@ -54,13 +68,11 @@ Jose implementó el subsistema de renderizado 3D, que utiliza la biblioteca Assi
 
 A partir de esta base, Jose desarrolló los cuatro modos de operación del \textit{plugin}. En el \textbf{modo de modelo 3D}, el sistema superpone geometría arbitraria anclada al marcador. En el \textbf{modo cronómetro}, el modelo actúa como reloj analógico de cuenta atrás cuyas manecillas se actualizan fotograma a fotograma y se sincronizan periódicamente con el tiempo oficial del concurso obtenido desde la API de DOMjudge. En el \textbf{modo \textit{scoreboard}}, el sistema proyecta la clasificación completa del concurso sobre el vídeo en tiempo real. En el \textbf{modo de información de equipo}, el sistema identifica automáticamente qué equipo tiene la cámara en el campo de visión y muestra exclusivamente sus datos, combinando la detección de marcadores con un fichero JSON de mapeo preparado antes de la retransmisión.
 
-\subsection*{Integración con DOMjudge y arquitectura de dos hilos}
+\subsection*{Pruebas y validación}
 
-Jose diseñó e implementó la capa de conectividad con la plataforma de juez automático DOMjudge. El cliente de red consume la API REST de DOMjudge usando libcurl, biblioteca HTTP incluida en OBS Studio, para obtener de forma periódica la clasificación general del concurso, los veredictos de los envíos y el tiempo oficial restante.
-
-Para que las peticiones HTTP no bloqueen en ningún caso el ciclo de renderizado, Jose diseñó una arquitectura de dos hilos: el hilo principal ejecuta la detección de marcadores, la estimación de pose y el renderizado dentro del \textit{callback} de OBS, mientras que un hilo secundario realiza las peticiones de red de forma asíncrona. El acceso concurrente a los datos compartidos se protege mediante una sección crítica (\texttt{CRITICAL\_SECTION}), garantizando que la actualización de datos nunca interrumpa la producción de fotogramas. Esta arquitectura fue diseñada explícitamente para entornos de producción en directo, donde cualquier parada del renderizado se traduce en un fotograma perdido perceptible por el espectador.
+Jose colaboró estrechamente en la fase de ejecución y verificación del plan de pruebas del sistema. Se encargó de validar el comportamiento de los algoritmos de estimación de pose y renderizado 3D bajo las distintas condiciones de estrés planteadas: iluminación variable, oclusión parcial de marcadores y fluctuaciones en las tasas de fotogramas de OBS. A partir de los resultados registrados, implementó los ajustes necesarios en el código para corregir los errores de software detectados de forma conjunta.
 
 \subsection*{Capítulos técnicos de la memoria}
+Jose redactó la documentación del estado de la cuestión de los Concurso de Programación \ref{cap:concursos_programacion} y el capítulo~\ref{cap:descripcionTrabajoConcursosProgramacion}, que describe la extensión del sistema para estos concursos y su implementación técnica. Jose también colaboró en la sección de motivación de este TFG, los apéndices técnicos y la sección de trabajo futuro de las conclusiones. Además junto con su compañera Sheila, se encargó de la revisión de estilo y coherencia del conjunto del documento, la terminología y la estructura bibliográfica.
 
-Jose redactó los capítulos de descripción técnica del trabajo: el capítulo~\ref{cap:descripcionTrabajo}, que detalla el diseño e implementación del filtro de RA base, y el capítulo~\ref{cap:descripcionTrabajoConcursosProgramacion}, que describe la extensión del sistema para los concursos de programación. Ambos capítulos incluyen diagramas de arquitectura, fragmentos de código comentados y análisis de las decisiones de diseño tomadas en cada etapa. Jose también redactó los apéndices técnicos y la sección de trabajo futuro de las conclusiones.
-        
+

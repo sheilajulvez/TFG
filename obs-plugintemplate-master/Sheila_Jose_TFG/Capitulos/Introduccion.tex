@@ -30,7 +30,7 @@ Esta memoria corresponde al estudio, diseño e implementación de una solución 
 
 El punto de partida de este trabajo está en cómo la RA ha pasado de ser una curiosidad experimental a convertirse en una herramienta habitual dentro de la producción audiovisual. Hoy en día ya no sorprende ver cómo informativos, retransmisiones deportivas o programas de entretenimiento incluyen gráficos en 3D, animaciones y elementos interactivos que se superponen en el escenario real, creando una experiencia mucho más visual y atractiva para el espectador.
 
-Con este proyecto se quiere probar hasta qué punto es posible llevar estas ideas a un entorno concreto: la \textbf{retransmisión de concursos de programación en \textit{streaming}}. Aunque todavía no es muy común aplicar la RA en este tipo de contenidos, esta tecnología tiene un gran potencial para hacer las emisiones más claras, dinámicas y entretenidas, además de contribuir a poner en valor este tipo de competiciones técnicas.
+Con este proyecto se quiere probar hasta qué punto es posible llevar estas ideas a un entorno concreto: la \textbf{retransmisión de concursos de programación en directo}. Aunque todavía no es muy común aplicar la RA en este tipo de contenidos, esta tecnología tiene un gran potencial para hacer las emisiones más claras, dinámicas y entretenidas, además de contribuir a poner en valor este tipo de competiciones técnicas.
 
 
 \section{Motivación}
@@ -62,7 +62,7 @@ Este planteamiento implica resolver un conjunto de retos técnicos que se aborda
   \item Ofrecer una \textbf{interfaz de usuario} integrada en OBS que permita al operador configurar y cambiar los parámetros del plugin en directo, sin reiniciar la escena.
 \end{itemize}
 
-Como resultado, el sistema demuestra la viabilidad de añadir un \textit{pipeline} completo de RA orientada a datos a OBS Studio manteniendo la arquitectura de filtro nativo, y abre la puerta a su adaptación a otros tipos de retransmisión en directo más allá de los concursos de programación.
+Como resultado, el sistema demuestra la viabilidad de añadir una cadena de procesamiento completa de RA orientada a datos a OBS Studio manteniendo la arquitectura de filtro nativo, y abre la puerta a su adaptación a otros tipos de retransmisión en directo más allá de los concursos de programación. El código fuente completo del complemento está disponible en el repositorio público del proyecto\footnote{\url{https://github.com/sheilajulvezcognifit/TFG}} \citep{PluginRepo}.
 
 \section{Plan de trabajo}
 
@@ -93,7 +93,7 @@ La tercera fase será la más extensa e incluirá el desarrollo completo del plu
 
 La cuarta fase estará dedicada a las pruebas de estabilidad del sistema, la revisión del código y la redacción de esta memoria.
 
-El resto de la memoria se organiza de la siguiente forma. El capítulo~\ref{cap:estadoDeLaCuestion} analiza el estado de la cuestión en realidad aumentada: sus tipos, aplicaciones principales, SDKs disponibles, la justificación de la elección tecnológica, la arquitectura de OBS Studio y su sistema de plugins. El capítulo~\ref{cap:concursos_programacion} introduce el dominio de los concursos de programación y la plataforma DOMjudge, que actúa como fuente de datos para la parte dinámica del sistema. El capítulo~\ref{cap:descripcionTrabajo} describe el diseño e implementación del filtro de realidad aumentada en OBS: detección de marcadores, estimación de pose, renderizado 3D y configuración del modo AR. El capítulo~\ref{cap:descripcionTrabajoConcursosProgramacion} explica la ampliación del filtro para concursos de programación, incluyendo elementos dinámicos, conectividad con DOMjudge y modos de visualización. Finalmente, el capítulo~\ref{cap:conclusiones} presenta las conclusiones del trabajo y las líneas de trabajo futuro.
+El resto de la memoria se organiza de la siguiente forma. El capítulo~\ref{cap:estadoDeLaCuestion} analiza el estado de la cuestión en realidad aumentada: sus tipos, aplicaciones principales, SDKs disponibles, la justificación de la elección tecnológica, la arquitectura de OBS Studio y su sistema de plugins. El capítulo~\ref{cap:concursos_programacion} introduce el dominio de los concursos de programación y la plataforma DOMjudge, que actúa como fuente de datos para la parte dinámica del sistema. El capítulo~\ref{cap:descripcionTrabajo} describe el diseño e implementación del filtro de realidad aumentada en OBS: detección de marcadores, estimación de pose, renderizado 3D y configuración del modo AR. El capítulo~\ref{cap:descripcionTrabajoConcursosProgramacion} explica la ampliación del filtro para concursos de programación, incluyendo elementos dinámicos, conectividad con DOMjudge y modos de visualización. El capítulo~\ref{cap:validacion} recoge la validación del sistema: pruebas funcionales de los cuatro modos de operación y mediciones de rendimiento sobre CPU, memoria y tasa de fotogramas. Finalmente, el capítulo~\ref{cap:conclusiones} presenta las conclusiones del trabajo y las líneas de trabajo futuro.
 
 
 % \section{Explicaciones adicionales sobre el uso de esta plantilla}

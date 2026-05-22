@@ -1,1 +1,5 @@
+# Excluir la carpeta de métricas completamente
+metricas/
+
+# Excluir todos los archivos y carpetas generados por Aider
 .aider*
