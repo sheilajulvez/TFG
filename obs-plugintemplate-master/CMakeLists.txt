@@ -58,14 +58,16 @@ set(OPENCV_LIBS_DEBUG
 )
 
 # libcurl: sincronización HTTP con DOMjudge.
-set(CURL_ROOT "${CMAKE_SOURCE_DIR}/.deps/obs-deps-2024-09-12-x64")
+set(CURL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/Dependencies/curl-8.18.0_1-win64-mingw")
 
 target_include_directories(${_name} PRIVATE
     "${CURL_ROOT}/include"
 )
 
-set(CURL_LIB_DEBUG   "${CURL_ROOT}/lib/libcurl_imp.lib")
-set(CURL_LIB_RELEASE "${CURL_ROOT}/lib/libcurl_imp.lib")
+set(CURL_LIB_DEBUG   "${CURL_ROOT}/lib/Debug/libcurl-d_imp.lib")
+set(CURL_LIB_RELEASE "${CURL_ROOT}/lib/Release/libcurl_imp.lib")
+set(CURL_DLL_DEBUG   "${CURL_ROOT}/lib/Debug/libcurl-d.dll")
+set(CURL_DLL_RELEASE "${CURL_ROOT}/lib/Release/libcurl.dll")
 
 # ==== Enlace del plugin ====
 target_link_libraries(${_name} PRIVATE
@@ -102,6 +104,6 @@ set_target_properties_plugin(${_name} PROPERTIES OUTPUT_NAME ${_name})
 # Copia el binario generado y libcurl al directorio Release local del build.
 add_custom_command(TARGET ${_name} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${_name}> "${CMAKE_CURRENT_BINARY_DIR}/Release/$<TARGET_FILE_NAME:${_name}>"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CURL_ROOT}/bin/libcurl.dll" "${CMAKE_CURRENT_BINARY_DIR}/Release/libcurl.dll"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<$<CONFIG:Debug>:${CURL_DLL_DEBUG}>$<$<NOT:$<CONFIG:Debug>>:${CURL_DLL_RELEASE}>" "${CMAKE_CURRENT_BINARY_DIR}/Release/$<$<CONFIG:Debug>:libcurl-d.dll>$<$<NOT:$<CONFIG:Debug>>:libcurl.dll>"
     COMMENT "Copying plugin and dependencies to local build directory..."
 )
