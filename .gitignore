@@ -2,3 +2,5 @@
 # Excluir todos los archivos y carpetas generados por Aider
 .aider*
 .DS_Store
+/obs-plugintemplate-master/deps
+obs-plugintemplate-master/.DS_Store
