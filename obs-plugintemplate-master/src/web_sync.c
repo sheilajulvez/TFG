@@ -8,9 +8,8 @@
 #include <time.h>
 #include <obs-module.h>
 #include <util/bmem.h>
-#ifdef _WIN32
-#include <windows.h>
-#endif
+#include <util/platform.h>
+#include <util/threading.h>
 
 #include <curl/curl.h>
 #include "json_utils.h"
@@ -25,8 +24,9 @@ struct web_sync {
 	volatile bool enabled;
 	volatile bool thread_stop;
 
-	HANDLE thread;
-	CRITICAL_SECTION mutex;
+	pthread_t thread;
+	pthread_mutex_t mutex;
+	bool thread_started;
 
 	bool has_new_result;
 
@@ -57,6 +57,44 @@ typedef struct {
 	bool found;
 } header_date_t;
 
+static int ascii_casecmp(const char *a, const char *b)
+{
+	unsigned char ca, cb;
+
+	if (!a || !b)
+		return (a != NULL) - (b != NULL);
+
+	while (*a && *b) {
+		ca = (unsigned char)tolower((unsigned char)*a++);
+		cb = (unsigned char)tolower((unsigned char)*b++);
+		if (ca != cb)
+			return (int)ca - (int)cb;
+	}
+
+	return (int)(unsigned char)*a - (int)(unsigned char)*b;
+}
+
+static int ascii_ncasecmp(const char *a, const char *b, size_t n)
+{
+	unsigned char ca, cb;
+
+	if (!a || !b)
+		return (a != NULL) - (b != NULL);
+
+	while (n > 0 && *a && *b) {
+		ca = (unsigned char)tolower((unsigned char)*a++);
+		cb = (unsigned char)tolower((unsigned char)*b++);
+		if (ca != cb)
+			return (int)ca - (int)cb;
+		n--;
+	}
+
+	if (n == 0)
+		return 0;
+
+	return (int)(unsigned char)*a - (int)(unsigned char)*b;
+}
+
 // Stores the HTTP response body into the memory buffer.
 // Guarda el cuerpo de la respuesta HTTP en el buffer de memoria.
 static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
@@ -81,7 +119,7 @@ static size_t header_callback(char *buffer, size_t size, size_t nitems,
 	header_date_t *hdr = (header_date_t *)userdata;
 	size_t total = size * nitems;
 
-	if (total > 6 && (_strnicmp(buffer, "Date:", 5) == 0)) {
+	if (total > 6 && ascii_ncasecmp(buffer, "Date:", 5) == 0) {
 		const char *p = buffer + 5;
 		while (*p == ' ' || *p == '\t')
 			p++;
@@ -308,7 +346,7 @@ static int parse_teams_json(const char *json, scoreboard_team_t *teams, int max_
 
 // Runs the main synchronization loop in the worker thread.
 // Ejecuta el bucle principal de sincronizacion en el hilo de trabajo.
-static DWORD WINAPI sync_thread_func(LPVOID arg)
+static void *sync_thread_func(void *arg)
 {
 	web_sync_t *sync = (web_sync_t *)arg;
 	memory_buffer_t buf;
@@ -341,7 +379,7 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	buf.data = (char *)malloc(WEB_SYNC_BUFFER_SIZE);
 	if (!buf.data) {
 		blog(LOG_WARNING, "[WEB_SYNC] Error: no se pudo asignar memoria");
-		return 0;
+		return NULL;
 	}
 	buf.size = 0;
 	buf.data[0] = '\0';
@@ -350,14 +388,14 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 	if (!curl) {
 		blog(LOG_WARNING, "[WEB_SYNC] Error: curl_easy_init falló");
 		free(buf.data);
-		return 0;
+		return NULL;
 	}
 
 	vinfo = curl_version_info(CURLVERSION_NOW);
 	blog(LOG_INFO, "[WEB_SYNC] Thread iniciado. libcurl version: %s", vinfo->version);
 
 	for (proto = vinfo->protocols; *proto; proto++) {
-		if (_stricmp(*proto, "https") == 0)
+		if (ascii_casecmp(*proto, "https") == 0)
 			break;
 	}
 
@@ -366,7 +404,7 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 		if (interval < WEB_SYNC_MIN_INTERVAL)
 			interval = WEB_SYNC_MIN_INTERVAL;
 
-		Sleep((DWORD)(interval * 1000));
+		os_sleep_ms((uint32_t)(interval * 1000.0f));
 
 		if (sync->thread_stop) break;
 		if (!sync->enabled) continue;
@@ -376,7 +414,7 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 		auth_user = NULL;
 		auth_pass = NULL;
 
-		EnterCriticalSection(&sync->mutex);
+		pthread_mutex_lock(&sync->mutex);
 		if (sync->base_url && sync->contest_id) {
 			snprintf(contest_url, sizeof(contest_url), "%s/contests/%s", sync->base_url, sync->contest_id);
 			snprintf(scoreboard_url, sizeof(scoreboard_url), "%s/contests/%s/scoreboard", sync->base_url, sync->contest_id);
@@ -391,7 +429,7 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 			auth_user = bstrdup(sync->username);
 			if (sync->password) auth_pass = bstrdup(sync->password);
 		}
-		LeaveCriticalSection(&sync->mutex);
+		pthread_mutex_unlock(&sync->mutex);
 
 		if (auth_user) {
 			snprintf(userpwd, sizeof(userpwd), "%s:%s", auth_user, auth_pass ? auth_pass : "");
@@ -453,14 +491,14 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 							}
 						}
 
-						EnterCriticalSection(&sync->mutex);
+						pthread_mutex_lock(&sync->mutex);
 						sync->has_new_result = true;
 						sync->has_contest_result = true;
 						sync->result_elapsed_seconds = elapsed;
 						sync->result_remaining_seconds = remaining;
 						sync->result_total_duration = total_dur;
 						sync->result_server_time = server_time;
-						LeaveCriticalSection(&sync->mutex);
+						pthread_mutex_unlock(&sync->mutex);
 
 						blog(LOG_INFO,
 						     "[WEB_SYNC] Contest OK. elapsed=%.2fs remaining=%.2fs total=%.2fs",
@@ -490,7 +528,7 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 				team_count = parse_scoreboard_json(buf.data, teams, MAX_SCOREBOARD_TEAMS);
 				if (team_count > 0) {
 					blog(LOG_INFO, "[WEB_SYNC] Scoreboard OK. rows=%d", team_count);
-					EnterCriticalSection(&sync->mutex);
+					pthread_mutex_lock(&sync->mutex);
 					for (int i = 0; i < team_count; i++) {
 						for (int j = 0; j < sync->cached_team_count; j++) {
 							if (strcmp(teams[i].team_id, sync->team_names[j].team_id) == 0) {
@@ -500,7 +538,7 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 							}
 						}
 					}
-					LeaveCriticalSection(&sync->mutex);
+					pthread_mutex_unlock(&sync->mutex);
 
 					char team_url[2048];
 					char fetched_name[128];
@@ -518,7 +556,7 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 								sizeof(teams[i].team_name) - 1);
 							teams[i].team_name[sizeof(teams[i].team_name) - 1] = '\0';
 
-							EnterCriticalSection(&sync->mutex);
+							pthread_mutex_lock(&sync->mutex);
 							bool found = false;
 							for (int j = 0; j < sync->cached_team_count; j++) {
 								if (strcmp(sync->team_names[j].team_id,
@@ -542,16 +580,16 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 								sync->team_names[sync->cached_team_count].team_name[sizeof(sync->team_names[sync->cached_team_count].team_name) - 1] = '\0';
 								sync->cached_team_count++;
 							}
-							LeaveCriticalSection(&sync->mutex);
+							pthread_mutex_unlock(&sync->mutex);
 						}
 					}
 
-					EnterCriticalSection(&sync->mutex);
+					pthread_mutex_lock(&sync->mutex);
 					sync->has_new_result = true;
 					sync->has_scoreboard_result = true;
 					sync->result_team_count = team_count;
 					memcpy(sync->result_teams, teams, sizeof(scoreboard_team_t) * team_count);
-					LeaveCriticalSection(&sync->mutex);
+					pthread_mutex_unlock(&sync->mutex);
 				} else {
 					blog(LOG_WARNING, "[WEB_SYNC] Scoreboard parseo 0 filas. HTTP=%ld URL=%s", http_code, scoreboard_url);
 				}
@@ -562,21 +600,21 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 
 		if (teams_cycle_++ % 10 == 0) {
 			char teams_url[2048] = {0};
-			EnterCriticalSection(&sync->mutex);
+			pthread_mutex_lock(&sync->mutex);
 			if (sync->base_url && sync->contest_id) {
 				snprintf(teams_url, sizeof(teams_url), "%s/contests/%s/teams", sync->base_url, sync->contest_id);
 			}
-			LeaveCriticalSection(&sync->mutex);
+			pthread_mutex_unlock(&sync->mutex);
 			if (teams_url[0]) {
 				buf.size = 0; buf.data[0] = '\0';
 				curl_easy_setopt(curl, CURLOPT_URL, teams_url);
 				if (curl_easy_perform(curl) == CURLE_OK) {
 					tc = parse_teams_json(buf.data, t_cache, 100);
 					if (tc > 0) {
-						EnterCriticalSection(&sync->mutex);
+						pthread_mutex_lock(&sync->mutex);
 						sync->cached_team_count = tc;
 						memcpy(sync->team_names, t_cache, sizeof(scoreboard_team_t) * tc);
-						LeaveCriticalSection(&sync->mutex);
+						pthread_mutex_unlock(&sync->mutex);
 					}
 				}
 			}
@@ -587,7 +625,7 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 
 	curl_easy_cleanup(curl);
 	free(buf.data);
-	return 0;
+	return NULL;
 }
 
 // Destroys the synchronizer and stops the worker thread.
@@ -596,15 +634,14 @@ void web_sync_destroy(web_sync_t *sync)
 {
 	if (!sync) return;
 	sync->thread_stop = true;
-	if (sync->thread) {
-		WaitForSingleObject(sync->thread, INFINITE);
-		CloseHandle(sync->thread);
+	if (sync->thread_started) {
+		pthread_join(sync->thread, NULL);
 	}
-	DeleteCriticalSection(&sync->mutex);
-	free(sync->base_url);
-	free(sync->contest_id);
-	free(sync->username);
-	free(sync->password);
+	pthread_mutex_destroy(&sync->mutex);
+	bfree(sync->base_url);
+	bfree(sync->contest_id);
+	bfree(sync->username);
+	bfree(sync->password);
 	free(sync);
 }
 
@@ -622,11 +659,11 @@ web_sync_t *web_sync_create_domjudge(const char *base_url,
 	if (!sync)
 		return NULL;
 	memset(sync, 0, sizeof(web_sync_t));
-	sync->base_url = _strdup(base_url);
-	sync->contest_id = _strdup(contest_id);
+	sync->base_url = bstrdup(base_url);
+	sync->contest_id = bstrdup(contest_id);
 	if (!sync->base_url || !sync->contest_id) {
-		free(sync->base_url);
-		free(sync->contest_id);
+		bfree(sync->base_url);
+		bfree(sync->contest_id);
 		free(sync);
 		return NULL;
 	}
@@ -635,16 +672,21 @@ web_sync_t *web_sync_create_domjudge(const char *base_url,
 	sync->enabled = true;
 	sync->thread_stop = false;
 
-	InitializeCriticalSection(&sync->mutex);
-
-	sync->thread = CreateThread(NULL, 0, sync_thread_func, sync, 0, NULL);
-	if (!sync->thread) {
-		DeleteCriticalSection(&sync->mutex);
-		free(sync->base_url);
-		free(sync->contest_id);
+	if (pthread_mutex_init(&sync->mutex, NULL) != 0) {
+		bfree(sync->base_url);
+		bfree(sync->contest_id);
 		free(sync);
 		return NULL;
 	}
+
+	if (pthread_create(&sync->thread, NULL, sync_thread_func, sync) != 0) {
+		pthread_mutex_destroy(&sync->mutex);
+		bfree(sync->base_url);
+		bfree(sync->contest_id);
+		free(sync);
+		return NULL;
+	}
+	sync->thread_started = true;
 
 	return sync;
 }
@@ -657,12 +699,12 @@ void web_sync_set_contest(web_sync_t *sync, const char *base_url,
 	if (!sync || !base_url || !contest_id)
 		return;
 
-	EnterCriticalSection(&sync->mutex);
-	if (sync->base_url) free(sync->base_url);
-	if (sync->contest_id) free(sync->contest_id);
-	sync->base_url = _strdup(base_url);
-	sync->contest_id = _strdup(contest_id);
-	LeaveCriticalSection(&sync->mutex);
+	pthread_mutex_lock(&sync->mutex);
+	if (sync->base_url) bfree(sync->base_url);
+	if (sync->contest_id) bfree(sync->contest_id);
+	sync->base_url = bstrdup(base_url);
+	sync->contest_id = bstrdup(contest_id);
+	pthread_mutex_unlock(&sync->mutex);
 }
 
 // Updates the polling interval in seconds.
@@ -692,7 +734,7 @@ bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result)
 		return false;
 
 	bool has_new = false;
-	EnterCriticalSection(&sync->mutex);
+	pthread_mutex_lock(&sync->mutex);
 
 	if (sync->has_new_result) {
 		memset(result, 0, sizeof(web_sync_result_t));
@@ -719,7 +761,7 @@ bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result)
 		has_new = true;
 	}
 
-	LeaveCriticalSection(&sync->mutex);
+	pthread_mutex_unlock(&sync->mutex);
 	return has_new;
 }
 
@@ -728,12 +770,12 @@ bool web_sync_poll(web_sync_t *sync, web_sync_result_t *result)
 void web_sync_set_auth(web_sync_t *sync, const char *username, const char *password)
 {
 	if (!sync) return;
-	EnterCriticalSection(&sync->mutex);
-	if (sync->username) free(sync->username);
-	if (sync->password) free(sync->password);
-	sync->username = (username && username[0]) ? _strdup(username) : NULL;
-	sync->password = (password && password[0]) ? _strdup(password) : NULL;
-	LeaveCriticalSection(&sync->mutex);
+	pthread_mutex_lock(&sync->mutex);
+	if (sync->username) bfree(sync->username);
+	if (sync->password) bfree(sync->password);
+	sync->username = (username && username[0]) ? bstrdup(username) : NULL;
+	sync->password = (password && password[0]) ? bstrdup(password) : NULL;
+	pthread_mutex_unlock(&sync->mutex);
 }
 
 // Performs a synchronous connection test.
@@ -820,13 +862,13 @@ int web_sync_get_teams(web_sync_t *sync, scoreboard_team_t *out_teams, int max_t
 		return 0;
 
 	int count = 0;
-	EnterCriticalSection(&sync->mutex);
+	pthread_mutex_lock(&sync->mutex);
 	count = sync->cached_team_count;
 	if (count > max_teams)
 		count = max_teams;
 	if (count > 0)
 		memcpy(out_teams, sync->team_names, sizeof(scoreboard_team_t) * count);
-	LeaveCriticalSection(&sync->mutex);
+	pthread_mutex_unlock(&sync->mutex);
 	return count;
 }
 
@@ -836,7 +878,7 @@ int web_sync_get_scoreboard(web_sync_t *sync, scoreboard_team_t *out_teams, int 
 		return 0;
 
 	int count = 0;
-	EnterCriticalSection(&sync->mutex);
+	pthread_mutex_lock(&sync->mutex);
 	count = sync->result_team_count;
 	if (count > max_teams)
 		count = max_teams;
@@ -861,7 +903,6 @@ int web_sync_get_scoreboard(web_sync_t *sync, scoreboard_team_t *out_teams, int 
 			}
 		}
 	}
-	LeaveCriticalSection(&sync->mutex);
+	pthread_mutex_unlock(&sync->mutex);
 	return count;
 }
-
