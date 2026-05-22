@@ -15,7 +15,7 @@
 #include <curl/curl.h>
 #include "json_utils.h"
 
-#define WEB_SYNC_BUFFER_SIZE 16384
+#define WEB_SYNC_BUFFER_SIZE 524288  /* 512 KB — suficiente para scoreboards grandes */
 #define WEB_SYNC_MIN_INTERVAL 1.0f
 
 struct web_sync {
@@ -484,9 +484,12 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 			buf.size = 0; buf.data[0] = '\0';
 			curl_easy_setopt(curl, CURLOPT_URL, scoreboard_url);
 			res = curl_easy_perform(curl);
-			if (res == CURLE_OK) {
+			http_code = 0;
+			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+			if (res == CURLE_OK && http_code == 200) {
 				team_count = parse_scoreboard_json(buf.data, teams, MAX_SCOREBOARD_TEAMS);
 				if (team_count > 0) {
+					blog(LOG_INFO, "[WEB_SYNC] Scoreboard OK. rows=%d", team_count);
 					EnterCriticalSection(&sync->mutex);
 					for (int i = 0; i < team_count; i++) {
 						for (int j = 0; j < sync->cached_team_count; j++) {
@@ -544,11 +547,16 @@ static DWORD WINAPI sync_thread_func(LPVOID arg)
 					}
 
 					EnterCriticalSection(&sync->mutex);
+					sync->has_new_result = true;
 					sync->has_scoreboard_result = true;
 					sync->result_team_count = team_count;
 					memcpy(sync->result_teams, teams, sizeof(scoreboard_team_t) * team_count);
 					LeaveCriticalSection(&sync->mutex);
+				} else {
+					blog(LOG_WARNING, "[WEB_SYNC] Scoreboard parseo 0 filas. HTTP=%ld URL=%s", http_code, scoreboard_url);
 				}
+			} else {
+				blog(LOG_WARNING, "[WEB_SYNC] Error consultando scoreboard. CURL=%d HTTP=%ld URL=%s", (int)res, http_code, scoreboard_url);
 			}
 		}
 
@@ -821,3 +829,39 @@ int web_sync_get_teams(web_sync_t *sync, scoreboard_team_t *out_teams, int max_t
 	LeaveCriticalSection(&sync->mutex);
 	return count;
 }
+
+int web_sync_get_scoreboard(web_sync_t *sync, scoreboard_team_t *out_teams, int max_teams)
+{
+	if (!sync || !out_teams || max_teams <= 0)
+		return 0;
+
+	int count = 0;
+	EnterCriticalSection(&sync->mutex);
+	count = sync->result_team_count;
+	if (count > max_teams)
+		count = max_teams;
+	if (count > 0) {
+		memcpy(out_teams, sync->result_teams, sizeof(scoreboard_team_t) * count);
+
+		/* Enriquecer con nombres reales de la caché de equipos */
+		for (int i = 0; i < count; i++) {
+			if (strncmp(out_teams[i].team_name, "Team ", 5) == 0 ||
+			    out_teams[i].team_name[0] == '\0') {
+				for (int j = 0; j < sync->cached_team_count; j++) {
+					if (strcmp(out_teams[i].team_id,
+						   sync->team_names[j].team_id) == 0 &&
+					    sync->team_names[j].team_name[0] != '\0') {
+						strncpy(out_teams[i].team_name,
+							sync->team_names[j].team_name,
+							sizeof(out_teams[i].team_name) - 1);
+						out_teams[i].team_name[sizeof(out_teams[i].team_name) - 1] = '\0';
+						break;
+					}
+				}
+			}
+		}
+	}
+	LeaveCriticalSection(&sync->mutex);
+	return count;
+}
+

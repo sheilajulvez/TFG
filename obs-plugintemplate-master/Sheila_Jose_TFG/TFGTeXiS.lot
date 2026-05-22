@@ -2,18 +2,20 @@
 \babel@toc {english}{}\relax 
 \babel@toc {spanish}{}\relax 
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {1.1}{\ignorespaces Planificación del proyecto por fases.}}{4}{table.caption.12}%
+\contentsline {table}{\numberline {1.1}{\ignorespaces Planificación del proyecto por fases.}}{4}{table.caption.13}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {2.1}{\ignorespaces Comparativa multidimensional de los tipos y tecnologías de Realidad Aumentada.}}{8}{table.caption.18}%
-\contentsline {table}{\numberline {2.2}{\ignorespaces Comparativa de SDKs y bibliotecas de RA.}}{17}{table.caption.35}%
+\contentsline {table}{\numberline {2.1}{\ignorespaces Comparativa multidimensional de los tipos y tecnologías de Realidad Aumentada.}}{8}{table.caption.19}%
+\contentsline {table}{\numberline {2.2}{\ignorespaces Comparativa de SDKs y bibliotecas de RA.}}{17}{table.caption.36}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {3.1}{\ignorespaces Principales endpoints de la API REST de DOMjudge relevantes para la integración con el plugin de RA.}}{35}{table.caption.64}%
+\contentsline {table}{\numberline {3.1}{\ignorespaces Principales endpoints de la API REST de DOMjudge relevantes para la integración con el plugin de RA.}}{35}{table.caption.65}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {4.1}{\ignorespaces Formatos de vídeo soportados por el módulo de detección y su conversión a BGR para OpenCV.}}{43}{table.caption.78}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {6.1}{\ignorespaces Resumen de consumo de CPU, memoria y tasa de fotogramas por configuración.}}{70}{table.caption.151}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {7.1}{\ignorespaces Project plan by phase.}}{67}{table.caption.130}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {8.1}{\ignorespaces Project plan by phase.}}{77}{table.caption.160}%
 \babel@toc {english}{}\relax 
 \addvspace {10\p@ }
 \babel@toc {spanish}{}\relax 

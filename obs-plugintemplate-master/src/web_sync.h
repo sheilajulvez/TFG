@@ -75,6 +75,26 @@ bool web_sync_test_connection(const char *base_url, const char *contest_id,
 // Copia los equipos en cache al array proporcionado.
 int web_sync_get_teams(web_sync_t *sync, scoreboard_team_t *out_teams, int max_teams);
 
+/**
+ * Copia el último resultado del scoreboard (con rank y num_solved) al array proporcionado.
+ * A diferencia de web_sync_get_teams, incluye los datos de puntuación.
+ * @param sync Instancia del sincronizador
+ * @param out_teams Array donde copiar los datos
+ * @param max_teams Tamaño máximo del array
+ * @return Número de equipos copiados
+ */
+int web_sync_get_teams(web_sync_t *sync, scoreboard_team_t *out_teams, int max_teams);
+
+/**
+ * Copia el último resultado del scoreboard (con rank y num_solved) al array proporcionado.
+ * A diferencia de web_sync_get_teams, incluye los datos de puntuación.
+ * @param sync Instancia del sincronizador
+ * @param out_teams Array donde copiar los datos
+ * @param max_teams Tamaño máximo del array
+ * @return Número de equipos copiados
+ */
+int web_sync_get_scoreboard(web_sync_t *sync, scoreboard_team_t *out_teams, int max_teams);
+
 #ifdef __cplusplus
 }
 #endif

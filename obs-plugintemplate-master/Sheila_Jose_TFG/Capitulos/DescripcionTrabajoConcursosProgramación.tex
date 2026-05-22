@@ -3,8 +3,11 @@
 
 \label{cap:descripcionTrabajoConcursosProgramacion}
 
-\chapterquote{Peugot}{Pelayo}
-En el capítulo anterior se describió cómo integrar realidad aumentada estática en OBS Studio:
+\chapterquote{No me preguntes qué puede hacer tu ordenador por ti, sino qué puedes hacer tú por tu clasificación.}{Anónimo, concurso de programación}
+
+El capítulo anterior deja construidas dos piezas fundamentales: un motor capaz de renderizar contenido 3D dentro de OBS y una capa de anclaje AR que permite colocar ese contenido sobre marcadores físicos detectados en tiempo real. Este capítulo parte de esa base y la amplía hacia contenido informativo dinámico para concursos de programación.
+
+En el capítulo anterior se describió cómo integrar realidad aumentada en OBS Studio:
 imprimir marcadores ArUco sobre cualquier superficie, calibrar la cámara y configurar el filtro
 para que ancle un modelo 3D al marcador detectado. Ese sistema es completo y funcional por sí
 solo para cualquier retransmisión que necesite superponer geometría fija sobre la imagen de una
@@ -48,33 +51,33 @@ las decisiones de diseño que condicionaron el desarrollo.
 %%=============================================================
  
 Superponer texto sobre un vídeo en tiempo real es técnicamente más exigente que superponer un
-modelo 3D estático. Un modelo se carga una vez y se redibuja cada \textit{frame} con la misma geometría;
+modelo 3D estático. Un modelo se carga una vez y se redibuja cada fotograma con la misma geometría,
 el texto, en cambio, puede cambiar de contenido en cualquier momento y su tamaño en pantalla
 varía según el volumen de información que deba mostrar. A eso se suma el requisito de que el
 bloque de texto parezca físicamente anclado al marcador: debe seguir su posición y orientación
 con precisión, sin temblores perceptibles, con un fondo legible y con la perspectiva correcta.
  
  
-\subsection{Pipeline de renderizado}
+\subsection{Cadena de procesamiento de renderizado}
 \label{subsec:pipeline_overlay}
  
-El \textit{pipeline} reutiliza la detección descrita en el capítulo anterior: cada \textit{frame} se convierte al
+La cadena de procesamiento reutiliza la detección descrita en el capítulo anterior: cada fotograma se convierte al
 espacio de color de OpenCV, el detector ArUco localiza el marcador elegido y el algoritmo de
 Perspectiva-$n$-Puntos calcula su posición y orientación tridimensionales. Las coordenadas de
 las esquinas se escalan a la resolución de salida de OBS de forma proporcional:
 \[
   s_x = \frac{W_{\text{base}}}{W_{\text{frame}}}, \qquad s_y = \frac{H_{\text{base}}}{H_{\text{frame}}}
 \]
-garantizando coherencia entre el espacio del detector y el espacio de dibujo del \textit{overlay}
+garantizando coherencia entre el espacio del detector y el espacio de dibujo de la superposición
 con independencia de la resolución real de la cámara.
 
 Lo que este módulo añade sobre el capítulo anterior son tres adaptaciones específicas para el
 renderizado de texto. Primera: la proyección ortográfica de OBS se configura con el mismo
 convenio de ejes que OpenCV (origen en la esquina superior izquierda, eje $Y$ hacia abajo),
-de modo que las coordenadas 2D del detector se usan directamente para posicionar el \textit{overlay} sin
+de modo que las coordenadas 2D del detector se usan directamente para posicionar la superposición sin
 transformación adicional; la figura~\ref{fig:coordsystems} ilustra la diferencia con el
 convenio OpenGL clásico. Segunda: la orientación en representación de Rodrigues que devuelve el
-algoritmo PnP se traduce a la pose del \textit{overlay} mediante la cadena de transformaciones:
+algoritmo PnP se traduce a la pose de la superposición mediante la cadena de transformaciones:
 \[
   M = T_{\text{pos}} \cdot R_{\text{offsets}} \cdot R_{\text{flip}} \cdot R_{\text{ArUco}}
   \cdot R_{\text{elev}} \cdot T_{\text{centrado}}
@@ -126,37 +129,37 @@ forma que las coordenadas del detector se pueden usar sin transformación adicio
   \node[box] (rvec)  {\textbf{rvec}\\\scriptsize vector Rodrigues\\$(r_x, r_y, r_z)$};
   \node[box, right=of rvec] (R)    {\textbf{Matriz R}\\\scriptsize rotación $3\times3$};
   \node[box, right=of R]    (euler){\textbf{Euler}\\\scriptsize pitch, yaw, roll};
-  \node[box, right=of euler] (pose) {\textbf{Pose}\\\scriptsize orientación\\del \textit{overlay}};
+  \node[box, right=of euler] (pose) {\textbf{Pose}\\\scriptsize orientación\\de la superposición};
   \draw[arr] (rvec)  -- node[midway, above, font=\scriptsize, yshift=3pt] {Rodrigues()} (R);
   \draw[arr] (R)     -- node[midway, above, font=\scriptsize, yshift=3pt] {extracción} (euler);
   \draw[arr] (euler) -- node[midway, above, font=\scriptsize, yshift=3pt] {aplicación} (pose);
 \end{tikzpicture}}
-\caption{\textit{Pipeline} de conversión de la representación de Rodrigues a la orientación del \textit{overlay}.}
+\caption{cadena de procesamiento de conversión de la representación de Rodrigues a la orientación de la superposición.}
 \label{fig:rodrigues_pipeline}
 \end{figure}
  
  
-\subsection{Suavizado del \textit{overlay}}
+\subsection{Suavizado de la superposición}
 \label{subsec:suavizado}
  
 Aunque la detección ArUco es robusta, el ruido de la imagen de cámara (granulado del sensor,
 compresión de vídeo y microvibraciones) provoca que la posición y el ángulo calculados del
-marcador oscilen ligeramente de \textit{frame} a \textit{frame}. Sin ninguna corrección, el texto parece temblar
+marcador oscilen ligeramente de fotograma a fotograma. Sin ninguna corrección, el texto parece temblar
 sobre el vídeo, lo que resulta poco profesional en una retransmisión.
  
 Para mitigarlo, el sistema aplica un filtro de suavizado exponencial sobre la posición y el
-ángulo del \textit{overlay}. En lugar de saltar directamente al valor nuevo detectado en cada \textit{frame}, se
-mezcla ese valor con el del \textit{frame} anterior según un factor configurable $\alpha \in (0,\,1]$:
+ángulo de la superposición. En lugar de saltar directamente al valor nuevo detectado en cada fotograma, se
+mezcla ese valor con el del fotograma anterior según un factor configurable $\alpha \in (0,\,1]$:
 \[
   P_t = (1 - \alpha)\,P_{t-1} + \alpha\,P_{\text{detectado}}
 \]
-Con $\alpha$ cercano a $1$ el \textit{overlay} sigue el marcador con mucha fidelidad pero puede mostrar
+Con $\alpha$ cercano a $1$ la superposición sigue el marcador con mucha fidelidad pero puede mostrar
 algo de temblor residual. Con $\alpha$ más pequeño el movimiento es más suave pero tiene algo
 más de inercia, por lo que en cámara rápida puede quedarse ligeramente retrasado. El operador
 ajusta este parámetro según las condiciones de grabación.
  
 El ángulo requiere un tratamiento especial. Si el marcador pasa de estar a $179^\circ$ a
-$-179^\circ$, una interpolación directa haría girar el \textit{overlay} $358^\circ$ en sentido contrario
+$-179^\circ$, una interpolación directa haría girar la superposición $358^\circ$ en sentido contrario
 en lugar de $2^\circ$. El sistema detecta este caso y siempre interpola por el camino angular
 más corto entre los dos valores. El suavizado se reinicia automáticamente cuando el marcador
 detectado cambia de ID, para no arrastrar la posición del marcador anterior a la animación del
@@ -179,7 +182,7 @@ La lógica del cronómetro reside en el módulo \texttt{countdown\_clock}, que m
 de la cuenta atrás (\texttt{STOPPED}, \texttt{RUNNING}, \texttt{PAUSED} o \texttt{FINISHED}),
 la duración total configurada en horas, minutos y segundos, y el tiempo restante que se
 decrementa fotograma a fotograma. En cada iteración del \textit{callback} de vídeo, el sistema llama a
-\texttt{countdown\_clock\_tick} con el tiempo transcurrido desde el \textit{frame} anterior, lo que
+\texttt{countdown\_clock\_tick} con el tiempo transcurrido desde el fotograma anterior, lo que
 actualiza el tiempo restante con alta precisión independientemente de la cadencia de fotogramas.
  
 El tiempo restante se traduce en ángulos de rotación para las mallas 3D de las manecillas. El
@@ -354,17 +357,42 @@ de propiedades:
 \begin{itemize}
     \item \textbf{Modelo 3D:} Modo estándar de RA descrito en el capítulo anterior. No requiere
     conectividad con DOMjudge.
-    \item \textbf{Countdown:} Cronómetro 3D de cuenta atrás sincronizado con el tiempo oficial
+
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.82\textwidth]{Imagenes/Vectorial/ModoAr}
+      \caption{Modo modelo 3D: geometría virtual anclada y orientada sobre el marcador ArUco en tiempo real.}
+      \label{fig:modo_ar_concursos}
+    \end{figure}
+
+    \item \textbf{Cronómetro:} Reloj analógico 3D de cuenta atrás sincronizado con el tiempo oficial
     del concurso. Puede anclarse a un marcador ArUco o posicionarse manualmente en pantalla.
-    \item \textbf{Scoreboard:} Tabla de clasificación general organizada en cuatro columnas
+
+    \item \textbf{Marcador de clasificación:} Tabla de clasificación general organizada en cuatro columnas
     (posición, nombre del equipo, problemas resueltos y tiempo de penalización). Cada columna es
     una fuente de texto independiente cuyos anchos se adaptan automáticamente al contenido, sin
     riesgo de desbordamiento. Puede mostrarse en pantalla completa o anclado a un marcador.
-    \item \textbf{Team Info:} Muestra la información del equipo cuyo marcador está visible en
-    cámara en ese instante. Si no hay ningún marcador registrado en plano, el \textit{overlay} desaparece
+
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.82\textwidth]{Imagenes/Vectorial/usoScoreboard}
+      \caption{Modo marcador de clasificación: tabla de equipos proyectada sobre el vídeo en tiempo real durante el concurso.}
+      \label{fig:modo_scoreboard}
+    \end{figure}
+
+    \item \textbf{Información de equipo:} Muestra la información del equipo cuyo marcador está visible en
+    cámara en ese instante. Si no hay ningún marcador registrado en plano, la superposición desaparece
     hasta que la cámara vuelva a enfocar una mesa registrada.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth]{Imagenes/Vectorial/ModoTeamInfo}
+      \caption{Modo información de equipo: datos del equipo detectado superpuestos sobre el vídeo en tiempo real.}
+      \label{fig:modo_teaminfo}
+\end{figure}
+
 \end{itemize}
- 
+
 El panel también expone controles de visibilidad que permiten activar o desactivar capas de
 información de forma independiente sin interrumpir la emisión.
  
@@ -388,8 +416,15 @@ servidor para obtener únicamente la información del evento actual mediante su 
 La \textbf{autenticación} se implementa mediante \textit{HTTP Basic Auth}; las credenciales se
 almacenan a través de la API de persistencia de OBS Studio, evitando que queden en texto plano
 en el archivo de configuración de la escena.
- 
- 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.72\textwidth]{Imagenes/Vectorial/UI_ConexionWeb}
+  \caption{Panel de configuración de la conexión con DOMjudge: URL base, identificador del torneo y credenciales de autenticación.}
+  \label{fig:ui_conexion_web}
+\end{figure}
+
+
 \subsection{Mapeo de marcadores a equipos}
 \label{subsec:mapeo}
  
@@ -408,7 +443,7 @@ correspondiente en DOMjudge:
  
 Al cargar el fichero, el módulo de sincronización construye en memoria la tabla de mapeos y
 extrae la lista de IDs de marcador válidos, que el módulo de detección usa para filtrar los
-marcadores detectados en cada \textit{frame} y descartar los que no corresponden a ningún equipo
+marcadores detectados en cada fotograma y descartar los que no corresponden a ningún equipo
 registrado. El fichero puede recargarse sin reiniciar la escena. Cuando hay varios marcadores
 simultáneos en pantalla, el modo Team Info elige el primero en el orden en que el detector los
 devuelve; si se necesitara mostrar varios equipos a la vez, basta con añadir una instancia del
@@ -436,7 +471,7 @@ La segunda decisión fue mantener un modo degradado con caché local. Si la cone
 plugin no deja de renderizar ni muestra paneles vacíos: continúa con el último estado conocido
 y vuelve a sincronizar en cuanto el servidor responde de nuevo. Para una realización en directo,
 esta continuidad visual es más valiosa que forzar una reconexión agresiva que podría interrumpir
-la imagen durante varios \textit{frames}.
+la imagen durante varios fotogramas.
  
 La tercera fue centralizar toda la configuración en el panel de OBS. La URL del servidor, el
 identificador del concurso, las credenciales de acceso, el intervalo de consulta y el mapeo

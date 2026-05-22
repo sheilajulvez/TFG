@@ -505,6 +505,7 @@ struct cube_filter_data {
 	uint32_t countdown_duration_h;
 	uint32_t countdown_duration_m;
 	uint32_t countdown_duration_s;
+	bool countdown_duration_initialized;
 	bool sync_enabled;
 	float sync_interval_sec;
 	char *api_username;
@@ -538,7 +539,7 @@ struct cube_filter_data {
 /* Aesthetic background for the text overlay (Scoreboard/Team Info). */
 	/* Fondo estetico para el overlay de texto (Scoreboard/Team Info) */
 	bool overlay_bg_enabled;
-	uint32_t overlay_bg_color; /* 0xRRGGBB */
+	uint32_t overlay_bg_color; /* OBS color value: 0x00BBGGRR */
 	int overlay_bg_opacity;    /* 0..100 */
 	int overlay_bg_padding;    /* px (en el espacio del texto; se escala junto con el overlay AR) */
 	int overlay_bg_radius;     /* px (esquinas redondeadas) */
@@ -577,6 +578,7 @@ struct cube_filter_data {
 	int mesh_id_second_hand;     // I
 	int mesh_id_single_hand;     // ID
 	bool countdown_use_ar;       // true = usar AR para posicionar reloj, false = posicion manual
+	bool overlay_use_ar;         // true = mostrar overlay (modos 3 y 4) solo si se detecta marcador
 
 /* Team Info (mode 4): ArUco ID -> team_id mapping loaded from local JSON. */
 	/* Team Info (modo 4): mapeo ArUco ID -> team_id cargado desde JSON local */
@@ -1233,14 +1235,11 @@ static struct obs_source_frame *filter_video(void *data,
 				filter->team_info_detected_marker = filter->last_result.id;
 			}
 	
-		filter->pos_x = filter->last_result.screen_pos_x +filter->ar_offset_pos_x;
-		/* Invertir Y para que coincida con el sistema de OBS (0 abajo) */
-/* Invert Y so it matches the OBS coordinate system (0 at the bottom). */
-		filter->pos_y =
-			(float)base_h - (filter->last_result.screen_pos_y +
-					 filter->ar_offset_pos_y);
-		;
-		filter->pos_z =0 +filter->ar_offset_pos_z; 
+		filter->pos_x = filter->last_result.screen_pos_x + filter->ar_offset_pos_x;
+		/* Usar coordenadas de pantalla directamente, igual que el texto 3D */
+		/* Use screen coords directly, same as the 3D text overlay. */
+		filter->pos_y = filter->last_result.screen_pos_y + filter->ar_offset_pos_y;
+		filter->pos_z = 0 + filter->ar_offset_pos_z;
 
 		/* Escala por distancia (tvec[2]): cuanto mas cerca el marcador, mas grande el objeto */
 		const float reference_distance = 1.0f;
@@ -1382,6 +1381,7 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->countdown_duration_h = 0;
 	data->countdown_duration_m = 0;
 	data->countdown_duration_s = 0;
+	data->countdown_duration_initialized = false;
 	data->sync_enabled = false;
 	data->sync_interval_sec = 10.0f;
 
@@ -1442,7 +1442,8 @@ static void *filter_create(obs_data_t *settings, obs_source_t *source)
 	data->mesh_id_minute_hand = 2;
 	data->mesh_id_second_hand = 3;
 	data->mesh_id_single_hand = 1;
-	data->countdown_use_ar = false;    // Posicion manual por defecto
+	data->countdown_use_ar  = false;   // Posicion manual por defecto
+	data->overlay_use_ar = false;      // Mostrar siempre por defecto
 
 	/* Team Info: JSON local (mapeos ArUco->team) */
 	data->team_info_json_path = NULL;
@@ -1582,7 +1583,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 	}
 
 
-	if (filter->mode != 3 && filter->g_meshes) {
+	if (filter->mode != 3 && filter->mode != 4 && filter->g_meshes) {
 		gs_texture_t *prev_render_target = gs_get_render_target();
 		gs_zstencil_t *prev_zstencil_target = gs_get_zstencil_target();
 
@@ -1656,7 +1657,9 @@ static void filter_render(void *data, gs_effect_t *effect)
 	obs_source_video_render(target);
 
 
-	if (filter->mode != 3 && filter->g_meshes) {
+	/* Mode 4 (Team Info) only shows text overlay — never blit the 3D texture. */
+	/* El modo 4 (Team Info) solo muestra texto: no se vuelca la textura 3D. */
+	if (filter->mode != 3 && filter->mode != 4 && filter->g_meshes) {
 		gs_blend_state_push();
 		gs_enable_blending(true);
 		gs_blend_function(GS_BLEND_SRCALPHA,
@@ -1670,11 +1673,16 @@ static void filter_render(void *data, gs_effect_t *effect)
 		gs_blend_state_pop();
 	}
 
-	/* Renderizar overlay de scoreboard/teaminfo si hay datos */
-	if ((filter->mode == 3 &&
+	/* Renderizar overlay de scoreboard/teaminfo si hay datos.
+	 * Si use_ar está activo en el modo correspondiente, solo se renderiza
+	 * cuando se ha detectado un marcador en el frame actual.
+	 * If use_ar is active for the corresponding mode, only render when
+	 * a marker has been detected in the current frame. */
+	const bool overlay_ar_ok = !filter->overlay_use_ar || filter->last_result.detected;
+	if ((filter->mode == 3 && overlay_ar_ok &&
 	     filter->sb_pos_source && filter->sb_name_source &&
 	     filter->sb_solved_source && filter->sb_time_source) ||
-	    (filter->mode == 4 && filter->scoreboard_text_source)) {
+	    (filter->mode == 4 && overlay_ar_ok && filter->scoreboard_text_source)) {
 		uint32_t tw = 0, th = 0;
 		uint32_t w_pos = 0, w_name = 0, w_res = 0, w_time = 0;
 		const float col_gap = 18.0f;
@@ -1726,7 +1734,7 @@ static void filter_render(void *data, gs_effect_t *effect)
 						&marker_cx,
 						&marker_cy);
 
-		const bool align_overlay_to_aruco = filter->last_result.detected;
+		const bool align_overlay_to_aruco = filter->overlay_use_ar && filter->last_result.detected;
 		if (align_overlay_to_aruco) {
 			const float deg_to_rad = 0.017453292519943295f;
 			/* Orientacion principal: proyeccion del eje Z del marcador (normal del papel).
@@ -1993,12 +2001,12 @@ static void filter_render(void *data, gs_effect_t *effect)
 			const float bg_h = safe_th + pad * 2.0f;
 			const int radius = filter->overlay_bg_radius;
 
-			/* Color: UI devuelve 0xRRGGBB; opacity se aplica como alpha. */
+			/* OBS color pickers store colors as 0x00BBGGRR; opacity is alpha. */
 			const uint32_t rgb = filter->overlay_bg_color;
 			struct vec4 col_bg = {
-				((float)((rgb >> 16) & 0xFF)) / 255.0f,
-				((float)((rgb >> 8) & 0xFF)) / 255.0f,
 				((float)(rgb & 0xFF)) / 255.0f,
+				((float)((rgb >> 8) & 0xFF)) / 255.0f,
+				((float)((rgb >> 16) & 0xFF)) / 255.0f,
 				clampf(((float)filter->overlay_bg_opacity) / 100.0f, 0.0f, 1.0f),
 			};
 
@@ -2274,6 +2282,7 @@ static bool render_mode_changed(obs_properties_t *props,
 	
 	obs_property_set_visible(obs_properties_get(props, "clock_mode"), show_countdown);
 	obs_property_set_visible(obs_properties_get(props, "countdown_use_ar"), show_countdown);
+	obs_property_set_visible(obs_properties_get(props, "overlay_use_ar"), show_scoreboard || show_team_info);
 	//obs_property_set_visible(obs_properties_get(props, "mesh_id_dial"), show_countdown);
 	
 	// Mostrar IDs de manecillas segÃºn el modo de reloj
@@ -2415,7 +2424,11 @@ obs_properties_add_path(props, "calibration_path", "Archivo de Calibracion",
 	obs_property_t *clk_mode = obs_properties_add_list(props, "clock_mode", "Manecillas Reloj", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(clk_mode, "H/M/S (3)", 0);
 	obs_property_list_add_int(clk_mode, "Total (1)", 1);
+	
+
+	
 	obs_properties_add_bool(props, "countdown_use_ar", "Reloj en Marker AR");
+	obs_properties_add_bool(props, "overlay_use_ar", "Anclar a marcador AR");
 
 	/* --- DOMJUDGE & SYNC --- */
 	obs_properties_add_bool(props, "sync_enabled", "Sincronizar con DOMjudge");
@@ -2482,9 +2495,18 @@ static void filter_update(void *data, obs_data_t *settings)
 	filter->pos_x = (float)obs_data_get_double(settings, "pos_x");
 	filter->countdown_running = obs_data_get_bool(settings, "countdown_running");
 	filter->countdown_reset_requested = obs_data_get_bool(settings, "countdown_reset");
-	filter->countdown_duration_h = (uint32_t)obs_data_get_int(settings, "countdown_duration_h");
-	filter->countdown_duration_m = (uint32_t)obs_data_get_int(settings, "countdown_duration_m");
-	filter->countdown_duration_s = (uint32_t)obs_data_get_int(settings, "countdown_duration_s");
+	uint32_t new_countdown_h = (uint32_t)obs_data_get_int(settings, "countdown_duration_h");
+	uint32_t new_countdown_m = (uint32_t)obs_data_get_int(settings, "countdown_duration_m");
+	uint32_t new_countdown_s = (uint32_t)obs_data_get_int(settings, "countdown_duration_s");
+	const bool countdown_duration_changed =
+		!filter->countdown_duration_initialized ||
+		filter->countdown_duration_h != new_countdown_h ||
+		filter->countdown_duration_m != new_countdown_m ||
+		filter->countdown_duration_s != new_countdown_s;
+	filter->countdown_duration_h = new_countdown_h;
+	filter->countdown_duration_m = new_countdown_m;
+	filter->countdown_duration_s = new_countdown_s;
+	filter->countdown_duration_initialized = true;
 	filter->sync_enabled = obs_data_get_bool(settings, "sync_enabled");
 	filter->sync_interval_sec = (float)obs_data_get_double(settings, "sync_interval_sec");
 	
@@ -2494,15 +2516,28 @@ static void filter_update(void *data, obs_data_t *settings)
 	filter->mesh_id_minute_hand = (int)obs_data_get_int(settings, "mesh_id_minute_hand");
 	filter->mesh_id_second_hand = (int)obs_data_get_int(settings, "mesh_id_second_hand");
 	filter->mesh_id_single_hand = (int)obs_data_get_int(settings, "mesh_id_single_hand");
-	filter->countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
-	
+	bool new_countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
+	bool new_overlay_use_ar = obs_data_get_bool(settings, "overlay_use_ar");
+	const bool countdown_anchor_changed = filter->countdown_use_ar != new_countdown_use_ar;
+	const bool overlay_anchor_changed = filter->overlay_use_ar != new_overlay_use_ar;
+	filter->countdown_use_ar = new_countdown_use_ar;
+	filter->overlay_use_ar = new_overlay_use_ar;
+	if (countdown_anchor_changed || overlay_anchor_changed) {
+		filter->last_result.detected = false;
+		filter->overlay_ar_smooth_valid = false;
+		filter->overlay_ar_smooth_marker_id = -1;
+		if (filter->mode == 4)
+			filter->team_info_detected_marker = -1;
+	}
+
 	if (filter->countdown_clock) {
-		blog(LOG_INFO, "SET DURATION");
-		countdown_clock_set_duration_hms(filter->countdown_clock,filter->countdown_duration_h, filter->countdown_duration_m, filter->countdown_duration_s);
+		if (countdown_duration_changed || filter->countdown_reset_requested) {
+			countdown_clock_set_duration_hms(filter->countdown_clock, filter->countdown_duration_h, filter->countdown_duration_m, filter->countdown_duration_s);
+		}
 		countdown_state_t state = countdown_clock_get_state(filter->countdown_clock);
 		
 		if (filter->countdown_running) {
-			if (state == COUNTDOWN_STATE_STOPPED)
+			if (state == COUNTDOWN_STATE_STOPPED || state == COUNTDOWN_STATE_FINISHED)
 				countdown_clock_start(filter->countdown_clock);
 			else if (state == COUNTDOWN_STATE_PAUSED)
 				countdown_clock_resume(filter->countdown_clock);
@@ -2857,12 +2892,16 @@ static void filter_update(void *data, obs_data_t *settings)
 				web_sync_set_auth(filter->web_sync, filter->api_username, filter->api_password);
 			}
 		} else {
-			if (filter->web_sync)
-				web_sync_set_enabled(filter->web_sync, false);
+			if (filter->web_sync) {
+				web_sync_destroy(filter->web_sync);
+				filter->web_sync = NULL;
+			}
 		}
 	} else {
-		if (filter->web_sync)
-			web_sync_set_enabled(filter->web_sync, false);
+		if (filter->web_sync) {
+			web_sync_destroy(filter->web_sync);
+			filter->web_sync = NULL;
+		}
 	}
 	filter->pos_y = (float)obs_data_get_double(settings, "pos_y");
 	filter->pos_z = (float)obs_data_get_double(settings, "pos_z");
@@ -2995,6 +3034,95 @@ static void filter_update(void *data, obs_data_t *settings)
 	}
 }
 
+static void scoreboard_update_sources_from_teams(struct cube_filter_data *filter,
+						 const scoreboard_team_t *teams,
+						 int team_count)
+{
+	if (!filter || !teams || team_count <= 0)
+		return;
+
+	if (team_count > MAX_SCOREBOARD_TEAMS)
+		team_count = MAX_SCOREBOARD_TEAMS;
+
+	filter->scoreboard_team_count = team_count;
+	memcpy(filter->scoreboard_teams, teams,
+	       sizeof(scoreboard_team_t) * (size_t)team_count);
+
+	const int max_rows = 10;
+	const int row_count =
+		(filter->scoreboard_team_count < max_rows)
+			? filter->scoreboard_team_count
+			: max_rows;
+
+	filter->scoreboard_header_lines = 1;
+	filter->scoreboard_row_count = row_count;
+	filter->scoreboard_line_count =
+		filter->scoreboard_header_lines + row_count;
+
+	char col_pos[1024] = {0};
+	char col_name[2048] = {0};
+	char col_res[1024] = {0};
+	char col_time[1024] = {0};
+
+	int off_pos = 0, off_name = 0, off_res = 0, off_time = 0;
+	off_pos += snprintf(col_pos + off_pos, sizeof(col_pos) - (size_t)off_pos, "POS\n");
+	off_name += snprintf(col_name + off_name, sizeof(col_name) - (size_t)off_name, "EQUIPO\n");
+	off_res += snprintf(col_res + off_res, sizeof(col_res) - (size_t)off_res, "RES\n");
+	off_time += snprintf(col_time + off_time, sizeof(col_time) - (size_t)off_time, "TIEMPO\n");
+
+	for (int i = 0; i < row_count; i++) {
+		const scoreboard_team_t *t = &filter->scoreboard_teams[i];
+		char team_clean[512] = {0};
+		const char *team_name = t->team_name;
+
+		scoreboard_sanitize_name(team_name, team_clean, sizeof(team_clean));
+
+		char team_trunc[512] = {0};
+		utf8_truncate_with_ellipsis(team_clean, team_trunc,
+					     sizeof(team_trunc),
+					     filter->scoreboard_name_max_chars);
+
+		char time_buf[32] = {0};
+		int total_m = t->total_time;
+		if (total_m < 0)
+			total_m = 0;
+		snprintf(time_buf, sizeof(time_buf), "%d", total_m);
+
+		off_pos += snprintf(col_pos + off_pos, sizeof(col_pos) - (size_t)off_pos,
+				    "%d\n", t->rank);
+		off_name += snprintf(col_name + off_name, sizeof(col_name) - (size_t)off_name,
+				     "%s\n", team_trunc);
+		off_res += snprintf(col_res + off_res, sizeof(col_res) - (size_t)off_res,
+				    "%d\n", t->num_solved);
+		off_time += snprintf(col_time + off_time, sizeof(col_time) - (size_t)off_time,
+				     "%s\n", time_buf);
+	}
+
+	if (filter->sb_pos_source) {
+		obs_data_t *s = obs_source_get_settings(filter->sb_pos_source);
+		obs_data_set_string(s, "text", col_pos);
+		obs_source_update(filter->sb_pos_source, s);
+		obs_data_release(s);
+	}
+	if (filter->sb_name_source) {
+		obs_data_t *s = obs_source_get_settings(filter->sb_name_source);
+		obs_data_set_string(s, "text", col_name);
+		obs_source_update(filter->sb_name_source, s);
+		obs_data_release(s);
+	}
+	if (filter->sb_solved_source) {
+		obs_data_t *s = obs_source_get_settings(filter->sb_solved_source);
+		obs_data_set_string(s, "text", col_res);
+		obs_source_update(filter->sb_solved_source, s);
+		obs_data_release(s);
+	}
+	if (filter->sb_time_source) {
+		obs_data_t *s = obs_source_get_settings(filter->sb_time_source);
+		obs_data_set_string(s, "text", col_time);
+		obs_source_update(filter->sb_time_source, s);
+		obs_data_release(s);
+	}
+}
 /* Advances per-frame state, timers, and sync data. */
 /* Avanza el estado por fotograma, los temporizadores y los datos de sincronizacion. */
 static void filter_tick(void *data, float seconds)
@@ -3020,10 +3148,18 @@ static void filter_tick(void *data, float seconds)
 			}
 			countdown_clock_tick(filter->countdown_clock, seconds);
 		}
-		if (filter->web_sync) {
-			/* Actualizar info equipos cada vez para ambos modos  */
-			if (filter->mode == 4 || filter->mode == 3) {
-				filter->team_info_cache_count = web_sync_get_teams(filter->web_sync, filter->team_info_cache, 100);
+		if (filter->sync_enabled && filter->web_sync) {
+			/* Actualizar info equipos cada vez para ambos modos.
+			   Modo 4: usamos web_sync_get_scoreboard para obtener rank y num_solved reales.
+			   Modo 3: también actualizamos la cache por si se usa en modo 4 después. */
+			if (filter->mode == 4) {
+				filter->team_info_cache_count = web_sync_get_scoreboard(filter->web_sync, filter->team_info_cache, 100);
+			} else if (filter->mode == 3) {
+				scoreboard_team_t cached_scoreboard[MAX_SCOREBOARD_TEAMS];
+				int cached_count = web_sync_get_scoreboard(filter->web_sync, cached_scoreboard, MAX_SCOREBOARD_TEAMS);
+				filter->team_info_cache_count = cached_count;
+				if (cached_count > 0)
+					scoreboard_update_sources_from_teams(filter, cached_scoreboard, cached_count);
 			}
 
 			web_sync_result_t sync_result;
@@ -3035,82 +3171,7 @@ static void filter_tick(void *data, float seconds)
 
 				/* Actualizar scoreboard si hay datos nuevos */
 				if (filter->mode == 3 && sync_result.scoreboard_valid && sync_result.team_count > 0) {
-					filter->scoreboard_team_count = sync_result.team_count;
-					memcpy(filter->scoreboard_teams, sync_result.teams,
-					       sizeof(scoreboard_team_t) * sync_result.team_count);
-
-					const int max_rows = 10;
-					const int row_count =
-						(filter->scoreboard_team_count < max_rows)
-							? filter->scoreboard_team_count
-							: max_rows;
-
-					filter->scoreboard_header_lines = 1;
-					filter->scoreboard_row_count = row_count;
-					filter->scoreboard_line_count =
-						filter->scoreboard_header_lines + row_count;
-
-					char col_pos[1024] = {0};
-					char col_name[2048] = {0};
-					char col_res[1024] = {0};
-					char col_time[1024] = {0};
-
-					int off_pos = 0, off_name = 0, off_res = 0, off_time = 0;
-					off_pos += snprintf(col_pos + off_pos, sizeof(col_pos) - (size_t)off_pos, "POS\n");
-					off_name += snprintf(col_name + off_name, sizeof(col_name) - (size_t)off_name, "EQUIPO\n");
-					off_res += snprintf(col_res + off_res, sizeof(col_res) - (size_t)off_res, "RES\n");
-					off_time += snprintf(col_time + off_time, sizeof(col_time) - (size_t)off_time, "TIEMPO\n");
-
-					for (int i = 0; i < row_count; i++) {
-						const scoreboard_team_t *t = &filter->scoreboard_teams[i];
-						char team_clean[512] = {0};
-						const char *team_name = t->team_name ? t->team_name : "";
-
-						scoreboard_sanitize_name(team_name, team_clean, sizeof(team_clean));
-						
-						char team_trunc[512] = {0};
-						utf8_truncate_with_ellipsis(team_clean, team_trunc, sizeof(team_trunc), filter->scoreboard_name_max_chars);
-
-						char time_buf[32] = {0};
-						int total_m = t->total_time;
-						if (total_m < 0)
-							total_m = 0;
-						snprintf(time_buf, sizeof(time_buf), "%d", total_m);
-
-						off_pos += snprintf(col_pos + off_pos, sizeof(col_pos) - (size_t)off_pos,
-								    "%d\n", t->rank);
-						off_name += snprintf(col_name + off_name, sizeof(col_name) - (size_t)off_name,
-								     "%s\n", team_trunc);
-						off_res += snprintf(col_res + off_res, sizeof(col_res) - (size_t)off_res,
-								    "%d\n", t->num_solved);
-						off_time += snprintf(col_time + off_time, sizeof(col_time) - (size_t)off_time,
-								     "%s\n", time_buf);
-					}
-
-					if (filter->sb_pos_source) {
-						obs_data_t *s = obs_source_get_settings(filter->sb_pos_source);
-						obs_data_set_string(s, "text", col_pos);
-						obs_source_update(filter->sb_pos_source, s);
-						obs_data_release(s);
-					}
-					if (filter->sb_name_source) {
-						obs_data_t *s = obs_source_get_settings(filter->sb_name_source);
-						obs_data_set_string(s, "text", col_name);
-						obs_source_update(filter->sb_name_source, s);
-						obs_data_release(s);
-					}
-					if (filter->sb_solved_source) {
-						obs_data_t *s = obs_source_get_settings(filter->sb_solved_source);
-						obs_data_set_string(s, "text", col_res);
-						obs_source_update(filter->sb_solved_source, s);
-						obs_data_release(s);
-					}
-					if (filter->sb_time_source) {
-						obs_data_t *s = obs_source_get_settings(filter->sb_time_source);
-						obs_data_set_string(s, "text", col_time);
-						obs_source_update(filter->sb_time_source, s);
-						obs_data_release(s);
-					}
+					scoreboard_update_sources_from_teams(filter, sync_result.teams, sync_result.team_count);
 				}
 			}
 
@@ -3250,7 +3311,8 @@ static void filter_save(void *data, obs_data_t *settings)
 	obs_data_set_int(settings, "mesh_id_minute_hand", filter->mesh_id_minute_hand);
 	obs_data_set_int(settings, "mesh_id_second_hand", filter->mesh_id_second_hand);
 	obs_data_set_int(settings, "mesh_id_single_hand", filter->mesh_id_single_hand);
-	obs_data_set_bool(settings, "countdown_use_ar", filter->countdown_use_ar);
+	obs_data_set_bool(settings, "countdown_use_ar",  filter->countdown_use_ar);
+	obs_data_set_bool(settings, "overlay_use_ar", filter->overlay_use_ar);
 
 	if (filter->model_path_str) obs_data_set_string(settings, "model_path", filter->model_path_str);
 	if (filter->texture_path_str) obs_data_set_string(settings, "texture_path", filter->texture_path_str);
@@ -3329,7 +3391,8 @@ static void filter_load(void *data, obs_data_t *settings)
 	filter->mesh_id_minute_hand = (int)obs_data_get_int(settings, "mesh_id_minute_hand");
 	filter->mesh_id_second_hand = (int)obs_data_get_int(settings, "mesh_id_second_hand");
 	filter->mesh_id_single_hand = (int)obs_data_get_int(settings, "mesh_id_single_hand");
-	filter->countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
+	filter->countdown_use_ar  = obs_data_get_bool(settings, "countdown_use_ar");
+	filter->overlay_use_ar = obs_data_get_bool(settings, "overlay_use_ar");
 
 	filter_update(data, settings);
 }
@@ -3399,7 +3462,8 @@ static void filter_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "mesh_id_minute_hand", 2);
 	obs_data_set_default_int(settings, "mesh_id_second_hand", 3);
 	obs_data_set_default_int(settings, "mesh_id_single_hand", 1);
-	obs_data_set_default_bool(settings, "countdown_use_ar", false);
+	obs_data_set_default_bool(settings, "countdown_use_ar",  false);
+	obs_data_set_default_bool(settings, "overlay_use_ar", false);
 
 	/* Defaults for Team Info (JSON local) */
 	obs_data_set_default_string(settings, "team_info_json_path", "");
