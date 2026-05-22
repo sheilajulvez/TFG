@@ -17,6 +17,8 @@
 
 	#include <float.h>
 
+	// Detects a forward-facing rotation offset for the loaded scene.
+	// Detecta un offset de rotacion frontal para la escena cargada.
 	static bool auto_detect_forward_scene(const struct aiScene *scene,
 					      float top_percent,
 					      float *out_x_deg,
@@ -156,6 +158,8 @@
 		return true;
 	}
 
+	// Releases the graphics resources of a single mesh.
+	// Libera los recursos graficos de una sola malla.
 	static void free_single_mesh(Mesh *mesh, gs_texture_t *user_texture_to_exclude)
 	{
 		if (!mesh) return;
@@ -166,6 +170,9 @@
 		if (mesh->texture) { blog(LOG_INFO, "[CUBE] free_single_mesh: anulando textura de malla %p", mesh->texture); mesh->texture = NULL; }
 		obs_leave_graphics();
 	}
+
+	// Releases all loaded meshes and their dimension arrays.
+	// Libera todas las mallas cargadas y sus arrays de dimensiones.
 	void cleanup_global_meshes(struct Mesh **g_meshes, size_t *g_mesh_count, float **mesh_widths, float **mesh_heights, gs_texture_t *user_texture_to_exclude)
 	{
 		if (!*g_meshes) return;
@@ -179,7 +186,8 @@
 		blog(LOG_INFO, "[CUBE] Todas las mallas y arrays de dimensiones han sido liberados.");
 	}
 
-	
+	// Draws debug axes in the current graphics context.
+	// Dibuja ejes de depuracion en el contexto grafico actual.
 	static void draw_debug_axes(float size)
 	{
 		struct gs_vb_data vbd;
@@ -246,15 +254,8 @@
 		bfree(vbd.colors);
 	}
 
-	/**
- 	 * @brief Carga un modelo 3D desde un archivo utilizando Assimp.
- 	 *
- 	 * Procesa el archivo, extrae la información de las mallas (vértices, índices, texturas)
- 	 * y crea los recursos gráficos correspondientes en OBS.
- 	 *
- 	 * @param path Ruta al archivo del modelo 3D.
- 	 * @return `true` si el modelo se cargó correctamente, `false` en caso contrario.
- 	 */
+	// Loads a 3D model and prepares its mesh resources.
+	// Carga un modelo 3D y prepara sus recursos de malla.
 	bool load_model_c(const char *path, Mesh **g_meshes, size_t *g_mesh_count,float **mesh_widths, float **mesh_heights)
 	{
 		// Importa el archivo del modelo usando Assimp.
@@ -520,20 +521,9 @@
 		blog(LOG_INFO, "Modelo cargado con %zu mallas", *g_mesh_count);
 		return true;
 	}
-	/**
-	 * @brief Aplica una textura dada a todas las mallas del modelo 3D.
-	 *
-	 * Esta funci�n itera a trav�s de todas las mallas en el array 'g_meshes'
-	 * y asigna 'new_texture' a la propiedad 'texture' de cada malla.
-	 * Es crucial que 'new_texture' sea gestionada externamente (creada y destruida)
-	 * y que 'free_single_mesh' est� adaptada para no destruir esta textura compartida
-	 * si se asigna a m�ltiples mallas.
-	 *
-	 * @param g_meshes Puntero al array de mallas.
-	 * @param g_mesh_count N�mero de mallas en el array.
-	 * @param new_texture La textura (gs_texture_t*) que se asignar� a todas las mallas.
-	 * Puede ser NULL para "desaplicar" una textura y volver al estado sin textura.
-	 */
+
+	// Applies the same texture to all meshes.
+	// Aplica la misma textura a todas las mallas.
 	void apply_texture_to_all_meshes(Mesh *g_meshes, size_t g_mesh_count,
 					 gs_texture_t *new_texture)
 	{
@@ -560,11 +550,14 @@
 	}
 
 
+	// Converts degrees to radians.
+	// Convierte grados a radianes.
 	static inline float degrees_to_radians(float degrees){
 			return degrees * (float)M_PI / 180.0f;
 	}
 
-	/* Aplica rotacion manual en orden Z->Y->X para desacoplar mejor los ejes de la UI. */
+	// Applies the manual UI rotation in ZYX order.
+	// Aplica la rotacion manual de la interfaz en orden ZYX.
 	static inline void apply_ui_rotation_zyx(float rot_x_deg, float rot_y_deg, float rot_z_deg)
 	{
 		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, degrees_to_radians(rot_z_deg));
@@ -573,6 +566,8 @@
 	}
 
 
+// Renders the model without using textures.
+// Renderiza el modelo sin usar texturas.
 void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths, float *heights, float scale,
 	const float rvec[3], bool detected, float offset_rot_x_deg, float offset_rot_y_deg, float offset_rot_z_deg)
 	{
@@ -646,6 +641,8 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 		gs_technique_end(tech);
 	}
 
+// Renders the 3D model with the current transform settings.
+// Renderiza el modelo 3D con la transformacion actual.
 void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *heights, float scale, const float rvec[3],	bool detected,float offset_rot_x_deg, float offset_rot_y_deg, float offset_rot_z_deg)
 {
 	gs_effect_t *default_effect =
@@ -733,6 +730,8 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 	gs_technique_end(tech);
 }
 
+// Renders the 3D model in clock mode.
+// Renderiza el modelo 3D en modo reloj.
 void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 			  float *heights, float scale, const float rvec[3],
 			  bool detected, float offset_rot_x_deg,
@@ -885,6 +884,8 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 }
 
 
+// Replaces mesh textures using the provided texture handles.
+// Reemplaza las texturas de las mallas usando los manejadores dados.
 void replace_mesh_textures(struct Mesh *meshes, size_t count,
 			   gs_texture_t *new_tex, gs_texture_t *old_tex)
 {
