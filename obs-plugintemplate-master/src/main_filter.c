@@ -1764,7 +1764,8 @@ static void filter_render(void *data, gs_effect_t *effect)
 				angle_screen = 0.0f;
 			}
 
-			angle_screen += filter->ar_offset_rot_z * deg_to_rad;
+			if (filter->mode != 3 && filter->mode != 4)
+				angle_screen += filter->ar_offset_rot_z * deg_to_rad;
 		}
 
 		if (align_overlay_to_aruco) {
@@ -1911,6 +1912,18 @@ static void filter_render(void *data, gs_effect_t *effect)
 				const float overlay_pos_x = final_x + filter->ar_offset_pos_x;
 				const float overlay_pos_y = final_y + filter->ar_offset_pos_y;
 				const float overlay_pos_z = filter->ar_offset_pos_z;
+				const float overlay_rot_x =
+					(filter->mode == 3 || filter->mode == 4)
+						? 0.0f
+						: filter->ar_offset_rot_x;
+				const float overlay_rot_y =
+					(filter->mode == 3 || filter->mode == 4)
+						? 0.0f
+						: filter->ar_offset_rot_y;
+				const float overlay_rot_z =
+					(filter->mode == 3 || filter->mode == 4)
+						? 0.0f
+						: filter->ar_offset_rot_z;
 				const float deg2rad = (float)M_PI / 180.0f;
 
 				const float rvx = filter->last_result.rvec[0];
@@ -1925,9 +1938,9 @@ static void filter_render(void *data, gs_effect_t *effect)
 				 *    orientación: corrección OpenCV→OBS + rvec + levantado R_x(90)).
 				 *    Por el orden de post-multiplicación, el vértice los recibe al final,
 				 *    cuando el panel ya está en su pose definitiva → ejes de pantalla. */
-				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,  filter->ar_offset_rot_x * deg2rad);
-				gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, -filter->ar_offset_rot_y * deg2rad);  /* negar Y: OpenCV→OBS */
-				gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, -filter->ar_offset_rot_z * deg2rad);  /* negar Z: OpenCV→OBS */
+				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,  overlay_rot_x * deg2rad);
+				gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, -overlay_rot_y * deg2rad);  /* negar Y: OpenCV→OBS */
+				gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, -overlay_rot_z * deg2rad);  /* negar Z: OpenCV→OBS */
 
 				/* 3. Corrección de ejes OpenCV → OBS. */
 				gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);

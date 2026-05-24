@@ -12,6 +12,9 @@ typedef struct Mesh {
 	float center_y;
 	float center_z; 
 	float depth_z; 
+	float scene_center_x;
+	float scene_center_y;
+	float scene_center_z;
 	float rot_offset_x;  // offset en pitch (X), en grados
 	float rot_offset_y;  // offset en yaw   (Y), en grados
 	float rot_offset_z;  // offset en roll  (Z), en grados

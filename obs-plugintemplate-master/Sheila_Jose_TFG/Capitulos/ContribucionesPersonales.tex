@@ -24,7 +24,7 @@ El diseño de la interfaz buscó que cualquier usuario pudiera configurar y camb
 
 Una de las contribuciones técnicas individuales más relevantes de Sheila fue el diseño e implementación de la herramienta de calibración de cámara, desarrollada como utilidad independiente en Python. Esta herramienta automatiza el proceso de adquisición de imágenes de un tablero de ajedrez desde la cámara conectada, extrae las esquinas de los cuadros con subpíxel de precisión, y resuelve el modelo de cámara \textit{pinhole} para obtener los parámetros intrínsecos y los coeficientes de distorsión radial y tangencial.
 
-El fichero de calibración resultante en formato XML es cargado por el \textit{plugin} y aplicado a cada fotograma antes de la estimación de pose, corrigiendo las deformaciones ópticas propias de cada objetivo. Sheila realizó varias sesiones de calibración para validar la estabilidad y repetibilidad de los parámetros obtenidos, y documentó el procedimiento de uso de la herramienta tanto en el código fuente como en el apéndice correspondiente de esta memoria.
+El fichero de calibración resultante en formato yml es cargado por el \textit{plugin} y aplicado a cada fotograma antes de la estimación de pose, corrigiendo las deformaciones ópticas propias de cada objetivo. Sheila realizó varias sesiones de calibración para validar la estabilidad y repetibilidad de los parámetros obtenidos, y documentó el procedimiento de uso de la herramienta tanto en el código fuente como en el apéndice correspondiente de esta memoria.
 
 \subsection*{Integración con DOMjudge y arquitectura de dos hilos}
 

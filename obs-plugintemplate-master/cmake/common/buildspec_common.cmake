@@ -61,17 +61,10 @@ function(_setup_obs_studio)
     set(_is_fresh --fresh)
   endif()
 
-  if(OS_WINDOWS)
-    set(_cmake_generator "${CMAKE_GENERATOR}")
-    set(_cmake_arch "-A ${arch}")
-    set(_cmake_extra "-DCMAKE_SYSTEM_VERSION=${CMAKE_SYSTEM_VERSION} -DCMAKE_ENABLE_SCRIPTING=OFF")
-    set(_cmake_version "2.0.0")
-  elseif(OS_MACOS)
-    set(_cmake_generator "Xcode")
-    set(_cmake_arch "-DCMAKE_OSX_ARCHITECTURES:STRING='arm64;x86_64'")
-    set(_cmake_extra "-DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
-    set(_cmake_version "3.0.0")
-  endif()
+  set(_cmake_generator "${CMAKE_GENERATOR}")
+  set(_cmake_arch "-A ${arch}")
+  set(_cmake_extra "-DCMAKE_SYSTEM_VERSION=${CMAKE_SYSTEM_VERSION} -DCMAKE_ENABLE_SCRIPTING=OFF")
+  set(_cmake_version "2.0.0")
 
   message(STATUS "Configure ${label} (${arch})")
   execute_process(
@@ -94,11 +87,7 @@ function(_setup_obs_studio)
   message(STATUS "Build ${label} (${arch}) - done")
 
   message(STATUS "Install ${label} (${arch})")
-  if(OS_WINDOWS)
-    set(_cmake_extra "--component obs_libraries")
-  else()
-    set(_cmake_extra "")
-  endif()
+  set(_cmake_extra "--component obs_libraries")
   execute_process(
     COMMAND "${CMAKE_COMMAND}" --install build_${arch} --component Development --config Debug --prefix
             "${dependencies_dir}" ${_cmake_extra}

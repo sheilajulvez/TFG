@@ -285,6 +285,32 @@
 			model_has_rot = false;
 			blog(LOG_INFO, "[AUTO-FWD-MODEL] no detection");
 		}
+
+		float scene_min_x = FLT_MAX, scene_max_x = -FLT_MAX;
+		float scene_min_y = FLT_MAX, scene_max_y = -FLT_MAX;
+		float scene_min_z = FLT_MAX, scene_max_z = -FLT_MAX;
+		for (size_t m = 0; m < scene->mNumMeshes; m++) {
+			const struct aiMesh *mesh = scene->mMeshes[m];
+			for (size_t i = 0; i < mesh->mNumVertices; i++) {
+				const struct aiVector3D *v = &mesh->mVertices[i];
+				if (v->x < scene_min_x)
+					scene_min_x = v->x;
+				if (v->x > scene_max_x)
+					scene_max_x = v->x;
+				if (v->y < scene_min_y)
+					scene_min_y = v->y;
+				if (v->y > scene_max_y)
+					scene_max_y = v->y;
+				if (v->z < scene_min_z)
+					scene_min_z = v->z;
+				if (v->z > scene_max_z)
+					scene_max_z = v->z;
+			}
+		}
+
+		const float scene_center_x = (scene_max_x + scene_min_x) * 0.5f;
+		const float scene_center_y = (scene_max_y + scene_min_y) * 0.5f;
+		const float scene_center_z = (scene_max_z + scene_min_z) * 0.5f;
 		// Asigna memoria para el nuevo conjunto de mallas del modelo.
 		*g_mesh_count = scene->mNumMeshes;
 		*g_meshes = (Mesh *)bmalloc(sizeof(Mesh) * (*g_mesh_count));
@@ -303,6 +329,9 @@
 			(*g_meshes)[m].center_y = 0.0f;
 			(*g_meshes)[m].center_z = 0.0f;
 			(*g_meshes)[m].depth_z = 0.0f;
+			(*g_meshes)[m].scene_center_x = scene_center_x;
+			(*g_meshes)[m].scene_center_y = scene_center_y;
+			(*g_meshes)[m].scene_center_z = scene_center_z;
 			(*g_meshes)[m].rot_offset_x = 0.0f;
 			(*g_meshes)[m].rot_offset_y = 0.0f;
 			(*g_meshes)[m].rot_offset_z = 0.0f;
@@ -439,6 +468,9 @@
 			(*g_meshes)[m].depth_z = (max_z - min_z);
 			(*g_meshes)[m].center_x = (max_x + min_x) * 0.5f;
 			(*g_meshes)[m].center_y = (max_y + min_y) * 0.5f;
+			(*g_meshes)[m].scene_center_x = scene_center_x;
+			(*g_meshes)[m].scene_center_y = scene_center_y;
+			(*g_meshes)[m].scene_center_z = scene_center_z;
 			(*g_meshes)[m].rot_offset_x = model_rot_x;
 			(*g_meshes)[m].rot_offset_y = model_rot_y;
 			(*g_meshes)[m].rot_offset_z = model_rot_z;
@@ -556,16 +588,23 @@
 			return degrees * (float)M_PI / 180.0f;
 	}
 
-	// Applies the manual UI rotation in ZYX order.
-	// Aplica la rotacion manual de la interfaz en orden ZYX.
+	// Applies the manual UI rotation as extrinsic (world-fixed) rotations.
+	// Aplica la rotacion manual de la interfaz como rotaciones extrinsecas (ejes fijos del mundo).
 	static inline void apply_ui_rotation_zyx(float rot_x_deg, float rot_y_deg, float rot_z_deg)
 	{
-		/* UI viene DESPUÉS de R180x en orden de vértice → solo Scale(-s,s,-s) queda detrás.
-		 * Scale no invierte Y  → +rot_y (sin negar)
-		 * Scale sí invierte Z  → -rot_z (negar para compensar) */
-		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f,  degrees_to_radians( rot_x_deg));
-		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f,  degrees_to_radians( rot_y_deg));
-		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f,  degrees_to_radians(-rot_z_deg));
+		/* Orden en codigo: Rz → Ry → Rx  (el vertice los recibe al reves: Rx → Ry → Rz)
+		 * Esto garantiza que cada slider rota SIEMPRE alrededor del eje world fijo,
+		 * independientemente del valor de los otros sliders (rotaciones extrinsecas).
+		 * Sin esto, a >45° en cualquier eje el siguiente eje ya esta rotado
+		 * y los sliders dejan de ser independientes (Gimbal Lock).
+		 *
+		 * Scale(-s,s,-s) queda detras del vertice:
+		 *   Rx: Scale invierte Z pero no Y → sentido revertido → +rot_x
+		 *   Ry: Scale invierte X y Z (cancelan) → sentido conservado → +rot_y
+		 *   Rz: Scale invierte X → sentido revertido → -rot_z */
+		gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, degrees_to_radians(-rot_z_deg));
+		gs_matrix_rotaa4f(0.0f, 1.0f, 0.0f, degrees_to_radians( rot_y_deg));
+		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, degrees_to_radians( rot_x_deg));
 	}
 
 
@@ -610,10 +649,10 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 			if (!m->vb || !m->ib)
 				continue;
 
-			// Centro del modelo (pivote)
-			float cx = m->center_x;
-			float cy = m->center_y;
-			float cz = m->center_z;
+			// Centro global del modelo: mantiene la separacion real entre submallas
+			float scene_cx = m->scene_center_x;
+			float scene_cy = m->scene_center_y;
+			float scene_cz = m->scene_center_z;
 
 			gs_matrix_push();
 
@@ -624,10 +663,7 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 			/* 1. Escala */
 			gs_matrix_scale3f(-scale, scale, -scale);
 
-			/* 2. Offsets manuales UI (mismo orden que texto: X → -Y → -Z) */
-			apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg, offset_rot_z_deg);
-
-			/* 3. Corrección de ejes OpenCV → OBS */
+			/* 2. Corrección de ejes OpenCV → OBS */
 			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
 			/* 4. Rotación del tracker (rvec ArUco) */
@@ -635,11 +671,14 @@ void render_model_c_NoTexture(Mesh *g_meshes, size_t g_mesh_count,float *widths,
 				gs_matrix_rotaa4f(ax, ay, az, angle_rad);
 			}
 
+			/* 4.5. Offsets AR en el frame local del modelo/marcador */
+			apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg, offset_rot_z_deg);
+
 			/* 5. Levantar el modelo perpendicular al marcador (igual que texto 3D) */
 			gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI / 2.0f);
 
 			/* 6. Centrar el modelo en el origen (primera op. sobre el vértice) */
-			gs_matrix_translate3f(-cx, -cy, -cz);
+			gs_matrix_translate3f(-scene_cx, -scene_cy, -scene_cz);
 
 			//  Dibujar
 			gs_load_vertexbuffer(m->vb);
@@ -705,10 +744,10 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 			return; // Salir para no renderizar doble
 		}
 
-		// Centro del modelo (pivote)
-		float cx = m->center_x;
-		float cy = m->center_y;
-		float cz = m->center_z;
+		// Centro global del modelo: mantiene la separacion real entre submallas
+		float scene_cx = m->scene_center_x;
+		float scene_cy = m->scene_center_y;
+		float scene_cz = m->scene_center_z;
 
 		gs_matrix_push();
 
@@ -718,10 +757,7 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 		/* 1. Escala */
 		gs_matrix_scale3f(-scale, scale, -scale);
 
-		/* 2. Offsets manuales UI (mismo orden que texto: X → -Y → -Z) */
-		apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg, offset_rot_z_deg);
-
-		/* 3. Corrección de ejes OpenCV → OBS */
+		/* 2. Corrección de ejes OpenCV → OBS */
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
 		/* 4. Rotación del tracker (rvec ArUco) */
@@ -729,11 +765,14 @@ void render_model_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,	float *h
 			gs_matrix_rotaa4f(ax, ay, az, angle_rad);
 		}
 
+		/* 4.5. Offsets AR en el frame local del modelo/marcador */
+		apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg, offset_rot_z_deg);
+
 		/* 5. Levantar el modelo perpendicular al marcador (igual que texto 3D) */
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI / 2.0f);
 
 		/* 6. Centrar el modelo en el origen (primera op. sobre el vértice) */
-		gs_matrix_translate3f(-cx, -cy, -cz);
+		gs_matrix_translate3f(-scene_cx, -scene_cy, -scene_cz);
 	
 
 		gs_effect_set_texture(image_param, m->texture);
@@ -798,6 +837,9 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 		float cx = m->center_x;
 		float cy = m->center_y;
 		float cz = m->center_z;
+		float scene_cx = m->scene_center_x;
+		float scene_cy = m->scene_center_y;
+		float scene_cz = m->scene_center_z;
 
 		// Detectar si es una manecilla
 		bool is_hand = false;
@@ -842,14 +884,14 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 	
 		gs_matrix_scale3f(-scale, scale, -scale);
 
-		apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg,
-				      offset_rot_z_deg);
-
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI);
 
 		if (detected) {
 			gs_matrix_rotaa4f(ax, ay, az, angle_rad);
 		}
+
+		apply_ui_rotation_zyx(offset_rot_x_deg, offset_rot_y_deg,
+				      offset_rot_z_deg);
 
 		gs_matrix_rotaa4f(1.0f, 0.0f, 0.0f, (float)M_PI / 2.0f);
 
@@ -887,6 +929,7 @@ void render_model_clock_c(Mesh *g_meshes, size_t g_mesh_count, float *widths,
 
 
 		gs_matrix_translate3f(-cx, -pivot_y, -cz);
+		gs_matrix_translate3f(-scene_cx, -scene_cy, -scene_cz);
 
 		gs_effect_set_texture(image_param, m->texture);
 		gs_load_vertexbuffer(m->vb);
