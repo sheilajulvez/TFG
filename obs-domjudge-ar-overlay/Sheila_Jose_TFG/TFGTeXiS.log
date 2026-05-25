@@ -1,9 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.4.25)  25 MAY 2026 19:13
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.4.25)  25 MAY 2026 19:26
 entering extended mode
  restricted \write18 enabled.
+ file:line:error style messages enabled.
  %&-line parsing enabled.
-**./TFGTeXiS.tex
-(TFGTeXiS.tex
+**c:/Users/josem/Desktop/jose/tfg/TFG/obs-domjudge-ar-overlay/Sheila_Jose_TFG/TFGTeXiS.tex
+(c:/Users/josem/Desktop/jose/tfg/TFG/obs-domjudge-ar-overlay/Sheila_Jose_TFG/TFGTeXiS.tex
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
 (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\book.cls
@@ -25,28 +26,23 @@ File: bk12.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
 \bibindent=\dimen150
 )
 
-LaTeX Warning: \include should only be used after \begin{document} on input lin
-e 75.
+LaTeX Warning: \include should only be used after \begin{document} on input line 75.
 
-(config.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsmath.sty
+(config.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsmath.sty
 Package: amsmath 2025/07/09 v2.17z AMS math features
 \@mathmargin=\skip51
 
 For additional information on amsmath, use the `?' option.
 (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amstext.sty
 Package: amstext 2024/11/17 v2.01 AMS text
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsgen.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0 generic functions
 \@emptytoks=\toks17
 \ex@=\dimen151
-))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsbsy.sty
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsbsy.sty
 Package: amsbsy 1999/11/29 v1.2d Bold Symbols
 \pmbraise@=\dimen152
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsopn.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsopn.sty
 Package: amsopn 2022/04/08 v2.04 operator names
 )
 \inf@bad=\count284
@@ -96,11 +92,9 @@ LaTeX Info: Redefining \Relbar on input line 970.
 \mathdisplay@stack=\toks21
 LaTeX Info: Redefining \[ on input line 2950.
 LaTeX Info: Redefining \] on input line 2951.
-)
-(TeXiS/TeXiS.sty
+) (TeXiS/TeXiS.sty
 Package: TeXiS/TeXiS 
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/tools\verbatim.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/tools\verbatim.sty
 Package: verbatim 2024-01-22 v1.5x LaTeX2e package for verbatim enhancements
 \every@verbatim=\toks22
 \verbatim@line=\toks23
@@ -109,48 +103,33 @@ Package: verbatim 2024-01-22 v1.5x LaTeX2e package for verbatim enhancements
 \example@out=\write3
 
 
-LaTeX Warning: \include should only be used after \begin{document} on input lin
-e 460.
+LaTeX Warning: \include should only be used after \begin{document} on input line 460.
 
-(TeXiS/TeXiS_pream.tex
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\shortvrb.sty
-Package: shortvrb 2024/12/25 v3.0q Standard LaTeX documentation package V3 (FMi
-)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\inputenc.sty
+(TeXiS/TeXiS_pream.tex (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\shortvrb.sty
+Package: shortvrb 2024/12/25 v3.0q Standard LaTeX documentation package V3 (FMi)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\inputenc.sty
 Package: inputenc 2024/02/08 v1.3d Input encoding file
 \inpenc@prehook=\toks24
 \inpenc@posthook=\toks25
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/natbib\natbib.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/natbib\natbib.sty
 Package: natbib 2010/09/13 8.31b (PWD, AO)
 \bibhang=\skip54
 \bibsep=\skip55
 LaTeX Info: Redefining \cite on input line 694.
 \c@NAT@ctr=\count296
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/babel\babel.sty
-Package: babel 2026/03/24 v26.5 The multilingual framework for LuaLaTeX, pdfLaT
-eX and XeLaTeX
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/babel\babel.sty
+Package: babel 2026/03/24 v26.5 The multilingual framework for LuaLaTeX, pdfLaTeX and XeLaTeX
 \babel@savecnt=\count297
-LaTeX Encoding Info:    Redeclaring text command \ij (encoding OT1) on input li
-ne 2078.
-LaTeX Encoding Info:    Redeclaring text command \IJ (encoding OT1) on input li
-ne 2080.
-LaTeX Encoding Info:    Redeclaring text command \ij (encoding T1) on input lin
-e 2082.
-LaTeX Encoding Info:    Redeclaring text command \IJ (encoding T1) on input lin
-e 2083.
-LaTeX Encoding Info:    Ignoring declaration for text command \ij (encoding ?) 
-on input line 2084.
-LaTeX Encoding Info:    Ignoring declaration for text command \IJ (encoding ?) 
-on input line 2086.
-LaTeX Encoding Info:    Ignoring declaration for text command \SS (encoding ?) 
-on input line 2111.
+LaTeX Encoding Info:    Redeclaring text command \ij (encoding OT1) on input line 2078.
+LaTeX Encoding Info:    Redeclaring text command \IJ (encoding OT1) on input line 2080.
+LaTeX Encoding Info:    Redeclaring text command \ij (encoding T1) on input line 2082.
+LaTeX Encoding Info:    Redeclaring text command \IJ (encoding T1) on input line 2083.
+LaTeX Encoding Info:    Ignoring declaration for text command \ij (encoding ?) on input line 2084.
+LaTeX Encoding Info:    Ignoring declaration for text command \IJ (encoding ?) on input line 2086.
+LaTeX Encoding Info:    Ignoring declaration for text command \SS (encoding ?) on input line 2111.
 \U@D=\dimen160
 \l@unhyphenated=\language79
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/babel\txtbabel.def)
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/babel\txtbabel.def)
 \bbl@readstream=\read3
 \bbl@dirlevel=\count298
 Package babel Info: Configuration files are deprecated, as
@@ -161,18 +140,11 @@ Package babel Info: Configuration files are deprecated, as
 * Local config file bblopts.cfg used
 *
 (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/arabi\bblopts.cfg
-File: bblopts.cfg 2005/09/08 v0.1 add Arabic and Farsi to "declared" options of
- babel
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/babel/locale/en\babel
--english.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/babel/locale/es\babel
--spanish.tex)
+File: bblopts.cfg 2005/09/08 v0.1 add Arabic and Farsi to "declared" options of babel
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/babel/locale/en\babel-english.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/babel/locale/es\babel-spanish.tex)
 Package babel Info: Importing font and identification data for english
 (babel)             from babel-en.ini. Reported on input line 4330.
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/babel-english\english.l
-df
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/babel-english\english.ldf
 Language: english 2017/06/06 v3.3r English support from the babel system
 Package babel Info: Hyphen rules for 'canadian' set to \l@english
 (babel)             (\language0). Reported on input line 102.
@@ -183,9 +155,7 @@ Package babel Info: Hyphen rules for 'newzealand' set to \l@ukenglish
 )
 Package babel Info: Importing font and identification data for spanish
 (babel)             from babel-es.ini. Reported on input line 4330.
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/babel-spanish\spanish.l
-df
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/babel-spanish\spanish.ldf
 Language: spanish.ldf 2021/05/27 v5.0q Spanish support from the babel system
 \es@quottoks=\toks26
 \es@quotdepth=\count299
@@ -195,29 +165,23 @@ Package babel Info: Making < an active character on input line 722.
 Package babel Info: Making > an active character on input line 722.
 Package babel Info: Making ' an active character on input line 740.
 ))
-LaTeX Encoding Info:    Redeclaring text command \guillemotleft (encoding OT1) 
-on input line 211.
-LaTeX Encoding Info:    Redeclaring text command \guillemotright (encoding OT1)
- on input line 211.
+LaTeX Encoding Info:    Redeclaring text command \guillemotleft (encoding OT1) on input line 211.
+LaTeX Encoding Info:    Redeclaring text command \guillemotright (encoding OT1) on input line 211.
  (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty
 \Urlmuskip=\muskip18
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifpdf.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifpdf.sty
 Package: ifpdf 2019/10/25 v3.4 ifpdf legacy package. Use iftex instead.
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty
 Package: iftex 2024/12/12 v1.0g TeX engine tests
-))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/float\float.sty
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/float\float.sty
 Package: float 2001/11/08 v1.3d Float enhancements (AL)
 \c@float@type=\count300
 \float@exts=\toks27
 \float@box=\box55
 \@float@everytoks=\toks28
 \@floatcapt=\box56
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/fncychap\fncychap.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/fncychap\fncychap.sty
 Package: fncychap 2007/07/30 v1.34 LaTeX package (Revised chapters)
 \RW=\skip56
 \mylen=\skip57
@@ -226,67 +190,44 @@ Package: fncychap 2007/07/30 v1.34 LaTeX package (Revised chapters)
 \py=\skip60
 \pyy=\skip61
 \pxx=\skip62
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
 Package: hyperref 2026-01-29 v7.01p Hypertext links for LaTeX
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty
 Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
 \KV@toks@=\toks29
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
 Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/kvdefinekeys\kvdefine
-keys.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/kvdefinekeys\kvdefinekeys.sty
 Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pdfescape\pdfescape.s
-ty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pdfescape\pdfescape.sty
 Package: pdfescape 2019/12/09 v1.15 Implements pdfTeX's escape features (HO)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
 Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcmds
-.sty
-Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
-)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr.s
-ty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcmds.sty
+Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO)
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr.sty
 Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
 )
 Package pdftexcmds Info: \pdf@primitive is available.
 Package pdftexcmds Info: \pdf@ifprimitive is available.
 Package pdftexcmds Info: \pdfdraftmode found.
-))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/hycolor\hycolor.sty
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/hycolor\hycolor.sty
 Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
 Package: nameref 2026-01-29 v2.58 Cross-referencing by name of section
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.sty
 Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/gettitlestring\gettit
-lestring.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/gettitlestring\gettitlestring.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 ))
 \c@section@level=\count301
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/etoolbox\etoolbox.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/etoolbox\etoolbox.sty
 Package: etoolbox 2025/10/02 v2.5m e-TeX tools for LaTeX (JAW)
 \etb@tempcnta=\count302
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc.s
-ty
-Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
-)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc.sty
+Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO)
 )
 \@linkdim=\dimen161
 \Hy@linkcounter=\count303
@@ -324,11 +265,8 @@ LaTeX Info: Redefining \url on input line 4807.
 \XeTeXLinkMargin=\dimen162
 (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
 Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/bigintcalc\bigintcalc
-.sty
-Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
-)
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/bigintcalc\bigintcalc.sty
+Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO)
 ))
 \Fld@menulength=\count307
 \Field@Width=\dimen163
@@ -345,28 +283,21 @@ Package hyperref Info: PDF/A mode OFF on input line 6114.
 \c@Hfootnote=\count310
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
 File: hpdftex.def 2026-01-29 v7.01p Hyperref driver for pdfTeX
 \Fld@listcount=\count311
 \c@bookmark@seq@number=\count312
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunfil
-echeck.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunfilecheck.sty
 Package: rerunfilecheck 2025-06-21 v1.11 Rerun checks for auxiliary files (HO)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/uniquecounter\uniquec
-ounter.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/uniquecounter\uniquecounter.sty
 Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
 )
-Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
-84.
+Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 284.
 )
 \Hy@SectionHShift=\skip63
 )
 Package hyperref Info: Option `colorlinks' set `false' on input line 290.
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\makeidx.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\makeidx.sty
 Package: makeidx 2021/10/04 v1.0m Standard LaTeX package
 )
 \@indexfile=\write4
@@ -444,14 +375,11 @@ Package: multicol 2025/10/21 v2.0b multicolumn formatting (FMi)
 \colbreak@box=\box102
 \mc@col@check@num=\count322
 \g__mc_curr_col_int=\count323
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/subfig\subfig.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/subfig\subfig.sty
 Package: subfig 2005/06/28 ver: 1.3 subfig package
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption.sty
 Package: caption 2023/08/05 v3.6o Customizing captions (AR)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption3.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption3.sty
 Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
 \caption@tempdima=\dimen174
 \captionmargin=\dimen175
@@ -483,7 +411,7 @@ Package caption Info: hyperref package is loaded.
 \sf@bottom=\skip70
 )
 \sf@box=\box103
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.sty
 \lst@mode=\count333
 \lst@gtempboxa=\box104
 \lst@token=\toks30
@@ -496,20 +424,18 @@ Package caption Info: hyperref package is loaded.
 \lst@newlines=\count337
 \lst@lineno=\count338
 \lst@maxwidth=\dimen186
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstpatch.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstpatch.sty
 File: lstpatch.sty 2025/11/14 1.11b (Carsten Heinz)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstmisc.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstmisc.sty
 File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
 \c@lstnumber=\count339
 \lst@skipnumbers=\count340
 \lst@framebox=\box105
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.cfg
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.cfg
 File: listings.cfg 2025/11/14 1.11b listings configuration
 ))
 Package: listings 2025/11/14 1.11b (Carsten Heinz)
+
 ==> First Aid for listings.sty no longer applied!
     Expected:
         2024/09/23 1.10c (Carsten Heinz)
@@ -518,8 +444,7 @@ Package: listings 2025/11/14 1.11b (Carsten Heinz)
     so I'm assuming it got fixed.
 (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/tools\tabularx.sty
 Package: tabularx 2023/12/11 v2.12a `tabularx' package (DPC)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/tools\array.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/tools\array.sty
 Package: array 2025/09/25 v2.6n Tabular extension package (FMi)
 \col@sep=\dimen187
 \ar@mcellbox=\box106
@@ -536,29 +461,21 @@ Package: array 2025/09/25 v2.6n Tabular extension package (FMi)
 \TX@delta=\dimen193
 \TX@cols=\count341
 \TX@ftn=\toks32
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\fontenc.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\fontenc.sty
 Package: fontenc 2025/07/18 v2.1d Standard LaTeX package
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\epsfig.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\epsfig.sty
 Package: epsfig 2024/01/14 v1.7b (e)psfig emulation (SPQR)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
 Package: graphicx 2024/12/31 v1.2e Enhanced LaTeX Graphics (DPC,SPQR)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
 Package: graphics 2024/08/06 v1.4g Standard LaTeX Graphics (DPC,SPQR)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty
 Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.c
-fg
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.cfg
 File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 )
 Package graphics Info: Driver file: pdftex.def on input line 106.
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\pdftex.def
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\pdftex.def
 File: pdftex.def 2025/09/29 v1.2d Graphics/color driver for pdftex
 ))
 \Gin@req@height=\dimen194
@@ -578,11 +495,9 @@ LaTeX Info: Redefining \setlength on input line 86.
 LaTeX Info: Redefining \addtolength on input line 87.
 \calc@Ccount=\count344
 \calc@Cskip=\skip75
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
 Package: geometry 2026/03/07 v6.0 Page Geometry
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
 Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
 )
 \Gm@cnth=\count345
@@ -597,9 +512,7 @@ Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
 \Gm@layouthoffset=\dimen262
 \Gm@layoutvoffset=\dimen263
 \Gm@dimlist=\toks33
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/titlesec\titlesec.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/titlesec\titlesec.sty
 Package: titlesec 2025/01/04 v2.17 Sectioning titles
 \ttl@box=\box108
 \beforetitleunit=\skip76
@@ -610,8 +523,7 @@ Package: titlesec 2025/01/04 v2.17 Sectioning titles
 \titlewidth=\dimen266
 \titlewidthlast=\dimen267
 \titlewidthfirst=\dimen268
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.sty
 Package: csquotes 2024-04-04 v5.2o context-sensitive quotations (JAW)
 \csq@reset=\count348
 \csq@gtype=\count349
@@ -620,35 +532,28 @@ Package: csquotes 2024-04-04 v5.2o context-sensitive quotations (JAW)
 \csq@maxlvl=\count352
 \csq@tshold=\count353
 \csq@ltx@everypar=\toks35
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.def
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.def
 File: csquotes.def 2024-04-04 v5.2o csquotes generic definitions (JAW)
 )
 Package csquotes Info: Trying to load configuration file 'csquotes.cfg'...
 Package csquotes Info: ... configuration file loaded successfully.
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.cfg
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/csquotes\csquotes.cfg
 File: csquotes.cfg 
-)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pdfpages\pdfpages.st
-y
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pdfpages\pdfpages.sty
 Package: pdfpages 2026/03/30 v0.6h Insert pages of external PDF documents (AM)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\ifthen.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/base\ifthen.sty
 Package: ifthen 2024/03/16 v1.1e Standard LaTeX ifthen package (DPC)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/eso-pic\eso-pic.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/eso-pic\eso-pic.sty
 Package: eso-pic 2025/12/10 v3.0d eso-pic (RN)
 \ESO@tempdima=\dimen269
 \ESO@tempdimb=\dimen270
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
 Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cfg
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cfg
 File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
 Package xcolor Info: Driver file: pdftex.def on input line 274.
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx)
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx)
 Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1349.
 Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1353.
 Package xcolor Info: Model `RGB' extended on input line 1365.
@@ -662,8 +567,7 @@ Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
 \AM@pagewidth=\dimen271
 \AM@pageheight=\dimen272
 \AM@fboxrule=\dimen273
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pdfpages\pppdftex.def
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pdfpages\pppdftex.def
 File: pppdftex.def 2026/03/30 v0.6h Pdfpages driver for pdfTeX (AM)
 )
 \pdfpages@includegraphics@status=\count354
@@ -674,14 +578,9 @@ File: pppdftex.def 2026/03/30 v0.6h Pdfpages driver for pdfTeX (AM)
 \AM@lof@heading=\toks38
 \c@AM@survey=\count356
 \AM@templatesizebox=\box110
-) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/lipsum\lipsum.sty
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/l3packages/l3keys2e\l3k
-eys2e.sty
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\expl3.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/lipsum\lipsum.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/l3packages/l3keys2e\l3keys2e.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\expl3.sty
 Package: expl3 2026-03-20 L3 programming layer (loader) 
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdf
-tex.def
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdftex.def
 File: l3backend-pdftex.def 2026-02-18 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count357
 ))
@@ -691,17 +590,12 @@ Package: lipsum 2021-09-20 v2.7 150 paragraphs of Lorem Ipsum dummy text
 \g__lipsum_par_int=\count358
 \l__lipsum_a_int=\count359
 \l__lipsum_b_int=\count360
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/lipsum\lipsum.ltd.tex)))
 
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/lipsum\lipsum.ltd.tex))
-)
+LaTeX Warning: \include should only be used after \begin{document} on input line 464.
 
-LaTeX Warning: \include should only be used after \begin{document} on input lin
-e 464.
-
-(TeXiS/TeXiS_cab.tex
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/fancyhdr\fancyhdr.sty
+(TeXiS/TeXiS_cab.tex (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/fancyhdr\fancyhdr.sty
 Package: fancyhdr 2025/02/07 v5.2 Extensive control of page headers and footers
-
 \f@nch@headwidth=\skip78
 \f@nch@offset@elh=\skip79
 \f@nch@offset@erh=\skip80
@@ -719,21 +613,17 @@ Package: fancyhdr 2025/02/07 v5.2 Extensive control of page headers and footers
 \@temptokenb=\toks39
 ))
 
-LaTeX Warning: \include should only be used after \begin{document} on input lin
-e 467.
+LaTeX Warning: \include should only be used after \begin{document} on input line 467.
 
 (TeXiS/TeXiS_cover.tex)
 
-LaTeX Warning: \include should only be used after \begin{document} on input lin
-e 470.
+LaTeX Warning: \include should only be used after \begin{document} on input line 470.
 
 (TeXiS/TeXiS_dedic.tex)
 
-LaTeX Warning: \include should only be used after \begin{document} on input lin
-e 473.
+LaTeX Warning: \include should only be used after \begin{document} on input line 473.
 
-(TeXiS/TeXiS_bib.tex))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/booktabs\booktabs.sty
+(TeXiS/TeXiS_bib.tex)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/booktabs\booktabs.sty
 Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \heavyrulewidth=\dimen274
 \lightrulewidth=\dimen275
@@ -752,44 +642,22 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \@thisruleclass=\count363
 \@lastruleclass=\count364
 \@thisrulewidth=\dimen286
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/frontendlayer\tikz.
-sty
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgf.sty
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfrcs.st
-y
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil
--common.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/frontendlayer\tikz.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgf.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfrcs.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil-common.tex
 \pgfutil@everybye=\toks40
 \pgfutil@tempdima=\dimen287
 \pgfutil@tempdimb=\dimen288
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil
--latex.def
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil-latex.def
 \pgfutil@abb=\box111
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfrcs.
-code.tex
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf\pgf.revision.tex)
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfrcs.code.tex (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf\pgf.revision.tex)
 Package: pgfrcs 2025-08-29 v3.1.11a (3.1.11a)
 ))
 Package: pgf 2025-08-29 v3.1.11a (3.1.11a)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgfcore.
-sty
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/systemlayer\pgfsys.
-sty
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
-s.code.tex
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgfcore.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/systemlayer\pgfsys.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys.code.tex
 Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
-.code.tex
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys.code.tex
 \pgfkeys@pathtoks=\toks41
 \pgfkeys@temptoks=\toks42
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
-libraryfiltered.code.tex
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeyslibraryfiltered.code.tex
 \pgfkeys@tmptoks=\toks43
 ))
 \pgf@x=\dimen289
@@ -812,76 +680,32 @@ libraryfiltered.code.tex
 \t@pgf@tokb=\toks45
 \t@pgf@tokc=\toks46
 \pgf@sys@id@count=\count369
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf.c
-fg
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf.cfg
 File: pgf.cfg 2025-08-29 v3.1.11a (3.1.11a)
 )
 Driver file for pgf: pgfsys-pdftex.def
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
-s-pdftex.def
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys-pdftex.def
 File: pgfsys-pdftex.def 2025-08-29 v3.1.11a (3.1.11a)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
-s-common-pdf.def
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys-common-pdf.def
 File: pgfsys-common-pdf.def 2025-08-29 v3.1.11a (3.1.11a)
-)))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
-ssoftpath.code.tex
+))) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsyssoftpath.code.tex
 File: pgfsyssoftpath.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgfsyssoftpath@smallbuffer@items=\count370
 \pgfsyssoftpath@bigbuffer@items=\count371
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
-sprotocol.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsysprotocol.code.tex
 File: pgfsysprotocol.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-e.code.tex
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore.code.tex
 Package: pgfcore 2025-08-29 v3.1.11a (3.1.11a)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.code
-.tex
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathutil.
-code.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathparse
-r.code.tex
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.code.tex (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathutil.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathparser.code.tex
 \pgfmath@dimen=\dimen299
 \pgfmath@count=\count372
 \pgfmath@box=\box112
 \pgfmath@toks=\toks47
 \pgfmath@stack@operand=\toks48
 \pgfmath@stack@operation=\toks49
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
-ions.code.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
-ions.basic.code.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
-ions.trigonometric.code.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
-ions.random.code.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
-ions.comparison.code.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
-ions.base.code.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
-ions.round.code.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
-ions.misc.code.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
-ions.integerarithmetics.code.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathcalc.
-code.tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfloat
-.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.basic.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.trigonometric.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.random.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.comparison.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.base.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.round.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.misc.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.integerarithmetics.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathcalc.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfloat.code.tex
 \c@pgfmathroundto@lastzeros=\count373
-))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfint.code.
-tex)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-epoints.code.tex
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfint.code.tex) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepoints.code.tex
 File: pgfcorepoints.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgf@picminx=\dimen300
 \pgf@picmaxx=\dimen301
@@ -897,130 +721,75 @@ File: pgfcorepoints.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgf@yy=\dimen311
 \pgf@zx=\dimen312
 \pgf@zy=\dimen313
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-epathconstruct.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepathconstruct.code.tex
 File: pgfcorepathconstruct.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgf@path@lastx=\dimen314
 \pgf@path@lasty=\dimen315
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-epathusage.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepathusage.code.tex
 File: pgfcorepathusage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgf@shorten@end@additional=\dimen316
 \pgf@shorten@start@additional=\dimen317
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-escopes.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorescopes.code.tex
 File: pgfcorescopes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgfpic=\box113
 \pgf@hbox=\box114
 \pgf@layerbox@main=\box115
 \pgf@picture@serial@count=\count374
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-egraphicstate.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoregraphicstate.code.tex
 File: pgfcoregraphicstate.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgflinewidth=\dimen318
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-etransformations.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoretransformations.code.tex
 File: pgfcoretransformations.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgf@pt@x=\dimen319
 \pgf@pt@y=\dimen320
 \pgf@pt@temp=\dimen321
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-equick.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorequick.code.tex
 File: pgfcorequick.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-eobjects.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoreobjects.code.tex
 File: pgfcoreobjects.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-epathprocessing.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepathprocessing.code.tex
 File: pgfcorepathprocessing.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-earrows.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorearrows.code.tex
 File: pgfcorearrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgfarrowsep=\dimen322
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-eshade.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoreshade.code.tex
 File: pgfcoreshade.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgf@max=\dimen323
 \pgf@sys@shading@range@num=\count375
 \pgf@shadingcount=\count376
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-eimage.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoreimage.code.tex
 File: pgfcoreimage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-eexternal.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoreexternal.code.tex
 File: pgfcoreexternal.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgfexternal@startupbox=\box116
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-elayers.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorelayers.code.tex
 File: pgfcorelayers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-etransparency.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcoretransparency.code.tex
 File: pgfcoretransparency.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-epatterns.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepatterns.code.tex
 File: pgfcorepatterns.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
-erdf.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcorerdf.code.tex
 File: pgfcorerdf.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodule
-shapes.code.tex
+))) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmoduleshapes.code.tex
 File: pgfmoduleshapes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgfnodeparttextbox=\box117
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodule
-plot.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmoduleplot.code.tex
 File: pgfmoduleplot.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfco
-mp-version-0-65.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfcomp-version-0-65.sty
 Package: pgfcomp-version-0-65 2025-08-29 v3.1.11a (3.1.11a)
 \pgf@nodesepstart=\dimen324
 \pgf@nodesepend=\dimen325
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfco
-mp-version-1-18.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfcomp-version-1-18.sty
 Package: pgfcomp-version-1-18 2025-08-29 v3.1.11a (3.1.11a)
-))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgffor.st
-y
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfkeys.s
-ty
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
-.code.tex))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/math\pgfmath.sty
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.code
-.tex))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgffor.
-code.tex
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgffor.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfkeys.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys.code.tex)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pgf/math\pgfmath.sty (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.code.tex)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgffor.code.tex
 Package: pgffor 2025-08-29 v3.1.11a (3.1.11a)
 \pgffor@iter=\dimen326
 \pgffor@skip=\dimen327
 \pgffor@stack=\toks50
 \pgffor@toks=\toks51
-))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
-z\tikz.code.tex
+)) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz\tikz.code.tex
 Package: tikz 2025-08-29 v3.1.11a (3.1.11a)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibr
-aryplothandlers.code.tex
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibraryplothandlers.code.tex
 File: pgflibraryplothandlers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgf@plot@mark@count=\count377
 \pgfplotmarksize=\dimen328
@@ -1041,46 +810,32 @@ File: pgflibraryplothandlers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \tikznumberofchildren=\count379
 \tikznumberofcurrentchild=\count380
 \tikz@fig@count=\count381
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodule
-matrix.code.tex
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodulematrix.code.tex
 File: pgfmodulematrix.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgfmatrixcurrentrow=\count382
 \pgfmatrixcurrentcolumn=\count383
 \pgf@matrix@numberofcolumns=\count384
 )
 \tikz@expandcount=\count385
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
-z/libraries\tikzlibrarytopaths.code.tex
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibrarytopaths.code.tex
 File: tikzlibrarytopaths.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)))
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
-z/libraries\tikzlibrarybabel.code.tex
+))) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibrarybabel.code.tex
 File: tikzlibrarybabel.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
-z/libraries\tikzlibrarypositioning.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibrarypositioning.code.tex
 File: tikzlibrarypositioning.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
-z/libraries\tikzlibrarycalc.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibrarycalc.code.tex
 File: tikzlibrarycalc.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibr
-aryarrows.meta.code.tex
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibraryarrows.meta.code.tex
 File: pgflibraryarrows.meta.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgfarrowinset=\dimen337
 \pgfarrowlength=\dimen338
 \pgfarrowwidth=\dimen339
 \pgfarrowlinewidth=\dimen340
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/xurl\xurl.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/xurl\xurl.sty
 Package: xurl 2022/01/09 v 0.10 modify URL breaks
 )
 
-LaTeX Warning: \include should only be used after \begin{document} on input lin
-e 86.
+LaTeX Warning: \include should only be used after \begin{document} on input line 86.
 
 (constantes.tex)
 Copyright Marco Antonio and Pedro Pablo Gomez Martin
@@ -1093,22 +848,13 @@ LaTeX Info: Redefining \. on input line 13.
 LaTeX Info: Redefining \% on input line 13.
 Package babel Info: 'spanish' activates 'spanish' shorthands.
 (babel)             Reported on input line 13.
- (Cascaras/autorizacion.aux)
-(Cascaras/dedicatoria.aux) (Cascaras/agradecimientos.aux) (Cascaras/resumen.aux
-) (Cascaras/abstract.aux) (TeXiS/TeXiS_toc.aux)
+ (Cascaras/autorizacion.aux) (Cascaras/dedicatoria.aux) (Cascaras/agradecimientos.aux) (Cascaras/resumen.aux) (Cascaras/abstract.aux) (TeXiS/TeXiS_toc.aux)
 LaTeX Info: Redefining \. on input line 21.
 LaTeX Info: Redefining \% on input line 21.
- (Capitulos/Introduccion.aux)
-(Capitulos/EstadoDeLaCuestion.aux) (Capitulos/ConcursosProgramacion.aux)
-(Capitulos/DescripcionTrabajo.aux)
-(Capitulos/DescripcionTrabajoConcursosProgramaci贸n.aux)
-(Capitulos/Validacion.aux) (Capitulos/ConclusionesTrabajoFuturo.aux)
-(Capitulos/Introduction.aux) (Capitulos/ConclusionsFutureWork.aux)
-(Capitulos/ContribucionesPersonales.aux)
+ (Capitulos/Introduccion.aux) (Capitulos/EstadoDeLaCuestion.aux) (Capitulos/ConcursosProgramacion.aux) (Capitulos/DescripcionTrabajo.aux) (Capitulos/DescripcionTrabajoConcursosProgramaci贸n.aux) (Capitulos/Validacion.aux) (Capitulos/ConclusionesTrabajoFuturo.aux) (Capitulos/Introduction.aux) (Capitulos/ConclusionsFutureWork.aux) (Capitulos/ContribucionesPersonales.aux)
 LaTeX Info: Redefining \. on input line 33.
 LaTeX Info: Redefining \% on input line 33.
- (Cascaras/bibliografia.aux)
-(Apendices/appendixA.aux) (Apendices/appendixB.aux) (Cascaras/fin.aux))
+ (Cascaras/bibliografia.aux) (Apendices/appendixA.aux) (Apendices/appendixB.aux) (Cascaras/fin.aux))
 \openout1 = `TFGTeXiS.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 110.
@@ -1132,8 +878,7 @@ LaTeX Font Info:    ... okay on input line 110.
 LaTeX Info: Redefining \. on input line 110.
 LaTeX Info: Redefining \% on input line 110.
 Package hyperref Info: Link coloring OFF on input line 110.
-
-(TFGTeXiS.out) (TFGTeXiS.out)
+ (TFGTeXiS.out) (TFGTeXiS.out)
 \@outlinefile=\write6
 \openout6 = `TFGTeXiS.out'.
 
@@ -1142,9 +887,7 @@ Package caption Info: subfig package v1.3 is loaded.
 Package caption Info: listings package is loaded.
 Package caption Info: End \AtBeginDocument code.
 \c@lstlisting=\count386
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mk
-ii
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count387
 \scratchdimen=\dimen341
@@ -1157,15 +900,10 @@ ii
 \MPnumerator=\count391
 \makeMPintoPDFobject=\count392
 \everyMPtoPDFconversion=\toks53
-)
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-b
-ase.sty
+) (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
-Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
-85.
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys.c
-fg
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 ))
 *geometry* driver: auto-detecting
@@ -1202,21 +940,15 @@ File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-
 (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pdflscape\pdflscape.sty
 Package: pdflscape 2022-10-27 v0.13 Display of landscape pages in PDF
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pdflscape\pdflscape-nom
-etadata.sty
-Package: pdflscape-nometadata 2022-10-28 v0.13 Display of landscape pages in PD
-F (HO)
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\lscape.sty
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/pdflscape\pdflscape-nometadata.sty
+Package: pdflscape-nometadata 2022-10-28 v0.13 Display of landscape pages in PDF (HO)
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/graphics\lscape.sty
 Package: lscape 2020/05/28 v3.02 Landscape Pages (DPC)
 )
 Package pdflscape Info: Auto-detected driver: pdftex on input line 81.
-))
-(guionado.tex)
+)) (guionado.tex)
 \openout2 = `Cascaras/cover.aux'.
 
  (Cascaras/cover.tex
@@ -1229,18 +961,16 @@ Package pdflscape Info: Auto-detected driver: pdftex on input line 81.
 <Imagenes/Bitmap/escudoUCMcolor.png, id=458, 600.3228pt x 678.3744pt>
 File: Imagenes/Bitmap/escudoUCMcolor.png Graphic file (type png)
 <use Imagenes/Bitmap/escudoUCMcolor.png>
-Package pdftex.def Info: Imagenes/Bitmap/escudoUCMcolor.png  used on input line
- 190.
+Package pdftex.def Info: Imagenes/Bitmap/escudoUCMcolor.png  used on input line 190.
 (pdftex.def)             Requested size: 120.06242pt x 135.67247pt.
 \c@lastyear=\count393
  [1
 
 
 
-{C:/Users/josem/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map} <./Imagenes/B
-itmap/escudoUCMcolor.png>] [2]
+{C:/Users/josem/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map} <./Imagenes/Bitmap/escudoUCMcolor.png>] [2]
 
-! LaTeX Error: There's no line here to end.
+Cascaras/cover.tex:190: LaTeX Error: There's no line here to end.
 
 See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
@@ -1278,8 +1008,7 @@ No file Cascaras/autorizacion.tex.
 ]) [7]
 \openout2 = `Cascaras/resumen.aux'.
 
-
-(Cascaras/resumen.tex [8
+ (Cascaras/resumen.tex [8
 
 
 
@@ -1297,8 +1026,7 @@ LaTeX Info: Redefining \. on input line 130.
 LaTeX Info: Redefining \% on input line 130.
 \openout2 = `TeXiS/TeXiS_toc.aux'.
 
-
-(TeXiS/TeXiS_toc.tex (TFGTeXiS.toc
+ (TeXiS/TeXiS_toc.tex (TFGTeXiS.toc
 LaTeX Info: Redefining \. on input line 1.
 LaTeX Info: Redefining \% on input line 1.
 LaTeX Info: Redefining \. on input line 3.
@@ -1322,8 +1050,7 @@ LaTeX Info: Redefining \. on input line 3.
 LaTeX Info: Redefining \% on input line 3.
  [17
 
-]
-[18]
+] [18]
 LaTeX Info: Redefining \. on input line 46.
 LaTeX Info: Redefining \% on input line 46.
 )
@@ -1352,18 +1079,14 @@ LaTeX Info: Redefining \% on input line 21.
 
  (Capitulos/Introduccion.tex
 Cap\'itulo 1.
-LaTeX Font Info:    Trying to load font information for OT1+phv on input line 1
-.
+LaTeX Font Info:    Trying to load font information for OT1+phv on input line 1.
 (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1phv.fd
 File: ot1phv.fd 2020/03/25 scalable font definitions for OT1/phv.
 )
-LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 1
-.
-
-(C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1ptm.fd
+LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 1.
+ (C:\Users\josem\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1ptm.fd
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
-)
-[1
+) [1
 
 
 {C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}]
@@ -1498,8 +1221,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 <Imagenes/Vectorial/noticias.png, id=917, 470.50781pt x 297.36093pt>
 File: Imagenes/Vectorial/noticias.png Graphic file (type png)
 <use Imagenes/Vectorial/noticias.png>
-Package pdftex.def Info: Imagenes/Vectorial/noticias.png  used on input line 12
-2.
+Package pdftex.def Info: Imagenes/Vectorial/noticias.png  used on input line 122.
 (pdftex.def)             Requested size: 285.875pt x 180.67499pt.
 <Imagenes/Vectorial/rrss.png, id=922, 566.86781pt x 286.06876pt>
 File: Imagenes/Vectorial/rrss.png Graphic file (type png)
@@ -1521,13 +1243,11 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 File: Imagenes/Vectorial/sports.png Graphic file (type png)
 <use Imagenes/Vectorial/sports.png>
 Package pdftex.def Info: Imagenes/Vectorial/sports.png  used on input line 141.
-
 (pdftex.def)             Requested size: 333.26685pt x 180.67499pt.
 <Imagenes/Vectorial/education.png, id=936, 481.8pt x 304.88907pt>
 File: Imagenes/Vectorial/education.png Graphic file (type png)
 <use Imagenes/Vectorial/education.png>
-Package pdftex.def Info: Imagenes/Vectorial/education.png  used on input line 1
-50.
+Package pdftex.def Info: Imagenes/Vectorial/education.png  used on input line 150.
 (pdftex.def)             Requested size: 285.51666pt x 180.67499pt.
 LaTeX Info: Redefining \. on input line 153.
 LaTeX Info: Redefining \% on input line 153.
@@ -1587,8 +1307,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 <Imagenes/Vectorial/CamaraDistorsion.png, id=983, 1413.28pt x 770.88pt>
 File: Imagenes/Vectorial/CamaraDistorsion.png Graphic file (type png)
 <use Imagenes/Vectorial/CamaraDistorsion.png>
-Package pdftex.def Info: Imagenes/Vectorial/CamaraDistorsion.png  used on input
- line 235.
+Package pdftex.def Info: Imagenes/Vectorial/CamaraDistorsion.png  used on input line 235.
 (pdftex.def)             Requested size: 256.07741pt x 139.66989pt.
 LaTeX Info: Redefining \. on input line 271.
 LaTeX Info: Redefining \% on input line 271.
@@ -1631,8 +1350,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 <Imagenes/Vectorial/Eventosenvivo.jpg, id=1009, 953.5625pt x 537.00626pt>
 File: Imagenes/Vectorial/Eventosenvivo.jpg Graphic file (type jpg)
 <use Imagenes/Vectorial/Eventosenvivo.jpg>
-Package pdftex.def Info: Imagenes/Vectorial/Eventosenvivo.jpg  used on input li
-ne 319.
+Package pdftex.def Info: Imagenes/Vectorial/Eventosenvivo.jpg  used on input line 319.
 (pdftex.def)             Requested size: 426.79135pt x 240.35593pt.
 LaTeX Info: Redefining \. on input line 323.
 LaTeX Info: Redefining \% on input line 323.
@@ -1958,8 +1676,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 
 [48]
 Overfull \hbox (16.70769pt too wide) in paragraph at lines 214--214
-|[]\T1/cmr/bx/n/14.4 Conversi髇 en-tre los sis-te-mas de coor-de-na-das de Open
-CV
+|[]\T1/cmr/bx/n/14.4 Conversi髇 en-tre los sis-te-mas de coor-de-na-das de OpenCV
  []
 
 LaTeX Info: Redefining \. on input line 225.
@@ -1986,8 +1703,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 <Imagenes/Vectorial/codigoAruco.png, id=1215, 269.005pt x 192.72pt>
 File: Imagenes/Vectorial/codigoAruco.png Graphic file (type png)
 <use Imagenes/Vectorial/codigoAruco.png>
-Package pdftex.def Info: Imagenes/Vectorial/codigoAruco.png  used on input line
- 284.
+Package pdftex.def Info: Imagenes/Vectorial/codigoAruco.png  used on input line 284.
 (pdftex.def)             Requested size: 256.07741pt x 183.45935pt.
 LaTeX Info: Redefining \. on input line 290.
 LaTeX Info: Redefining \% on input line 290.
@@ -2003,8 +1719,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 <Imagenes/Vectorial/UI_modo3D.png, id=1224, 415.5525pt x 281.25075pt>
 File: Imagenes/Vectorial/UI_modo3D.png Graphic file (type png)
 <use Imagenes/Vectorial/UI_modo3D.png>
-Package pdftex.def Info: Imagenes/Vectorial/UI_modo3D.png  used on input line 3
-23.
+Package pdftex.def Info: Imagenes/Vectorial/UI_modo3D.png  used on input line 323.
 (pdftex.def)             Requested size: 307.29028pt x 207.98495pt.
 LaTeX Info: Redefining \. on input line 327.
 LaTeX Info: Redefining \% on input line 327.
@@ -2020,8 +1735,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 <Imagenes/Vectorial/UI_modo3DAR.png, id=1232, 421.575pt x 264.99pt>
 File: Imagenes/Vectorial/UI_modo3DAR.png Graphic file (type png)
 <use Imagenes/Vectorial/UI_modo3DAR.png>
-Package pdftex.def Info: Imagenes/Vectorial/UI_modo3DAR.png  used on input line
- 336.
+Package pdftex.def Info: Imagenes/Vectorial/UI_modo3DAR.png  used on input line 336.
 (pdftex.def)             Requested size: 307.29028pt x 193.15805pt.
 LaTeX Info: Redefining \. on input line 346.
 LaTeX Info: Redefining \% on input line 346.
@@ -2033,8 +1747,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[53 <./Imagenes/Vectorial/UI_modo3D.png> <./Imagenes/Vectorial/UI_modo3DAR.png>
-])
+[53 <./Imagenes/Vectorial/UI_modo3D.png> <./Imagenes/Vectorial/UI_modo3DAR.png>])
 LaTeX Info: Redefining \. on input line 148.
 LaTeX Info: Redefining \% on input line 148.
 
@@ -2115,7 +1828,6 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 File: Imagenes/Vectorial/ModoAr.png Graphic file (type png)
 <use Imagenes/Vectorial/ModoAr.png>
 Package pdftex.def Info: Imagenes/Vectorial/ModoAr.png  used on input line 357.
-
 (pdftex.def)             Requested size: 349.97203pt x 349.9715pt.
 LaTeX Info: Redefining \. on input line 361.
 LaTeX Info: Redefining \% on input line 361.
@@ -2131,8 +1843,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 <Imagenes/Vectorial/usoScoreboard.png, id=1295, 958.782pt x 549.252pt>
 File: Imagenes/Vectorial/usoScoreboard.png Graphic file (type png)
 <use Imagenes/Vectorial/usoScoreboard.png>
-Package pdftex.def Info: Imagenes/Vectorial/usoScoreboard.png  used on input li
-ne 372.
+Package pdftex.def Info: Imagenes/Vectorial/usoScoreboard.png  used on input line 372.
 (pdftex.def)             Requested size: 349.97203pt x 200.48788pt.
 LaTeX Info: Redefining \. on input line 376.
 LaTeX Info: Redefining \% on input line 376.
@@ -2148,8 +1859,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 <Imagenes/Vectorial/ModoTeamInfo.png, id=1301, 458.9145pt x 302.3295pt>
 File: Imagenes/Vectorial/ModoTeamInfo.png Graphic file (type png)
 <use Imagenes/Vectorial/ModoTeamInfo.png>
-Package pdftex.def Info: Imagenes/Vectorial/ModoTeamInfo.png  used on input lin
-e 383.
+Package pdftex.def Info: Imagenes/Vectorial/ModoTeamInfo.png  used on input line 383.
 (pdftex.def)             Requested size: 349.97203pt x 230.56165pt.
 LaTeX Info: Redefining \. on input line 401.
 LaTeX Info: Redefining \% on input line 401.
@@ -2161,13 +1871,11 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[63 <./Imagenes/Vectorial/usoScoreboard.png> <./Imagenes/Vectorial/ModoTeamInfo
-.png>]
+[63 <./Imagenes/Vectorial/usoScoreboard.png> <./Imagenes/Vectorial/ModoTeamInfo.png>]
 <Imagenes/Vectorial/UI_ConexionWeb.png, id=1309, 422.7795pt x 260.172pt>
 File: Imagenes/Vectorial/UI_ConexionWeb.png Graphic file (type png)
 <use Imagenes/Vectorial/UI_ConexionWeb.png>
-Package pdftex.def Info: Imagenes/Vectorial/UI_ConexionWeb.png  used on input l
-ine 416.
+Package pdftex.def Info: Imagenes/Vectorial/UI_ConexionWeb.png  used on input line 416.
 (pdftex.def)             Requested size: 307.29028pt x 189.1141pt.
 LaTeX Info: Redefining \. on input line 435.
 LaTeX Info: Redefining \% on input line 435.
@@ -2181,21 +1889,17 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 
 [64 <./Imagenes/Vectorial/UI_ConexionWeb.png>]
 Underfull \hbox (badness 10000) in paragraph at lines 478--486
-[]\T1/cmr/m/n/12 La im-ple-men-ta-ci髇 del hi-lo se-cun-da-rio usa la in-ter-fa
-z \T1/cmr/m/it/12 PO-SIX th-
+[]\T1/cmr/m/n/12 La im-ple-men-ta-ci髇 del hi-lo se-cun-da-rio usa la in-ter-faz \T1/cmr/m/it/12 PO-SIX th-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 478--486
-\T1/cmr/m/it/12 reads \T1/cmr/m/n/12 (\T1/cmtt/m/n/12 pthread_create\T1/cmr/m/n
-/12 , \T1/cmtt/m/n/12 pthread_mutex_init\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 pthrea
-d_mutex_lock\T1/cmr/m/n/12 ,
+\T1/cmr/m/it/12 reads \T1/cmr/m/n/12 (\T1/cmtt/m/n/12 pthread_create\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 pthread_mutex_init\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 pthread_mutex_lock\T1/cmr/m/n/12 ,
  []
 
 
 Underfull \hbox (badness 1342) in paragraph at lines 478--486
-\T1/cmtt/m/n/12 pthread_mutex_unlock \T1/cmr/m/n/12 y \T1/cmtt/m/n/12 pthread_j
-oin\T1/cmr/m/n/12 ) pa-ra se-pa-rar las pe-ti-cio-nes HTTP
+\T1/cmtt/m/n/12 pthread_mutex_unlock \T1/cmr/m/n/12 y \T1/cmtt/m/n/12 pthread_join\T1/cmr/m/n/12 ) pa-ra se-pa-rar las pe-ti-cio-nes HTTP
  []
 
 )
@@ -2245,14 +1949,12 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 <Imagenes/Vectorial/6APPsNoOBS.png, id=1339, 497.4585pt x 79.497pt>
 File: Imagenes/Vectorial/6APPsNoOBS.png Graphic file (type png)
 <use Imagenes/Vectorial/6APPsNoOBS.png>
-Package pdftex.def Info: Imagenes/Vectorial/6APPsNoOBS.png  used on input line 
-72.
+Package pdftex.def Info: Imagenes/Vectorial/6APPsNoOBS.png  used on input line 72.
 (pdftex.def)             Requested size: 320.0935pt x 51.15446pt.
 <Imagenes/Vectorial/6AppsSoloOBS.png, id=1340, 302.3295pt x 24.69225pt>
 File: Imagenes/Vectorial/6AppsSoloOBS.png Graphic file (type png)
 <use Imagenes/Vectorial/6AppsSoloOBS.png>
-Package pdftex.def Info: Imagenes/Vectorial/6AppsSoloOBS.png  used on input lin
-e 79.
+Package pdftex.def Info: Imagenes/Vectorial/6AppsSoloOBS.png  used on input line 79.
 (pdftex.def)             Requested size: 320.0935pt x 26.14424pt.
 LaTeX Info: Redefining \. on input line 88.
 LaTeX Info: Redefining \% on input line 88.
@@ -2264,35 +1966,26 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[69 <./Imagenes/Vectorial/6APPsNoOBS.png> <./Imagenes/Vectorial/6AppsSoloOBS.pn
-g>]
-<Imagenes/Vectorial/6APPSOBSModo3D_1modelo.png, id=1348, 320.397pt x 30.71475pt
->
+[69 <./Imagenes/Vectorial/6APPsNoOBS.png> <./Imagenes/Vectorial/6AppsSoloOBS.png>]
+<Imagenes/Vectorial/6APPSOBSModo3D_1modelo.png, id=1348, 320.397pt x 30.71475pt>
 File: Imagenes/Vectorial/6APPSOBSModo3D_1modelo.png Graphic file (type png)
 <use Imagenes/Vectorial/6APPSOBSModo3D_1modelo.png>
-Package pdftex.def Info: Imagenes/Vectorial/6APPSOBSModo3D_1modelo.png  used on
- input line 95.
+Package pdftex.def Info: Imagenes/Vectorial/6APPSOBSModo3D_1modelo.png  used on input line 95.
 (pdftex.def)             Requested size: 209.1301pt x 20.04823pt.
 <Imagenes/Vectorial/6APPSOBSModo3D_3modelos.png, id=1349, 320.397pt x 36.135pt>
-
 File: Imagenes/Vectorial/6APPSOBSModo3D_3modelos.png Graphic file (type png)
 <use Imagenes/Vectorial/6APPSOBSModo3D_3modelos.png>
-Package pdftex.def Info: Imagenes/Vectorial/6APPSOBSModo3D_3modelos.png  used o
-n input line 101.
+Package pdftex.def Info: Imagenes/Vectorial/6APPSOBSModo3D_3modelos.png  used on input line 101.
 (pdftex.def)             Requested size: 209.1301pt x 23.58615pt.
-<Imagenes/Vectorial/6APPSOBSModoAR_1filtro.png, id=1350, 310.761pt x 34.32825pt
->
+<Imagenes/Vectorial/6APPSOBSModoAR_1filtro.png, id=1350, 310.761pt x 34.32825pt>
 File: Imagenes/Vectorial/6APPSOBSModoAR_1filtro.png Graphic file (type png)
 <use Imagenes/Vectorial/6APPSOBSModoAR_1filtro.png>
-Package pdftex.def Info: Imagenes/Vectorial/6APPSOBSModoAR_1filtro.png  used on
- input line 118.
+Package pdftex.def Info: Imagenes/Vectorial/6APPSOBSModoAR_1filtro.png  used on input line 118.
 (pdftex.def)             Requested size: 209.1301pt x 23.10193pt.
-<Imagenes/Vectorial/6APPSOBSModoAR_3filtros.png, id=1351, 314.3745pt x 27.7035p
-t>
+<Imagenes/Vectorial/6APPSOBSModoAR_3filtros.png, id=1351, 314.3745pt x 27.7035pt>
 File: Imagenes/Vectorial/6APPSOBSModoAR_3filtros.png Graphic file (type png)
 <use Imagenes/Vectorial/6APPSOBSModoAR_3filtros.png>
-Package pdftex.def Info: Imagenes/Vectorial/6APPSOBSModoAR_3filtros.png  used o
-n input line 124.
+Package pdftex.def Info: Imagenes/Vectorial/6APPSOBSModoAR_3filtros.png  used on input line 124.
 (pdftex.def)             Requested size: 209.1301pt x 18.42976pt.
 LaTeX Info: Redefining \. on input line 135.
 LaTeX Info: Redefining \% on input line 135.
@@ -2304,47 +1997,31 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[70 <./Imagenes/Vectorial/6APPSOBSModo3D_1modelo.png> <./Imagenes/Vectorial/6AP
-PSOBSModo3D_3modelos.png> <./Imagenes/Vectorial/6APPSOBSModoAR_1filtro.png> <./
-Imagenes/Vectorial/6APPSOBSModoAR_3filtros.png>]
-<Imagenes/Vectorial/6APPsOBSModoScoreboardNoAruko.png, id=1360, 307.1475pt x 30
-.71475pt>
-File: Imagenes/Vectorial/6APPsOBSModoScoreboardNoAruko.png Graphic file (type p
-ng)
+[70 <./Imagenes/Vectorial/6APPSOBSModo3D_1modelo.png> <./Imagenes/Vectorial/6APPSOBSModo3D_3modelos.png> <./Imagenes/Vectorial/6APPSOBSModoAR_1filtro.png> <./Imagenes/Vectorial/6APPSOBSModoAR_3filtros.png>]
+<Imagenes/Vectorial/6APPsOBSModoScoreboardNoAruko.png, id=1360, 307.1475pt x 30.71475pt>
+File: Imagenes/Vectorial/6APPsOBSModoScoreboardNoAruko.png Graphic file (type png)
 <use Imagenes/Vectorial/6APPsOBSModoScoreboardNoAruko.png>
-Package pdftex.def Info: Imagenes/Vectorial/6APPsOBSModoScoreboardNoAruko.png  
-used on input line 143.
+Package pdftex.def Info: Imagenes/Vectorial/6APPsOBSModoScoreboardNoAruko.png  used on input line 143.
 (pdftex.def)             Requested size: 209.1301pt x 20.91339pt.
-<Imagenes/Vectorial/6APPSOBSModoScoreboardConAruco.png, id=1361, 329.43076pt x 
-37.3395pt>
-File: Imagenes/Vectorial/6APPSOBSModoScoreboardConAruco.png Graphic file (type 
-png)
+<Imagenes/Vectorial/6APPSOBSModoScoreboardConAruco.png, id=1361, 329.43076pt x 37.3395pt>
+File: Imagenes/Vectorial/6APPSOBSModoScoreboardConAruco.png Graphic file (type png)
 <use Imagenes/Vectorial/6APPSOBSModoScoreboardConAruco.png>
-Package pdftex.def Info: Imagenes/Vectorial/6APPSOBSModoScoreboardConAruco.png 
- used on input line 149.
+Package pdftex.def Info: Imagenes/Vectorial/6APPSOBSModoScoreboardConAruco.png  used on input line 149.
 (pdftex.def)             Requested size: 209.1301pt x 23.70403pt.
-<Imagenes/Vectorial/6APPSOBSModoTeamInfoAruco.png, id=1362, 313.77225pt x 25.29
-45pt>
+<Imagenes/Vectorial/6APPSOBSModoTeamInfoAruco.png, id=1362, 313.77225pt x 25.2945pt>
 File: Imagenes/Vectorial/6APPSOBSModoTeamInfoAruco.png Graphic file (type png)
 <use Imagenes/Vectorial/6APPSOBSModoTeamInfoAruco.png>
-Package pdftex.def Info: Imagenes/Vectorial/6APPSOBSModoTeamInfoAruco.png  used
- on input line 157.
+Package pdftex.def Info: Imagenes/Vectorial/6APPSOBSModoTeamInfoAruco.png  used on input line 157.
 (pdftex.def)             Requested size: 320.0935pt x 25.80582pt.
-<Imagenes/Vectorial/6APPSOBS_MIX_1SCOREBOARD2TEAMINFO.png, id=1363, 325.215pt x
- 34.32825pt>
-File: Imagenes/Vectorial/6APPSOBS_MIX_1SCOREBOARD2TEAMINFO.png Graphic file (ty
-pe png)
+<Imagenes/Vectorial/6APPSOBS_MIX_1SCOREBOARD2TEAMINFO.png, id=1363, 325.215pt x 34.32825pt>
+File: Imagenes/Vectorial/6APPSOBS_MIX_1SCOREBOARD2TEAMINFO.png Graphic file (type png)
 <use Imagenes/Vectorial/6APPSOBS_MIX_1SCOREBOARD2TEAMINFO.png>
-Package pdftex.def Info: Imagenes/Vectorial/6APPSOBS_MIX_1SCOREBOARD2TEAMINFO.p
-ng  used on input line 173.
+Package pdftex.def Info: Imagenes/Vectorial/6APPSOBS_MIX_1SCOREBOARD2TEAMINFO.png  used on input line 173.
 (pdftex.def)             Requested size: 209.1301pt x 22.07527pt.
-<Imagenes/Vectorial/6APPSOBS_MIXED1COREBOARD2TEAMINFO_2.png, id=1364, 560.0925p
-t x 199.947pt>
-File: Imagenes/Vectorial/6APPSOBS_MIXED1COREBOARD2TEAMINFO_2.png Graphic file (
-type png)
+<Imagenes/Vectorial/6APPSOBS_MIXED1COREBOARD2TEAMINFO_2.png, id=1364, 560.0925pt x 199.947pt>
+File: Imagenes/Vectorial/6APPSOBS_MIXED1COREBOARD2TEAMINFO_2.png Graphic file (type png)
 <use Imagenes/Vectorial/6APPSOBS_MIXED1COREBOARD2TEAMINFO_2.png>
-Package pdftex.def Info: Imagenes/Vectorial/6APPSOBS_MIXED1COREBOARD2TEAMINFO_2
-.png  used on input line 179.
+Package pdftex.def Info: Imagenes/Vectorial/6APPSOBS_MIXED1COREBOARD2TEAMINFO_2.png  used on input line 179.
 (pdftex.def)             Requested size: 209.1301pt x 74.65652pt.
 
 Overfull \hbox (31.87013pt too wide) in alignment at lines 207--207
@@ -2360,10 +2037,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-0.49998pt}.
 
-[71 <./Imagenes/Vectorial/6APPsOBSModoScoreboardNoAruko.png> <./Imagenes/Vector
-ial/6APPSOBSModoScoreboardConAruco.png> <./Imagenes/Vectorial/6APPSOBSModoTeamI
-nfoAruco.png> <./Imagenes/Vectorial/6APPSOBS_MIX_1SCOREBOARD2TEAMINFO.png> <./I
-magenes/Vectorial/6APPSOBS_MIXED1COREBOARD2TEAMINFO_2.png>])
+[71 <./Imagenes/Vectorial/6APPsOBSModoScoreboardNoAruko.png> <./Imagenes/Vectorial/6APPSOBSModoScoreboardConAruco.png> <./Imagenes/Vectorial/6APPSOBSModoTeamInfoAruco.png> <./Imagenes/Vectorial/6APPSOBS_MIX_1SCOREBOARD2TEAMINFO.png> <./Imagenes/Vectorial/6APPSOBS_MIXED1COREBOARD2TEAMINFO_2.png>])
 LaTeX Info: Redefining \. on input line 152.
 LaTeX Info: Redefining \% on input line 152.
 
@@ -2418,8 +2092,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 Chapter 8.
 [77]
 Overfull \hbox (3.6618pt too wide) in paragraph at lines 33--34
-[]\T1/cmr/m/n/12 Integrate con-nec-tiv-ity with the \T1/cmr/bx/n/12 DOM-judge \
-T1/cmr/m/n/12 au-to-mated judge plat-form through
+[]\T1/cmr/m/n/12 Integrate con-nec-tiv-ity with the \T1/cmr/bx/n/12 DOM-judge \T1/cmr/m/n/12 au-to-mated judge plat-form through
  []
 
 
@@ -2564,8 +2237,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 Ap\'{e}ndice A.
 [95]
 Overfull \hbox (21.25482pt too wide) in paragraph at lines 78--79
-[]\T1/cmr/m/n/12 Esta car-pe-ta con-tie-ne los sha-ders del ren-de-ri-za-dor, e
-l mo-de-lo 3D del re-loj (\T1/cmtt/m/n/12 reloj.fbx\T1/cmr/m/n/12 ,
+[]\T1/cmr/m/n/12 Esta car-pe-ta con-tie-ne los sha-ders del ren-de-ri-za-dor, el mo-de-lo 3D del re-loj (\T1/cmtt/m/n/12 reloj.fbx\T1/cmr/m/n/12 ,
  []
 
 LaTeX Info: Redefining \. on input line 80.
@@ -2655,84 +2327,30 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 ] [106]) (TFGTeXiS.aux (Cascaras/cover.aux)
 LaTeX Info: Redefining \. on input line 13.
 LaTeX Info: Redefining \% on input line 13.
-
-(Cascaras/autorizacion.aux) (Cascaras/dedicatoria.aux)
-(Cascaras/agradecimientos.aux) (Cascaras/resumen.aux) (Cascaras/abstract.aux)
-(TeXiS/TeXiS_toc.aux)
+ (Cascaras/autorizacion.aux) (Cascaras/dedicatoria.aux) (Cascaras/agradecimientos.aux) (Cascaras/resumen.aux) (Cascaras/abstract.aux) (TeXiS/TeXiS_toc.aux)
 LaTeX Info: Redefining \. on input line 21.
 LaTeX Info: Redefining \% on input line 21.
- (Capitulos/Introduccion.aux)
-(Capitulos/EstadoDeLaCuestion.aux) (Capitulos/ConcursosProgramacion.aux)
-(Capitulos/DescripcionTrabajo.aux)
-(Capitulos/DescripcionTrabajoConcursosProgramaci贸n.aux)
-(Capitulos/Validacion.aux) (Capitulos/ConclusionesTrabajoFuturo.aux)
-(Capitulos/Introduction.aux) (Capitulos/ConclusionsFutureWork.aux)
-(Capitulos/ContribucionesPersonales.aux)
+ (Capitulos/Introduccion.aux) (Capitulos/EstadoDeLaCuestion.aux) (Capitulos/ConcursosProgramacion.aux) (Capitulos/DescripcionTrabajo.aux) (Capitulos/DescripcionTrabajoConcursosProgramaci贸n.aux) (Capitulos/Validacion.aux) (Capitulos/ConclusionesTrabajoFuturo.aux) (Capitulos/Introduction.aux) (Capitulos/ConclusionsFutureWork.aux) (Capitulos/ContribucionesPersonales.aux)
 LaTeX Info: Redefining \. on input line 33.
 LaTeX Info: Redefining \% on input line 33.
- (Cascaras/bibliografia.aux)
-(Apendices/appendixA.aux) (Apendices/appendixB.aux) (Cascaras/fin.aux))
+ (Cascaras/bibliografia.aux) (Apendices/appendixA.aux) (Apendices/appendixB.aux) (Cascaras/fin.aux))
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
  ***********
-
-
-Package rerunfilecheck Warning: File `TFGTeXiS.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `TFGTeXiS.out':
-(rerunfilecheck)             Before: 339C964B939652A79A27E93D8964E6EA;22753
-(rerunfilecheck)             After:  B0723E1EE3F3D49467EE35F15363B4C5;22640.
+Package rerunfilecheck Info: File `TFGTeXiS.out' has not changed.
+(rerunfilecheck)             Checksum: B0723E1EE3F3D49467EE35F15363B4C5;22640.
  ) 
 Here is how much of TeX's memory you used:
- 30990 strings out of 467691
- 589722 string characters out of 5414987
+ 30992 strings out of 467691
+ 589950 string characters out of 5414987
  1086577 words of memory out of 5000000
  58779 multiletter control sequences out of 15000+600000
  654833 words of font info for 93 fonts, out of 8000000 for 9000
  1379 hyphenation exceptions out of 8191
- 97i,12n,109p,1929b,902s stack positions out of 10000i,1000n,20000p,200000b,200000s
- <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm
-1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi60
-0\ecti1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec
-/dpi600\ecbi1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknap
-pen/ec/dpi600\ecbi1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour
-/jknappen/ec/dpi450\ectt0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/
-ljfour/jknappen/ec/dpi600\ecbx0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fon
-ts/pk/ljfour/jknappen/ec/dpi600\tcrm0800.pk> <C:\Users\josem\AppData\Local\MiKT
-eX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0600.pk> <C:\Users\josem\AppData\Loca
-l\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\josem\AppDat
-a\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\josem\
-AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\
-josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1000.pk> <C:\
-Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0700.pk
-> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0
-800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600
-\ectt1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/
-dpi600\ecbx1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknapp
-en/ec/dpi600\ecrm1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/
-jknappen/ec/dpi600\eccc1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/l
-jfour/jknappen/ec/dpi600\ecti1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\font
-s/pk/ljfour/jknappen/ec/dpi600\ecti1440.pk> <C:\Users\josem\AppData\Local\MiKTe
-X\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2488.pk> <C:\Users\josem\AppData\Local
-\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\josem\AppData
-\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1728.pk><C:/Users/josem/Ap
-pData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users
-/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb>
-<C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cm
-mi12.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfo
-nts/cm/cmmi8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/publ
-ic/amsfonts/cm/cmr10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/ty
-pe1/public/amsfonts/cm/cmr12.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/
-fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/josem/AppData/Local/Programs
-/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/josem/AppData/Local/P
-rograms/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/josem/AppDat
-a/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/jose
-m/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvr8a.pfb><C:/Users/j
-osem/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb>
-Output written on TFGTeXiS.pdf (128 pages, 7636452 bytes).
+ 97i,12n,109p,2003b,902s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi450\ectt0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0600.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1000.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0700.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0800.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1200.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2488.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\josem\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1728.pk><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvr8a.pfb><C:/Users/josem/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb>
+Output written on TFGTeXiS.pdf (128 pages, 7636401 bytes).
 PDF statistics:
  2685 PDF objects out of 2984 (max. 8388607)
  336 named destinations out of 1000 (max. 500000)

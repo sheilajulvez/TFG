@@ -38,13 +38,13 @@ struct team_info_mapping {
 };
 
 OBS_DECLARE_MODULE()
-OBS_MODULE_USE_DEFAULT_LOCALE("cube", "en-US")
+OBS_MODULE_USE_DEFAULT_LOCALE("obs-domjudge-ar-overlay", "en-US")
 
 /* Returns the module description exposed to OBS. */
 /* Devuelve la descripcion del modulo expuesta a OBS. */
 MODULE_EXPORT const char *obs_module_description(void)
 {
-	return "SJ_3D";
+	return "obs-domjudge-ar-overlay";
 }
 /* Converts an angle from degrees to radians. */
 /* Convierte un angulo de grados a radianes. */
@@ -1349,7 +1349,7 @@ void create_texture(struct cube_filter_data *data)
 static const char *filter_get_name(void *unused)
 {
 	UNUSED_PARAMETER(unused);
-	return "SJ_3D";
+	return "obs-domjudge-ar-overlay";
 }
 
 /* Allocates and initializes the filter instance state. */
@@ -3482,7 +3482,7 @@ static void filter_defaults(obs_data_t *settings)
 	obs_data_set_default_string(settings, "team_info_json_path", "");
 }
 static struct obs_source_info cube_filter = {
-	.id = "cube_filter",
+	.id = "obs-domjudge-ar-overlay",
 	.type = OBS_SOURCE_TYPE_FILTER,
 	.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_CUSTOM_DRAW,
 	.get_name = filter_get_name,
