@@ -1,0 +1,48 @@
+\babel@toc {spanish}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {spanish}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces cadena de procesamiento de Realidad Aumentada aplicado a cada fotograma de vídeo en una retransmisión en vivo.}}{11}{figure.caption.21}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Aplicación de la realidad aumentada (RA) en informativos televisivos para la visualización de datos y escenarios virtuales.}}{12}{figure.caption.23}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Ejemplo de filtro con realidad aumentada (RA) en la red social Snapchat, utilizado para superponer elementos virtuales sobre el rostro del usuario en tiempo real.}}{13}{figure.caption.24}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Uso de la realidad aumentada (RA) en retransmisiones en vivo de competiciones de deportes electrónicos, donde se integran elementos virtuales en la escena para mejorar la visualización y el análisis del evento.}}{13}{figure.caption.25}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Ejemplo de aplicación de la realidad aumentada (RA) en el ámbito educativo, utilizada para el aprendizaje de anatomía y procedimientos médicos mediante la visualización interactiva de modelos tridimensionales.}}{14}{figure.caption.26}%
+\contentsline {figure}{\numberline {2.6}{\ignorespaces Modelo geométrico de cámara \textit {pinhole}. Un punto $P$ del espacio real se proyecta a través del centro óptico hasta el plano del sensor, produciendo la coordenada de píxel $(u,v)$. La calibración corrige las desviaciones que introducen las lentes reales respecto a este modelo ideal.}}{18}{figure.caption.34}%
+\contentsline {figure}{\numberline {2.7}{\ignorespaces Interfaz de OBS Studio mostrando una sesión de composición real con múltiples fuentes activas, filtros configurados y el panel de control de la retransmisión.}}{20}{figure.caption.40}%
+\contentsline {figure}{\numberline {2.8}{\ignorespaces Retransmisión del Super Bowl LIX por Fox Sports, donde se combinan la señal de cámara del estadio, el marcador gráfico y los gráficos de RA en una única escena compuesta.}}{22}{figure.caption.41}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Vista del sistema de jurado automático durante un concurso de programación, mostrando los equipos participantes y el estado de sus envíos en tiempo real.}}{32}{figure.caption.56}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Interfaz de administración de DOMjudge mostrando el panel de control del concurso, con el estado de los judgehosts y los envíos recientes.}}{35}{figure.caption.63}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Ejemplo de marcador ArUco del diccionario 4$\times $4. El patrón binario interior codifica el identificador del marcador; el borde negro exterior facilita la detección del contorno.}}{52}{figure.caption.100}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Configuración del modo 3D en la interfaz del plugin: carga del modelo, textura, posición, rotación y escala.}}{53}{figure.caption.103}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Parámetros adicionales de la interfaz para el modo AR con modelo 3D: \textit {offsets} de posición y rotación relativos al marcador.}}{53}{figure.caption.105}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Convenios de coordenadas 2D. OBS se configura para usar el convenio de OpenCV, de forma que las coordenadas del detector se pueden usar sin transformación adicional.}}{57}{figure.caption.110}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces cadena de procesamiento de conversión de la representación de Rodrigues a la orientación de la superposición.}}{57}{figure.caption.111}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces Arquitectura de dos hilos del plugin. El hilo secundario realiza peticiones HTTP asíncronas y escribe los datos en la caché protegida por un \texttt {pthread\_mutex\_t}, el hilo principal de OBS lee de la caché en cada fotograma sin bloquearse.}}{60}{figure.caption.116}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces Flujo de datos desde DOMjudge hasta los componentes de renderizado. El hilo secundario escribe en la caché; el hilo principal la lee sin bloqueos para alimentar el reloj y el motor de texto.}}{61}{figure.caption.123}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces Modo modelo 3D: geometría virtual anclada y orientada sobre el marcador ArUco en tiempo real.}}{62}{figure.caption.125}%
+\contentsline {figure}{\numberline {5.6}{\ignorespaces Modo marcador de clasificación: tabla de equipos proyectada sobre el vídeo en tiempo real durante el concurso.}}{63}{figure.caption.126}%
+\contentsline {figure}{\numberline {5.7}{\ignorespaces Modo información de equipo: datos del equipo detectado superpuestos sobre el vídeo en tiempo real.}}{63}{figure.caption.127}%
+\contentsline {figure}{\numberline {5.8}{\ignorespaces Panel de configuración de la conexión con DOMjudge: URL base, identificador del torneo y credenciales de autenticación.}}{64}{figure.caption.130}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Consumo del sistema sin OBS en ejecución: 15\,\% de CPU global y 56\,\% de memoria.}}{69}{figure.caption.142}%
+\contentsline {figure}{\numberline {6.2}{\ignorespaces OBS Studio activo sin ningún filtro de realidad aumentada: 1,4\,\% de CPU reportado por OBS y cadencia estable de 30\,/\,30 fotogramas por segundo.}}{69}{figure.caption.143}%
+\contentsline {figure}{\numberline {6.3}{\ignorespaces Modo 3D con 1 filtro: 1,1\,\% de CPU y 168,9\,MB.}}{70}{figure.caption.145}%
+\contentsline {figure}{\numberline {6.4}{\ignorespaces Modo 3D con 3 filtros: 2,2\,\% de CPU y 228,8\,MB.}}{70}{figure.caption.145}%
+\contentsline {figure}{\numberline {6.5}{\ignorespaces Modo AR con 1 filtro: 12,3\,\% de CPU y 193,5\,MB, cadencia estable.}}{70}{figure.caption.147}%
+\contentsline {figure}{\numberline {6.6}{\ignorespaces Modo AR con 3 filtros: cadencia degradada a 16,88\,/\,30 fotogramas por segundo.}}{70}{figure.caption.147}%
+\contentsline {figure}{\numberline {6.7}{\ignorespaces Modo marcador de clasificación sin detección ArUco: 11,3\,\% de CPU.}}{71}{figure.caption.149}%
+\contentsline {figure}{\numberline {6.8}{\ignorespaces Modo marcador de clasificación con detección ArUco activa: 12,4\,\% de CPU.}}{71}{figure.caption.149}%
+\contentsline {figure}{\numberline {6.9}{\ignorespaces Modo información de equipo con detección ArUco: 14,3\,\% de CPU y 154,4\,MB, cadencia estable de 30\,/\,30.}}{71}{figure.caption.150}%
+\contentsline {figure}{\numberline {6.10}{\ignorespaces Configuración mixta (1 marcador de clasificación + 2 información de equipo): OBS reporta 25,1\,\% de CPU.}}{71}{figure.caption.152}%
+\contentsline {figure}{\numberline {6.11}{\ignorespaces Administrador de Tareas bajo la configuración mixta: 22,7\,\% de CPU y cadencia degradada a 16,45\,/\,30.}}{71}{figure.caption.152}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\babel@toc {english}{}\relax 
+\addvspace {10\p@ }
+\babel@toc {spanish}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }

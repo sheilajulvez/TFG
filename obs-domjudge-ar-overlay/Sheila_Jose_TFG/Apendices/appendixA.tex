@@ -1,0 +1,95 @@
+\chapter{Manual de Instalación del Plugin}
+\label{Appendix:Instalacion}
+
+Este apéndice describe el proceso de instalación del plugin \textit{SheilaJosePluginTest} en OBS Studio. El plugin ha sido compilado para Windows de 64 bits y ha sido desarrollado y validado específicamente para OBS Studio 31.x (31.0.0). No se garantiza su funcionamiento correcto en otras versiones principales de OBS Studio.
+
+\section*{Requisitos previos}
+
+\begin{itemize}
+  \item OBS Studio 31.x, arquitectura 64 bits, instalado en el sistema.
+  \item Windows 10 o Windows 11 de 64 bits.
+  \item Acceso de escritura a la carpeta de instalación de OBS (puede requerirse ejecutar el explorador como administrador).
+\end{itemize}
+
+\section*{Archivos del plugin}
+
+La distribución del plugin incluye los siguientes archivos:
+
+\begin{itemize}
+  \item \texttt{SheilaJosePluginTest.dll} — biblioteca principal del plugin.
+  \item \texttt{libcurl.dll} — biblioteca para comunicaciones HTTP con la API de DOMjudge.
+  \item \texttt{zlib.dll} — biblioteca de compresión requerida por libcurl.
+  \item \texttt{assimp-vc143-mt.dll} — biblioteca de importación de modelos 3D.
+  \item \texttt{opencv\_aruco460.dll} — módulo de detección de marcadores ArUco.
+  \item \texttt{opencv\_core460.dll} — núcleo de OpenCV.
+  \item \texttt{opencv\_imgproc460.dll} — procesamiento de imagen.
+  \item \texttt{opencv\_calib3d460.dll} — calibración de cámara y estimación de pose.
+  \item \texttt{opencv\_imgcodecs460.dll} — codecs de imagen.
+  \item \texttt{opencv\_videoio460.dll} — entrada/salida de vídeo.
+  \item \texttt{opencv\_highgui460.dll} — interfaz gráfica auxiliar de OpenCV.
+  \item Carpeta \texttt{SheilaJosePluginTest/} — contiene los recursos del plugin (shaders, modelos, ficheros de ejemplo y localización).
+\end{itemize}
+
+\section*{Proceso de instalación}
+
+\subsection*{Paso 1: Localizar la carpeta de OBS Studio}
+
+La instalación estándar de OBS Studio se encuentra en:
+
+\begin{verbatim}
+C:\Program Files\obs-studio\
+\end{verbatim}
+
+Dentro de esta carpeta existe la siguiente estructura relevante:
+
+\begin{verbatim}
+obs-studio/
+  obs-plugins/
+    64bit/        <- aqui van todas las DLLs del plugin
+  data/
+    obs-plugins/  <- aqui va la carpeta de datos del plugin
+\end{verbatim}
+
+\subsection*{Paso 2: Copiar las bibliotecas}
+
+Copiar todos los archivos \texttt{.dll} de la distribución en:
+
+\begin{verbatim}
+C:\Program Files\obs-studio\obs-plugins\64bit\
+\end{verbatim}
+
+Los archivos que deben quedar en esa carpeta son:
+\texttt{SheilaJosePluginTest.dll}, \texttt{libcurl.dll}, \texttt{zlib.dll}, \texttt{assimp-vc143-mt.dll} y los siete \texttt{opencv\_*460.dll} listados anteriormente.
+
+\subsection*{Paso 3: Copiar la carpeta de datos}
+
+Copiar la carpeta \texttt{SheilaJosePluginTest/} de la distribución en:
+
+\begin{verbatim}
+C:\Program Files\obs-studio\data\obs-plugins\
+\end{verbatim}
+
+El resultado debe ser:
+
+\begin{verbatim}
+C:\Program Files\obs-studio\data\obs-plugins\SheilaJosePluginTest\
+\end{verbatim}
+
+Esta carpeta contiene los shaders del renderizador, el modelo 3D del reloj (\texttt{reloj.fbx}, \texttt{reloj.obj}), ficheros de ejemplo de configuración y los archivos de localización.
+
+\subsection*{Paso 4: Verificar la instalación}
+
+Iniciar OBS Studio. Si la instalación es correcta, al añadir un filtro a cualquier fuente de vídeo (clic derecho sobre la fuente $\rightarrow$ \textit{Filtros} $\rightarrow$ botón \texttt{+}) aparecerá el plugin en la lista de filtros de efecto disponibles.
+
+En caso de que no aparezca, verificar que:
+
+\begin{itemize}
+  \item Todos los \texttt{.dll} están directamente en \texttt{obs-plugins/64bit/}, no en subcarpetas.
+  \item La carpeta \texttt{SheilaJosePluginTest/} está en \texttt{data/obs-plugins/}.
+  \item La versión de OBS Studio pertenece a la rama 31.x y es la de 64 bits.
+  \item No hay mensajes de error al iniciar OBS (menú \textit{Ayuda} $\rightarrow$ \textit{Registro}).
+\end{itemize}
+
+\section*{Desinstalación}
+
+Para desinstalar el plugin, eliminar los \texttt{.dll} copiados en \texttt{obs-plugins/64bit/} y la carpeta \texttt{SheilaJosePluginTest/} de \texttt{data/obs-plugins/}. OBS no genera archivos adicionales para este plugin.

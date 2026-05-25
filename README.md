@@ -102,6 +102,7 @@ Para trabajar con el proyecto se recomienda disponer de:
   - **libcurl**
 
 > Nota: el desarrollo y la validacion del plugin se han realizado principalmente en entorno **Windows**.
+> Nota de compatibilidad: el plugin ha sido desarrollado y validado especificamente para **OBS Studio 31.1.12** en **Windows x64**. No se garantiza su funcionamiento correcto en otras versiones principales de OBS Studio.
 
 ---
 

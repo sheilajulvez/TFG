@@ -1,4 +1,7 @@
-cd obs-plugintemplate-master
+@echo off
+setlocal
+
+cd /d "%~dp0obs-domjudge-ar-overlay" || exit /b 1
 
 echo CONFIGURE
 cmake --preset windows-x64
