@@ -1,0 +1,39 @@
+\chapter{Conclusions and Future Work}
+\label{cap:conclusiones}
+
+\chapterquote{Para ingenio y agudeza, los de Belmonte de Calatayud; que de las piedras sacan agua y de los hombres, virtud}{Baltasar Gracián}
+
+\section{Conclusions}
+
+In this work, two main objectives were outlined:
+
+\begin{itemize}
+    \item \textbf{Incorporate augmented reality (AR) functionalities} within the \textit{OBS Studio} platform.
+    \item \textbf{Apply said AR to live programming contests} through the development of a native plugin.
+\end{itemize}
+
+Both objectives have been successfully fulfilled.
+
+The result is a functional plugin that extends \textit{OBS Studio} with four distinct operation modes. In the 3D model mode, the system loads geometry in multiple formats via \textbf{ASSIMP}, estimates the pose of the \textbf{ArUco} marker in real time using \textbf{OpenCV}'s PnP algorithm, and renders the model anchored to the marker with the correct orientation and position. In the countdown timer mode, that same model acts as an analog countdown clock whose hands are updated and periodically synchronized with the official time connected to the \textbf{DOMjudge} API \citep{DOMjudge}. In the \textit{Scoreboard} mode, the system projects the general contest leaderboard onto the video stream in real time, with the data of all teams organized. In the \textit{Team Info} mode, the camera automatically detects the marker of a specific team and displays only their data, combining marker detection with a JSON team-mapping file that the user prepares prior to the broadcast.
+
+Beyond the visualization modes, this work has resolved several technical challenges. The coordinate system separating OpenCV from OBS required an explicit conversion of conventions using rotations. Smoothing the overlay with a filter eliminates much of the noticeable jitter caused by camera noise and video compression. The two-thread architecture, with a secondary thread dedicated exclusively to HTTP requests, guarantees that network operations never block the rendering pipeline. The camera calibration process, implemented as an independent tool, generates the parameter file that the plugin loads upon startup, allowing the correction of the optical distortion of each lens.
+
+The video format conversion system covers the seven formats that OBS can output (I420, NV12, YUY2, UYVY, BGRA, RGBA, Y800), making the detection work independently of the connected camera source, as long as it meets those requirements. The user interface integrated within OBS allows the operator to adjust all parameters live, at any moment, without restarting the scene. This makes the system manageable within a real production environment.
+
+Altogether, the plugin demonstrates that it is possible to add a complete real-time data-driven augmented reality system to \textit{OBS Studio} while maintaining a native plugin architecture, without additional latency from external processes, and without modifying the core software.
+
+\section{Limitations}
+
+The plugin has been developed and tested in a Windows environment using the integrated camera of an ASUS TUF Gaming A16. This circumstance implies several limitations that should be explicitly pointed out. The system has not been validated in other environments such as Linux or macOS—platforms where OBS Studio also runs, but whose API and resource management differ. Furthermore, the quality of the detection depends directly on lighting conditions and the print resolution of the markers. Camera calibration must be repeated for each different lens, adding a configuration step that can be impractical in environments where cameras are changed frequently. Lastly, the connectivity system is designed exclusively for the \textbf{DOMjudge} REST API \citep{DOMjudge}, meaning it cannot connect to other programming contest management systems without modifying the code implemented in this plugin.
+
+\section{Future Work}
+
+The results obtained open up several natural lines of continuation.
+
+The most relevant from a technical perspective is the incorporation of \textbf{markerless tracking}. Current visual SLAM techniques \citep{MurArtal2015} would allow anchoring AR elements to surfaces in the real environment. This would eliminate the need to print and place ArUco codes on different items, making the system more flexible and applicable to scenarios where the physical space cannot be controlled.
+
+A second line is \textbf{compatibility with other live contest systems}. Currently, the project is tailored to the DOMjudge API, so adding support for other platforms would expand the plugin's reach to a much larger section of the programming contest community.
+
+In terms of performance, it would be valuable to conduct a \textbf{systematic evaluation of the impact} of the plugin on the frame rate and CPU/GPU usage across different configurations. This would establish recommended usage thresholds and potential optimizations for various hardware setups.
+
+Finally, adding a \textbf{remote control panel} accessible from a web interface or a mobile application would allow the broadcast director to manage the modes and visibility of the AR elements from a secondary device. Therefore, there would be no need to interact with the main broadcasting equipment during the transmission, significantly improving the workflow in productions with more than one technical crew member.

@@ -19,7 +19,7 @@
 !LICENSE
 !README.md
 !/Dependencies
-
+!Memoria
 # Exclude lock files
 *.lock.json
 
