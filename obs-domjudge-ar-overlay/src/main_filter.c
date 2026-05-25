@@ -38,13 +38,13 @@ struct team_info_mapping {
 };
 
 OBS_DECLARE_MODULE()
-OBS_MODULE_USE_DEFAULT_LOCALE("obs-domjudge-ar-overlay", "en-US")
+OBS_MODULE_USE_DEFAULT_LOCALE("obsdomjudgearoverlay", "en-US")
 
 /* Returns the module description exposed to OBS. */
 /* Devuelve la descripcion del modulo expuesta a OBS. */
 MODULE_EXPORT const char *obs_module_description(void)
 {
-	return "obs-domjudge-ar-overlay";
+	return "OBS DOM judge AR Overlay";
 }
 /* Converts an angle from degrees to radians. */
 /* Convierte un angulo de grados a radianes. */
@@ -1349,7 +1349,7 @@ void create_texture(struct cube_filter_data *data)
 static const char *filter_get_name(void *unused)
 {
 	UNUSED_PARAMETER(unused);
-	return "obs-domjudge-ar-overlay";
+	return "OBS DOM judge AR Overlay";
 }
 
 /* Allocates and initializes the filter instance state. */
@@ -2211,6 +2211,18 @@ static bool render_mode_changed(obs_properties_t *props,
 
 	bool countdown_use_ar = obs_data_get_bool(settings, "countdown_use_ar");
 	int clock_mode = (int)obs_data_get_int(settings, "clock_mode");
+
+	if (property) {
+		const char *prop_name = obs_property_name(property);
+		if (prop_name && strcmp(prop_name, "countdown_use_ar") == 0 &&
+		    show_countdown) {
+			obs_property_t *marker_prop =
+				obs_properties_get(props, "marker_id");
+			if (marker_prop)
+				countdown_use_ar =
+					!obs_property_visible(marker_prop);
+		}
+	}
 	
 
 	bool show_manual_pos = show_3d || (show_countdown && !countdown_use_ar);
@@ -2430,7 +2442,7 @@ obs_properties_add_path(props, "calibration_path", "Archivo de Calibracion",
 	obs_properties_add_int(props, "countdown_duration_h", "Horas", 0, 99, 1);
 	obs_properties_add_int(props, "countdown_duration_m", "Minutos", 0, 59, 1);
 	obs_properties_add_int(props, "countdown_duration_s", "Segundos", 0, 59, 1);
-	obs_properties_add_bool(props, "countdown_running", "Cuenta Atras a Mover");
+	obs_properties_add_bool(props, "countdown_running", "Cuenta atras");
 	obs_properties_add_bool(props, "countdown_reset", "Reiniciar Reloj");
 
 	/* --- CONFIGURACION RELOJ --- */
@@ -2440,8 +2452,13 @@ obs_properties_add_path(props, "calibration_path", "Archivo de Calibracion",
 	
 
 	
-	obs_properties_add_bool(props, "countdown_use_ar", "Reloj en Marker AR");
-	obs_properties_add_bool(props, "overlay_use_ar", "Anclar a marcador AR");
+	obs_property_t *countdown_use_ar_prop =
+		obs_properties_add_bool(props, "countdown_use_ar", "Reloj en Marker AR");
+	obs_property_set_modified_callback(countdown_use_ar_prop, render_mode_changed);
+
+	obs_property_t *overlay_use_ar_prop =
+		obs_properties_add_bool(props, "overlay_use_ar", "Anclar a marcador AR");
+	obs_property_set_modified_callback(overlay_use_ar_prop, render_mode_changed);
 
 	/* --- DOMJUDGE & SYNC --- */
 	obs_properties_add_bool(props, "sync_enabled", "Sincronizar con DOMjudge");
@@ -3482,7 +3499,7 @@ static void filter_defaults(obs_data_t *settings)
 	obs_data_set_default_string(settings, "team_info_json_path", "");
 }
 static struct obs_source_info cube_filter = {
-	.id = "obs-domjudge-ar-overlay",
+	.id = "obsdomjudgearoverlay",
 	.type = OBS_SOURCE_TYPE_FILTER,
 	.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_CUSTOM_DRAW,
 	.get_name = filter_get_name,
