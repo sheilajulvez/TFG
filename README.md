@@ -133,7 +133,7 @@ cmake --build --preset windows-x64 --config Release
 
 La carpeta `Release/` recoge una compilacion lista para pruebas o integracion, incluyendo:
 
-- el binario principal del plugin, como `SheilaJosePluginTest.dll`,
+- el binario principal del plugin, como `obs-domjudge-ar-overlay.dll`,
 - bibliotecas necesarias para vision artificial, como `opencv_core460.dll`, `opencv_aruco460.dll`, `opencv_imgproc460.dll` y `opencv_calib3d460.dll`,
 - dependencias de carga de modelos 3D, como `assimp-vc143-mt.dll`.
 
